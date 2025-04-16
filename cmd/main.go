@@ -4,7 +4,7 @@ import (
 	configs "cakestore/config"
 	controller "cakestore/internal/delivery/http"
 	"cakestore/internal/delivery/http/route"
-	"cakestore/internal/entity"
+	"cakestore/internal/domain/entity"
 	"cakestore/internal/repository"
 	"cakestore/internal/usecase"
 	"cakestore/utils"

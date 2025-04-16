@@ -4,8 +4,8 @@ import (
 	"bytes"
 	configs "cakestore/config"
 	controller "cakestore/internal/delivery/http"
-	"cakestore/internal/entity"
-	"cakestore/internal/model"
+	"cakestore/internal/domain/entity"
+	"cakestore/internal/domain/model"
 	"cakestore/internal/repository"
 	"cakestore/internal/usecase"
 	"cakestore/utils"
@@ -100,7 +100,7 @@ func (suite *CakeHandlerTestSuite) TestCreate() {
 	assert.Equal(suite.T(), fiber.StatusCreated, resp.StatusCode)
 
 	body, _ := io.ReadAll(resp.Body)
-	var response model.Response
+	var response utils.Response
 	_ = json.Unmarshal(body, &response)
 
 	jsonCake, _ := json.Marshal(response.Data)
@@ -131,7 +131,7 @@ func (suite *CakeHandlerTestSuite) TestGetByID() {
 	resp, _ := suite.app.Test(req)
 
 	body, _ := io.ReadAll(resp.Body)
-	var respCreate model.Response
+	var respCreate utils.Response
 	json.Unmarshal(body, &respCreate)
 
 	// Test getting the cake
@@ -141,7 +141,7 @@ func (suite *CakeHandlerTestSuite) TestGetByID() {
 	assert.Equal(suite.T(), fiber.StatusOK, resp.StatusCode)
 
 	body, _ = io.ReadAll(resp.Body)
-	var response model.Response
+	var response utils.Response
 	err = json.Unmarshal(body, &response)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), cake.Title, response.Data.(*entity.Cake).Title)

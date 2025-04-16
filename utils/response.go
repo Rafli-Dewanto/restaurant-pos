@@ -1,15 +1,15 @@
-package model
+package utils
 
 import (
-	"cakestore/utils"
+	"cakestore/internal/domain/model"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 type Response struct {
-	Message string         `json:"message"`
-	Data    any            `json:"data,omitempty"`
-	Meta    *PaginatedMeta `json:"meta,omitempty"`
+	Message string               `json:"message"`
+	Data    any                  `json:"data,omitempty"`
+	Meta    *model.PaginatedMeta `json:"meta,omitempty"`
 }
 
 type FailedResponse struct {
@@ -17,9 +17,9 @@ type FailedResponse struct {
 	Errors  any    `json:"errors"`
 }
 
-func WriteResponse(c *fiber.Ctx, statusCode int, data interface{}, message string, meta *PaginatedMeta) error {
+func WriteResponse(c *fiber.Ctx, statusCode int, data interface{}, message string, meta *model.PaginatedMeta) error {
 	if data != nil {
-		if errors, ok := data.([]utils.ValidationError); ok {
+		if errors, ok := data.([]ValidationError); ok {
 			resp := FailedResponse{
 				Message: message,
 				Errors:  errors,
@@ -41,6 +41,6 @@ func WriteErrorResponse(c *fiber.Ctx, statusCode int, message string) error {
 	return WriteResponse(c, statusCode, nil, message, nil)
 }
 
-func WriteValidationErrorResponse(c *fiber.Ctx, errors []utils.ValidationError) error {
+func WriteValidationErrorResponse(c *fiber.Ctx, errors []ValidationError) error {
 	return WriteResponse(c, fiber.StatusBadRequest, errors, "Validation failed", nil)
 }

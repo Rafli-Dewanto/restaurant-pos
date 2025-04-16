@@ -1,9 +1,10 @@
 package controller
 
 import (
-	"cakestore/internal/entity"
-	"cakestore/internal/model"
+	"cakestore/internal/domain/entity"
+	"cakestore/internal/domain/model"
 	"cakestore/internal/usecase"
+	"cakestore/utils"
 	"crypto/sha512"
 	"encoding/hex"
 
@@ -33,7 +34,7 @@ func (c *PaymentControllerImpl) GetTransactionStatus(ctx *fiber.Ctx) error {
 	c.logger.Trace("UpdateOrderStatus called")
 	var notif model.MidtransNotification
 	if err := ctx.BodyParser(&notif); err != nil {
-		return model.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid request body")
+		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid request body")
 	}
 
 	rawSignature := notif.OrderID + notif.StatusCode + notif.GrossAmount + c.midtransServerKey
@@ -42,7 +43,7 @@ func (c *PaymentControllerImpl) GetTransactionStatus(ctx *fiber.Ctx) error {
 	computedSignature := hex.EncodeToString(hash[:])
 	if computedSignature != notif.SignatureKey {
 		c.logger.Errorf("Invalid signature key: %s", notif.SignatureKey)
-		return model.WriteErrorResponse(ctx, fiber.StatusUnauthorized, "Invalid signature key")
+		return utils.WriteErrorResponse(ctx, fiber.StatusUnauthorized, "Invalid signature key")
 	}
 	c.logger.Info("Webhook received")
 
@@ -50,21 +51,21 @@ func (c *PaymentControllerImpl) GetTransactionStatus(ctx *fiber.Ctx) error {
 	case "settlement":
 		if err := c.orderUseCase.UpdateOrderStatus(notif.OrderID, string(entity.OrderStatusPaid)); err != nil {
 			c.logger.Errorf("Failed to update order status: %v", err)
-			return model.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to update order status")
+			return utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to update order status")
 		}
-		return model.WriteResponse(ctx, fiber.StatusOK, nil, "Transaction successful", nil)
+		return utils.WriteResponse(ctx, fiber.StatusOK, nil, "Transaction successful", nil)
 	case "pending":
 		if err := c.orderUseCase.UpdateOrderStatus(notif.OrderID, string(entity.OrderStatusPending)); err != nil {
 			c.logger.Errorf("Failed to update order status: %v", err)
-			return model.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to update order status")
+			return utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to update order status")
 		}
-		return model.WriteResponse(ctx, fiber.StatusOK, nil, "Transaction pending", nil)
+		return utils.WriteResponse(ctx, fiber.StatusOK, nil, "Transaction pending", nil)
 	case "expire", "cancel":
 		if err := c.orderUseCase.UpdateOrderStatus(notif.OrderID, string(entity.OrderStatusCancelled)); err != nil {
 			c.logger.Errorf("Failed to update order status: %v", err)
-			return model.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to update order status")
+			return utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to update order status")
 		}
-		return model.WriteResponse(ctx, fiber.StatusOK, nil, "Transaction cancelled", nil)
+		return utils.WriteResponse(ctx, fiber.StatusOK, nil, "Transaction cancelled", nil)
 	}
 	return ctx.SendStatus(fiber.StatusOK)
 }

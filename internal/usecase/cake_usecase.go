@@ -1,7 +1,7 @@
 package usecase
 
 import (
-	"cakestore/internal/entity"
+	"cakestore/internal/domain/entity"
 	"cakestore/internal/repository"
 
 	"github.com/go-playground/validator/v10"
