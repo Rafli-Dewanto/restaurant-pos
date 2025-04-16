@@ -1,8 +1,8 @@
 package usecase
 
 import (
-	"cakestore/internal/entity"
-	"cakestore/internal/model"
+	"cakestore/internal/domain/entity"
+	"cakestore/internal/domain/model"
 	"cakestore/internal/repository"
 	"errors"
 	"strconv"

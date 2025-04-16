@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"cakestore/internal/entity"
+	"cakestore/internal/domain/entity"
 	"errors"
 
 	"github.com/sirupsen/logrus"

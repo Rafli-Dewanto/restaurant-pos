@@ -1,6 +1,6 @@
 package model
 
-import "cakestore/internal/entity"
+import "cakestore/internal/domain/entity"
 
 type CustomerResponse struct {
 	ID      int    `json:"id"`

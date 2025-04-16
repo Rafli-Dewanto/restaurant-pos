@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"cakestore/internal/model"
+	"cakestore/internal/domain/model"
 	"cakestore/internal/usecase"
 	"cakestore/utils"
 	"strconv"

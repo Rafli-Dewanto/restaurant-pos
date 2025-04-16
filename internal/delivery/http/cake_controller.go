@@ -1,8 +1,8 @@
 package controller
 
 import (
-	"cakestore/internal/entity"
-	"cakestore/internal/model"
+	"cakestore/internal/domain/entity"
+	"cakestore/internal/domain/model"
 	"cakestore/internal/usecase"
 	"database/sql"
 	"net/http"
