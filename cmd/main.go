@@ -10,7 +10,6 @@ import (
 	"cakestore/utils"
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/driver/mysql"
@@ -45,6 +44,10 @@ func main() {
 
 	app := fiber.New()
 
+	app.Get("/health", func(c *fiber.Ctx) error {
+		return c.SendString("OK")
+	})
+
 	// repo
 	cakeRepository := repository.NewCakeRepository(db, logger)
 	customerRepository := repository.NewCustomerRepository(db, logger)
@@ -53,7 +56,7 @@ func main() {
 	// usecase
 	cakeUseCase := usecase.NewCakeUseCase(cakeRepository, logger)
 	customerUseCase := usecase.NewCustomerUseCase(customerRepository, logger, cfg.JWT_SECRET)
-	orderUseCase := usecase.NewOrderUseCase(orderRepository, cakeRepository, customerRepository, logger, cfg.ENV)
+	orderUseCase := usecase.NewOrderUseCase(orderRepository, cakeRepository, customerRepository, logger, cfg.SERVER_ENV)
 	paymentUsecase := usecase.NewPaymentUseCase(cfg.MIDTRANS_ENDPOINT)
 
 	// controller
@@ -72,7 +75,7 @@ func main() {
 	}
 	routeConfig.Setup()
 
-	port := os.Getenv("PORT")
+	port := cfg.SERVER_PORT
 	if port == "" {
 		port = "8080"
 	}
