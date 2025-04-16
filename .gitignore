@@ -1,0 +1,38 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+
+# Output of the go build command
+/build/
+/bin/
+/dist/
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Dependency directories (go mod tidy will regenerate them)
+vendor/
+
+# Logs
+*.log
+
+# IDE/editor-specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.tmp
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Environment/config files
+.env
