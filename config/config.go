@@ -11,6 +11,7 @@ type Config struct {
 	MIDTRANS_CLIENT_KEY  string
 	MIDTRANS_SERVER_KEY  string
 	MIDTRANS_ENDPOINT    string
+	ENV                  string
 }
 
 func LoadConfig() *Config {
@@ -27,5 +28,6 @@ func LoadConfig() *Config {
 		MIDTRANS_CLIENT_KEY:  viper.GetString("MIDTRANS_CLIENT_KEY"),
 		MIDTRANS_SERVER_KEY:  viper.GetString("MIDTRANS_SERVER_KEY"),
 		MIDTRANS_ENDPOINT:    viper.GetString("MIDTRANS_ENDPOINT"),
+		ENV:                  viper.GetString("ENV"),
 	}
 }

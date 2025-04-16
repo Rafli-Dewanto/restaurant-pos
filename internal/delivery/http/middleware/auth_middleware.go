@@ -12,6 +12,7 @@ import (
 
 func AuthMiddleware(jwtSecret string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		log.Println("🔒 AuthMiddleware triggered for path:", c.Path())
 		authHeader := c.Get("Authorization")
 		if authHeader == "" {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{

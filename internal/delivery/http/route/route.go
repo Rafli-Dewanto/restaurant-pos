@@ -13,6 +13,7 @@ type RouteConfig struct {
 	CakeController     *http.CakeController
 	CustomerController *http.CustomerController
 	OrderController    *http.OrderController
+	PaymentController  http.PaymentController
 	JWTSecret          string
 }
 
@@ -23,13 +24,15 @@ func (c *RouteConfig) Setup() {
 func (c *RouteConfig) SetupRoute() {
 	c.App.Use(cors.New(cors.Config{
 		AllowOrigins: "*",
-		AllowMethods: "GET,POST,PUT,DELETE",
+		AllowMethods: "GET,POST,PATCH,PUT,DELETE",
 		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
 	}))
 
 	// Public routes
 	c.App.Post("/register", c.CustomerController.Register)
 	c.App.Post("/login", c.CustomerController.Login)
+	// Midtrans notification webhook
+	c.App.Post("/payment/notification", c.PaymentController.GetTransactionStatus)
 
 	// Protected routes
 	protectedRoutes := c.App.Group("/", middleware.AuthMiddleware(c.JWTSecret))
@@ -50,10 +53,4 @@ func (c *RouteConfig) SetupRoute() {
 	orders.Post("/", c.OrderController.CreateOrder)
 	orders.Get("/", c.OrderController.GetCustomerOrders)
 	orders.Get("/:id", c.OrderController.GetOrderByID)
-	orders.Put("/:id/status", c.OrderController.UpdateOrderStatus)
-
-	// payment routes
-	// payments := protectedRoutes.Group("/payments")
-	// payments.Post("/", c.OrderController.)
-	// payments.Post("/status", c.OrderController.GetOrderByID)
 }

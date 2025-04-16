@@ -94,30 +94,3 @@ func (c *OrderController) GetCustomerOrders(ctx *fiber.Ctx) error {
 	model.WriteResponse(ctx, fiber.StatusOK, orders, "Customer orders fetched successfully", nil)
 	return nil
 }
-
-func (c *OrderController) UpdateOrderStatus(ctx *fiber.Ctx) error {
-	orderID, err := strconv.Atoi(ctx.Params("id"))
-	if err != nil {
-		c.logger.Error("Failed to parse order ID: ", err)
-		model.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid order ID")
-	}
-
-	var request model.UpdateOrderStatusRequest
-	if err := ctx.BodyParser(&request); err != nil {
-		c.logger.Error("Failed to parse body: ", err)
-		model.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid request body")
-	}
-
-	if err := c.validator.Struct(request); err != nil {
-		c.logger.Error("Validation failed: ", err)
-		model.WriteErrorResponse(ctx, fiber.StatusBadRequest, err.Error())
-	}
-
-	if err := c.orderUseCase.UpdateOrderStatus(orderID, request.Status); err != nil {
-		c.logger.Error("Failed to update order status: ", err)
-		model.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to update order status")
-	}
-
-	model.WriteResponse(ctx, fiber.StatusOK, nil, "Order status updated successfully", nil)
-	return nil
-}

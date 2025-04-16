@@ -50,25 +50,26 @@ func main() {
 	customerRepository := repository.NewCustomerRepository(db, logger)
 	orderRepository := repository.NewOrderRepository(db, logger)
 	// paymentRepository := repository.NewPaymentRepository(db, logger)
-	
+
 	// usecase
 	cakeUseCase := usecase.NewCakeUseCase(cakeRepository, logger)
 	customerUseCase := usecase.NewCustomerUseCase(customerRepository, logger, cfg.JWT_SECRET)
-	orderUseCase := usecase.NewOrderUseCase(orderRepository, cakeRepository, customerRepository, logger)
+	orderUseCase := usecase.NewOrderUseCase(orderRepository, cakeRepository, customerRepository, logger, cfg.ENV)
 	paymentUsecase := usecase.NewPaymentUseCase(cfg.MIDTRANS_ENDPOINT)
 	// paymentUseCase := usecase.NewPaymentUseCase(paymentRepository, logger)
-	
+
 	// controller
 	cakeController := controller.NewCakeController(cakeUseCase, logger)
 	customerController := controller.NewCustomerController(customerUseCase, logger)
 	orderController := controller.NewOrderController(orderUseCase, paymentUsecase, logger)
-	// paymentController := controller.NewPaymentController(paymentUseCase, logger)
+	paymentController := controller.NewPaymentController(logger, cfg.MIDTRANS_SERVER_KEY, orderUseCase)
 
 	routeConfig := route.RouteConfig{
 		App:                app,
 		CakeController:     cakeController,
 		CustomerController: customerController,
 		OrderController:    orderController,
+		PaymentController:  paymentController,
 		JWTSecret:          cfg.JWT_SECRET,
 		// PaymentController: paymentController,
 	}

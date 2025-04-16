@@ -5,6 +5,7 @@ import (
 	"cakestore/internal/model"
 	"cakestore/internal/repository"
 	"errors"
+	"strconv"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -14,7 +15,7 @@ type OrderUseCase interface {
 	CreateOrder(customerID int, request *model.CreateOrderRequest) (*entity.Order, error)
 	GetOrderByID(id int) (*model.OrderResponse, error)
 	GetCustomerOrders(customerID int) ([]model.OrderResponse, error)
-	UpdateOrderStatus(id int, status string) error
+	UpdateOrderStatus(id string, status string) error
 	DeleteOrder(id int) error
 }
 
@@ -23,6 +24,7 @@ type orderUseCase struct {
 	cakeRepo     repository.CakeRepository
 	customerRepo repository.CustomerRepository
 	logger       *logrus.Logger
+	env          string
 }
 
 func NewOrderUseCase(
@@ -30,6 +32,7 @@ func NewOrderUseCase(
 	cakeRepo repository.CakeRepository,
 	customerRepo repository.CustomerRepository,
 	logger *logrus.Logger,
+	env string,
 ) OrderUseCase {
 	return &orderUseCase{
 		orderRepo:    orderRepo,
@@ -107,9 +110,23 @@ func (uc *orderUseCase) GetCustomerOrders(customerID int) ([]model.OrderResponse
 	return responses, nil
 }
 
-func (uc *orderUseCase) UpdateOrderStatus(id int, status string) error {
+func (uc *orderUseCase) UpdateOrderStatus(id string, status string) error {
 	orderStatus := entity.OrderStatus(status)
-	if err := uc.orderRepo.UpdateStatus(id, orderStatus); err != nil {
+
+	if uc.env == "development" {
+		if err := uc.orderRepo.UpdateStatus(9, orderStatus); err != nil {
+			uc.logger.Errorf("Error updating order status: %v", err)
+			return err
+		}
+		return nil
+	}
+
+	orderID, err := strconv.Atoi(id)
+	if err != nil {
+		return err
+	}
+
+	if err := uc.orderRepo.UpdateStatus(orderID, orderStatus); err != nil {
 		uc.logger.Errorf("Error updating order status: %v", err)
 		return err
 	}
