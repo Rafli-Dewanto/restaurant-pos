@@ -38,6 +38,7 @@ func (c *RouteConfig) SetupRoute() {
 	protectedRoutes := c.App.Group("/", middleware.AuthMiddleware(c.JWTSecret))
 
 	// Customer routes
+	protectedRoutes.Get("/customers/me", c.CustomerController.GetCustomerByID)
 	protectedRoutes.Put("/customers/:id", c.CustomerController.UpdateProfile)
 
 	// Cake routes

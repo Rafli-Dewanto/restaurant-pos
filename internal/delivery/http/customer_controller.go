@@ -104,3 +104,16 @@ func (c *CustomerController) UpdateProfile(ctx *fiber.Ctx) error {
 	model.WriteResponse(ctx, fiber.StatusOK, nil, "Profile updated successfully", nil)
 	return nil
 }
+
+func (c *CustomerController) GetCustomerByID(ctx *fiber.Ctx) error {
+	customerID := ctx.Locals("customer_id").(int)
+
+	customer, err := c.customerUseCase.GetCustomerByID(customerID)
+	if err != nil {
+		c.logger.Error("Failed to get customer: ", err)
+		model.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to get customer")
+	}
+
+	model.WriteResponse(ctx, fiber.StatusOK, model.CustomerToResponse(customer), "Customer fetched successfully", nil)
+	return nil
+}
