@@ -53,10 +53,11 @@ func (r *orderRepository) GetByID(id int) (*entity.Order, error) {
 
 func (r *orderRepository) GetByCustomerID(customerID int) ([]entity.Order, error) {
 	var orders []entity.Order
-	if err := r.db.Preload("Items.Cake").Where("customer_id = ?", customerID).Find(&orders).Error; err != nil {
+	if err := r.db.Preload("Customer").Preload("Items.Cake").Where("customer_id = ?", customerID).Find(&orders).Error; err != nil {
 		r.logger.Errorf("Error getting orders by customer ID: %v", err)
 		return nil, err
 	}
+	r.logger.Info("Orders: ", orders)
 	return orders, nil
 }
 
