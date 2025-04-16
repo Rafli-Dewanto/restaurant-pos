@@ -57,7 +57,6 @@ func (r *orderRepository) GetByCustomerID(customerID int) ([]entity.Order, error
 		r.logger.Errorf("Error getting orders by customer ID: %v", err)
 		return nil, err
 	}
-	r.logger.Info("Orders: ", orders)
 	return orders, nil
 }
 

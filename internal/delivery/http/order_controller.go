@@ -84,7 +84,6 @@ func (c *OrderController) GetOrderByID(ctx *fiber.Ctx) error {
 func (c *OrderController) GetCustomerOrders(ctx *fiber.Ctx) error {
 	// Get customer ID from JWT token
 	customerID := ctx.Locals("customer_id").(int)
-	c.logger.Info("Customer ID: ", customerID)
 
 	orders, err := c.orderUseCase.GetCustomerOrders(customerID)
 	if err != nil {

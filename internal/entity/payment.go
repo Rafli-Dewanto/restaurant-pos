@@ -34,6 +34,7 @@ func (p *Payment) TableName() string {
 	return "payments"
 }
 
-func (p *Payment) BeforeCreate(tx *gorm.DB) {
+func (p *Payment) BeforeCreate(tx *gorm.DB) error {
 	p.Status = PaymentStatusPending
+	return nil
 }
