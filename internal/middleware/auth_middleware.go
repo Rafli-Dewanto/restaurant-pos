@@ -12,11 +12,9 @@ import (
 
 func AuthMiddleware(jwtSecret string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		log.Println("🔒 AuthMiddleware triggered for path:", c.Path())
 		authHeader := c.Get("Authorization")
 		if authHeader == "" {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"success": false,
 				"message": "Missing authorization header",
 			})
 		}
@@ -34,7 +32,6 @@ func AuthMiddleware(jwtSecret string) fiber.Handler {
 		if err != nil || !token.Valid {
 			log.Println(err.Error())
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"success": false,
 				"message": "Invalid or expired token",
 			})
 		}
@@ -43,6 +40,7 @@ func AuthMiddleware(jwtSecret string) fiber.Handler {
 		c.Locals("email", claims.Email)
 		c.Locals("name", claims.Name)
 		c.Locals("customer_id", claims.CustomerID)
+		c.Locals("role", claims.Role)
 
 		return c.Next()
 	}

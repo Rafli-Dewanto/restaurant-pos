@@ -4,6 +4,7 @@ import (
 	"cakestore/internal/domain/entity"
 	"cakestore/internal/domain/model"
 	"cakestore/internal/repository"
+	"cakestore/utils"
 	"errors"
 	"time"
 
@@ -52,6 +53,7 @@ func (uc *customerUseCase) Register(request *model.CreateCustomerRequest) (*enti
 		Email:     request.Email,
 		Password:  string(hashedPassword),
 		Address:   request.Address,
+		Role:      utils.RoleCustomer,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -78,7 +80,8 @@ func (uc *customerUseCase) Login(request *model.LoginRequest) (*string, error) {
 	claims := jwt.MapClaims{
 		"customer_id": customer.ID,
 		"email":       customer.Email,
-		"exp":         time.Now().Add(time.Hour * 24).Unix(), // Token expires in 24 hours
+		"role":        customer.Role,
+		"exp":         time.Now().Add(time.Hour * 24).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

@@ -45,7 +45,7 @@ func (c *CustomerController) Register(ctx *fiber.Ctx) error {
 	}
 
 	// Generate JWT token
-	token, err := utils.GenerateToken(customer.ID, customer.Email, customer.Name)
+	token, err := utils.GenerateToken(customer.ID, customer.Email, customer.Name, customer.Role)
 	if err != nil {
 		c.logger.Error("Failed to generate token: ", err)
 		return utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to generate token")

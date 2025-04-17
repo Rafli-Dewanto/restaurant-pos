@@ -6,6 +6,7 @@ import (
 	"cakestore/internal/delivery/http/route"
 	"cakestore/internal/domain/entity"
 	"cakestore/internal/repository"
+	"cakestore/internal/seeder"
 	"cakestore/internal/usecase"
 	"cakestore/utils"
 	"fmt"
@@ -42,16 +43,22 @@ func main() {
 	}
 	log.Println("✅ Database migrations completed successfully")
 
+	// Initialize repositories
+	cakeRepository := repository.NewCakeRepository(db, logger)
+	customerRepository := repository.NewCustomerRepository(db, logger)
+	orderRepository := repository.NewOrderRepository(db, logger)
+
+	// Initialize and run seeder
+	dbSeeder := seeder.NewSeeder(customerRepository, logger)
+	if err := dbSeeder.SeedAll(); err != nil {
+		log.Printf("⚠️ Warning: Failed to seed database: %v", err)
+	}
+
 	app := fiber.New()
 
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.SendString("OK")
 	})
-
-	// repo
-	cakeRepository := repository.NewCakeRepository(db, logger)
-	customerRepository := repository.NewCustomerRepository(db, logger)
-	orderRepository := repository.NewOrderRepository(db, logger)
 
 	// usecase
 	cakeUseCase := usecase.NewCakeUseCase(cakeRepository, logger)

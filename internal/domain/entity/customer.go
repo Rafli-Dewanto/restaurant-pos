@@ -5,11 +5,6 @@ import (
 	"time"
 )
 
-const (
-	RoleCustomer = "customer"
-	RoleAdmin    = "admin"
-)
-
 type Customer struct {
 	ID        int          `gorm:"column:id;primaryKey"`
 	Name      string       `gorm:"column:name"`

@@ -62,7 +62,7 @@ func (suite *CakeHandlerTestSuite) SetupTest() {
 	suite.app = fiber.New()
 
 	// Generate a test token
-	token, err := utils.GenerateToken(123, "test@example.com", "Test User")
+	token, err := utils.GenerateToken(123, "test@example.com", "Test User", "customer")
 	suite.Require().NoError(err)
 	suite.token = token
 
