@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"cakestore/internal/domain/entity"
+	"cakestore/internal/domain/model"
 	"cakestore/internal/repository"
 
 	"github.com/go-playground/validator/v10"
@@ -9,7 +10,7 @@ import (
 )
 
 type CakeUseCase interface {
-	GetAllCakes() ([]entity.Cake, error)
+	GetAllCakes(params *model.CakeQueryParams) (*model.PaginationResponse, error)
 	GetCakeByID(id int) (*entity.Cake, error)
 	CreateCake(cake *entity.Cake) error
 	UpdateCake(cake *entity.Cake) error
@@ -30,14 +31,18 @@ func NewCakeUseCase(repo repository.CakeRepository, logger *logrus.Logger) CakeU
 	}
 }
 
-func (uc *cakeUseCase) GetAllCakes() ([]entity.Cake, error) {
-	cakes, err := uc.repo.GetAll()
+func (uc *cakeUseCase) GetAllCakes(params *model.CakeQueryParams) (*model.PaginationResponse, error) {
+	if params == nil {
+		params = &model.CakeQueryParams{}
+	}
+
+	response, err := uc.repo.GetAll(params)
 	if err != nil {
-		uc.logger.Errorf("Error fetching all cakes: %v", err)
+		uc.logger.Errorf("Error fetching cakes with params: %v, error: %v", params, err)
 		return nil, err
 	}
-	uc.logger.Info("Successfully fetched all cakes")
-	return cakes, nil
+
+	return response, nil
 }
 
 func (uc *cakeUseCase) GetCakeByID(id int) (*entity.Cake, error) {

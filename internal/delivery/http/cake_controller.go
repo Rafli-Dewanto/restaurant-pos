@@ -31,18 +31,43 @@ func NewCakeController(cakeUseCase usecase.CakeUseCase, logger *logrus.Logger) *
 }
 
 func (c *CakeController) GetAllCakes(ctx *fiber.Ctx) error {
-	cakes, err := c.cakeUseCase.GetAllCakes()
+	ip := ctx.IP()
+	c.logger.Infof("GetAllCakes endpoint is called by %s", ip)
+
+	var params model.CakeQueryParams
+	if err := ctx.QueryParser(&params); err != nil {
+		c.logger.Error("Failed to parse query params: ", err)
+		utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid query params")
+	}
+
+	cakes, err := c.cakeUseCase.GetAllCakes(&params)
 	if err != nil {
 		c.logger.Errorf("Failed to fetch cakes: %v", err)
 		utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to fetch cakes")
 	}
 
-	cakeResponses := make([]*model.CakeModel, len(cakes))
-	for i, cake := range cakes {
+	cakeData, ok := cakes.Data.([]entity.Cake)
+	if !ok {
+		c.logger.Error("Invalid data type for cakes.Data")
+		utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to process cakes data")
+		return nil
+	}
+
+	metaData := &model.PaginatedMeta{
+		CurrentPage: int64(cakes.Page),
+		Total:       cakes.Total,
+		PerPage:     int64(cakes.PageSize),
+		LastPage:    cakes.TotalPages,
+		HasNextPage: cakes.Page < cakes.TotalPages,
+		HasPrevPage: cakes.Page > 1,
+	}
+
+	cakeResponses := make([]*model.CakeModel, len(cakeData))
+	for i, cake := range cakeData {
 		cakeResponses[i] = model.CakeToResponse(&cake)
 	}
 
-	utils.WriteResponse(ctx, fiber.StatusOK, cakeResponses, "Success", nil)
+	utils.WriteResponse(ctx, fiber.StatusOK, cakeResponses, "Success", metaData)
 	return nil
 }
 
@@ -80,6 +105,8 @@ func (c *CakeController) CreateCake(ctx *fiber.Ctx) error {
 		Description: request.Description,
 		Rating:      float64(request.Rating),
 		Image:       request.ImageURL,
+		Price:       request.Price,
+		Category:    request.Category,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 		DeletedAt:   sql.NullTime{},
