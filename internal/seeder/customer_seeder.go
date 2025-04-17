@@ -1,9 +1,9 @@
 package seeder
 
 import (
+	"cakestore/internal/constants"
 	"cakestore/internal/domain/entity"
 	"cakestore/internal/repository"
-	"cakestore/utils"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -43,7 +43,7 @@ func (s *CustomerSeeder) SeedAdmin(email, password string) error {
 		Email:     email,
 		Password:  string(hashedPassword),
 		Address:   "Admin Address",
-		Role:      utils.RoleAdmin,
+		Role:      constants.RoleAdmin,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}

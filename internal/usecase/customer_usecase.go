@@ -1,10 +1,10 @@
 package usecase
 
 import (
+	"cakestore/internal/constants"
 	"cakestore/internal/domain/entity"
 	"cakestore/internal/domain/model"
 	"cakestore/internal/repository"
-	"cakestore/utils"
 	"errors"
 	"time"
 
@@ -53,7 +53,7 @@ func (uc *customerUseCase) Register(request *model.CreateCustomerRequest) (*enti
 		Email:     request.Email,
 		Password:  string(hashedPassword),
 		Address:   request.Address,
-		Role:      utils.RoleCustomer,
+		Role:      constants.RoleCustomer,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}

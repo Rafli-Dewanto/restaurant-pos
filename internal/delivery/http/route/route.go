@@ -1,9 +1,9 @@
 package route
 
 import (
+	"cakestore/internal/constants"
 	http "cakestore/internal/delivery/http"
 	"cakestore/internal/middleware"
-	"cakestore/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -46,9 +46,9 @@ func (c *RouteConfig) SetupRoute() {
 	cakes := protectedRoutes.Group("/cakes")
 	cakes.Get("/", c.CakeController.GetAllCakes)
 	cakes.Get("/:id", c.CakeController.GetCakeByID)
-	cakes.Post("/", middleware.RoleMiddleware(utils.RoleAdmin), c.CakeController.CreateCake)
-	cakes.Put("/:id", middleware.RoleMiddleware(utils.RoleAdmin), c.CakeController.UpdateCake)
-	cakes.Delete("/:id", middleware.RoleMiddleware(utils.RoleAdmin), c.CakeController.DeleteCake)
+	cakes.Post("/", middleware.RoleMiddleware(constants.RoleAdmin), c.CakeController.CreateCake)
+	cakes.Put("/:id", middleware.RoleMiddleware(constants.RoleAdmin), c.CakeController.UpdateCake)
+	cakes.Delete("/:id", middleware.RoleMiddleware(constants.RoleAdmin), c.CakeController.DeleteCake)
 
 	// Order routes
 	orders := protectedRoutes.Group("/orders")

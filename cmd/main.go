@@ -49,7 +49,7 @@ func main() {
 	orderRepository := repository.NewOrderRepository(db, logger)
 
 	// Initialize and run seeder
-	dbSeeder := seeder.NewSeeder(customerRepository, logger)
+	dbSeeder := seeder.NewSeeder(customerRepository, cakeRepository, logger)
 	if err := dbSeeder.SeedAll(); err != nil {
 		log.Printf("⚠️ Warning: Failed to seed database: %v", err)
 	}
