@@ -39,6 +39,7 @@ func NewOrderUseCase(
 		cakeRepo:     cakeRepo,
 		customerRepo: customerRepo,
 		logger:       logger,
+		env:          env,
 	}
 }
 
@@ -112,10 +113,16 @@ func (uc *orderUseCase) GetCustomerOrders(customerID int) ([]model.OrderResponse
 
 func (uc *orderUseCase) UpdateOrderStatus(id string, status string) error {
 	orderStatus := entity.OrderStatus(status)
+	uc.logger.Tracef("UpdateOrderStatus usecase ~ in %s", uc.env)
 
 	if uc.env == "development" {
-		if err := uc.orderRepo.UpdateStatus(9, orderStatus); err != nil {
-			uc.logger.Errorf("Error updating order status: %v", err)
+		orderID, err := uc.orderRepo.GetPendingOrder()
+		if err != nil {
+			uc.logger.Errorf("UpdateOrderStatus usecase ~Error getting pending order: %v", err)
+			return err
+		}
+		if err := uc.orderRepo.UpdateStatus(orderID, orderStatus); err != nil {
+			uc.logger.Errorf("UpdateOrderStatus usecase ~Error updating order status: %v", err)
 			return err
 		}
 		return nil

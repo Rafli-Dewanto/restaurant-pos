@@ -2,8 +2,10 @@ package usecase
 
 import (
 	"bytes"
+	"cakestore/internal/constants"
 	"cakestore/internal/domain/entity"
 	"cakestore/internal/domain/model"
+	"cakestore/internal/repository"
 	"cakestore/utils"
 	"encoding/json"
 	"fmt"
@@ -11,20 +13,33 @@ import (
 	"strconv"
 
 	"github.com/midtrans/midtrans-go"
+	"github.com/sirupsen/logrus"
 )
 
 type PaymentUseCase interface {
 	CreatePaymentURL(order *entity.Order) (*model.PaymentResponse, error)
 	GetOrderStatus(orderID string) (string, error)
+	UpdateOrderStatus(id string, status constants.PaymentStatus) error
 }
 
 type paymentUseCase struct {
-	endpoint string
+	paymentRepository repository.PaymentRepository
+	endpoint          string
+	log               *logrus.Logger
+	env               string
 }
 
-func NewPaymentUseCase(endpoint string) PaymentUseCase {
+func NewPaymentUseCase(
+	endpoint string,
+	paymentRepository repository.PaymentRepository,
+	log *logrus.Logger,
+	env string,
+) PaymentUseCase {
 	return &paymentUseCase{
-		endpoint: endpoint,
+		endpoint:          endpoint,
+		paymentRepository: paymentRepository,
+		log:               log,
+		env:               env,
 	}
 }
 
@@ -68,6 +83,18 @@ func (uc *paymentUseCase) CreatePaymentURL(order *entity.Order) (*model.PaymentR
 		return nil, err
 	}
 
+	// insert payment to db
+	payment := &entity.Payment{
+		OrderID:      order.ID,
+		Amount:       order.TotalPrice,
+		Status:       constants.PaymentStatusPending,
+		PaymentToken: paymentResponse.Token,
+		PaymentURL:   paymentResponse.RedirectURL,
+	}
+	if err := uc.paymentRepository.CreatePayment(payment); err != nil {
+		return nil, err
+	}
+
 	return &paymentResponse, nil
 }
 
@@ -105,4 +132,40 @@ func (uc *paymentUseCase) GetOrderStatus(orderID string) (string, error) {
 	}
 
 	return orderStatus.TransactionStatus, nil
+}
+
+func (uc *paymentUseCase) UpdateOrderStatus(id string, status constants.PaymentStatus) error {
+	if uc.env == "development" {
+		orderId, err := uc.paymentRepository.GetPendingPayment()
+		if err != nil {
+			uc.log.Errorf("Error getting pending payment: %v", err)
+			return err
+		}
+		payment := model.ToPaymentEntity(&model.PaymentModel{
+			OrderID: orderId,
+			Status:  status,
+		})
+		if err := uc.paymentRepository.UpdatePayment(payment); err != nil {
+			uc.log.Errorf("Error updating order status: %v", err)
+			return err
+		}
+		return nil
+	}
+
+	uc.log.Info("Running in production mode, updating payment status")
+	orderID, err := strconv.Atoi(id)
+	if err != nil {
+		return err
+	}
+
+	payment := model.ToPaymentEntity(&model.PaymentModel{
+		OrderID: orderID,
+		Status:  status,
+	})
+
+	if err := uc.paymentRepository.UpdatePayment(payment); err != nil {
+		uc.log.Errorf("Error updating order status: %v", err)
+		return err
+	}
+	return nil
 }

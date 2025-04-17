@@ -47,6 +47,7 @@ func main() {
 	cakeRepository := repository.NewCakeRepository(db, logger)
 	customerRepository := repository.NewCustomerRepository(db, logger)
 	orderRepository := repository.NewOrderRepository(db, logger)
+	paymentRepository := repository.NewPaymentRepository(db, logger)
 
 	// Initialize and run seeder
 	dbSeeder := seeder.NewSeeder(customerRepository, cakeRepository, logger)
@@ -64,13 +65,13 @@ func main() {
 	cakeUseCase := usecase.NewCakeUseCase(cakeRepository, logger)
 	customerUseCase := usecase.NewCustomerUseCase(customerRepository, logger, cfg.JWT_SECRET)
 	orderUseCase := usecase.NewOrderUseCase(orderRepository, cakeRepository, customerRepository, logger, cfg.SERVER_ENV)
-	paymentUsecase := usecase.NewPaymentUseCase(cfg.MIDTRANS_ENDPOINT)
+	paymentUsecase := usecase.NewPaymentUseCase(cfg.MIDTRANS_ENDPOINT, paymentRepository, logger, cfg.SERVER_ENV)
 
 	// controller
 	cakeController := controller.NewCakeController(cakeUseCase, logger)
 	customerController := controller.NewCustomerController(customerUseCase, logger)
 	orderController := controller.NewOrderController(orderUseCase, paymentUsecase, logger)
-	paymentController := controller.NewPaymentController(logger, cfg.MIDTRANS_SERVER_KEY, orderUseCase)
+	paymentController := controller.NewPaymentController(logger, cfg.MIDTRANS_SERVER_KEY, orderUseCase, paymentUsecase)
 
 	routeConfig := route.RouteConfig{
 		App:                app,

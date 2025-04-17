@@ -15,6 +15,8 @@ type OrderRepository interface {
 	Update(order *entity.Order) error
 	Delete(id int) error
 	UpdateStatus(id int, status entity.OrderStatus) error
+	// GetPendingOrder retrieves the first pending order from the database for testing purposes
+	GetPendingOrder() (int, error)
 }
 
 type orderRepository struct {
@@ -99,11 +101,24 @@ func (r *orderRepository) Delete(id int) error {
 func (r *orderRepository) UpdateStatus(id int, status entity.OrderStatus) error {
 	result := r.db.Model(&entity.Order{}).Where("id = ?", id).Update("status", status)
 	if result.Error != nil {
-		r.logger.Errorf("Error updating order status: %v", result.Error)
+		r.logger.Errorf("UpdateStatus repository ~ Error updating order status: %v", result.Error)
 		return result.Error
 	}
 	if result.RowsAffected == 0 {
 		return errors.New("order not found")
 	}
 	return nil
+}
+
+// GetPendingOrder retrieves the first pending order from the database for testing purposes
+func (r *orderRepository) GetPendingOrder() (int, error) {
+	var order entity.Order
+	if err := r.db.Preload("Items.Cake").Preload("Customer").Where("status = ?", entity.OrderStatusPending).First(&order).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return 0, errors.New("order not found")
+		}
+		r.logger.Errorf("GetPendingOrder repository ~ Error getting order: %v", err)
+		return 0, err
+	}
+	return order.ID, nil
 }

@@ -1,10 +1,21 @@
 package model
 
 import (
+	"cakestore/internal/constants"
+	"cakestore/internal/domain/entity"
 	"time"
 
 	"github.com/midtrans/midtrans-go"
 )
+
+type PaymentModel struct {
+	ID           int                     `json:"id"`
+	OrderID      int                     `json:"order_id"`
+	Amount       float64                 `json:"amount"`
+	Status       constants.PaymentStatus `json:"status"`
+	PaymentToken string                  `json:"payment_token"`
+	PaymentURL   string                  `json:"payment_url"`
+}
 
 type CreatePaymentRequest struct {
 	TransactionDetails midtrans.TransactionDetails `json:"transaction_details" validate:"required"`
@@ -53,4 +64,16 @@ type MidtransNotification struct {
 	GrossAmount       string `json:"gross_amount"`
 	FraudStatus       string `json:"fraud_status"`
 	Currency          string `json:"currency"`
+}
+
+func ToPaymentEntity(paymentModel *PaymentModel) *entity.Payment {
+	return &entity.Payment{
+		ID:           paymentModel.ID,
+		OrderID:      paymentModel.OrderID,
+		Amount:       paymentModel.Amount,
+		Status:       paymentModel.Status,
+		PaymentToken: paymentModel.PaymentToken,
+		PaymentURL:   paymentModel.PaymentURL,
+		UpdatedAt:    time.Now(),
+	}
 }
