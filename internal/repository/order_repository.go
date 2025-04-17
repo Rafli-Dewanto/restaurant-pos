@@ -113,7 +113,12 @@ func (r *orderRepository) UpdateStatus(id int, status entity.OrderStatus) error 
 // GetPendingOrder retrieves the first pending order from the database for testing purposes
 func (r *orderRepository) GetPendingOrder() (int, error) {
 	var order entity.Order
-	if err := r.db.Preload("Items.Cake").Preload("Customer").Where("status = ?", entity.OrderStatusPending).First(&order).Error; err != nil {
+	if err := r.db.
+		Preload("Items.Cake").
+		Preload("Customer").
+		Where("status = ?", entity.OrderStatusPending).
+		Order("created_at DESC").
+		First(&order).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return 0, errors.New("order not found")
 		}

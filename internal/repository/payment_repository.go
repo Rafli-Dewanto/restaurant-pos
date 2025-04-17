@@ -72,7 +72,11 @@ func (r *paymentRespositoryImpl) UpdatePayment(payment *entity.Payment) error {
 
 func (r *paymentRespositoryImpl) GetPendingPayment() (int, error) {
 	var payment entity.Payment
-	if err := r.db.Preload("Order").Where("status = ?", constants.PaymentStatusPending).First(&payment).Error; err != nil {
+	if err := r.db.
+		Preload("Order").
+		Where("status = ?", constants.PaymentStatusPending).
+		Order("created_at DESC").
+		First(&payment).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return 0, errors.New("payment not found")
 		}
