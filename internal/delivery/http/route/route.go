@@ -14,6 +14,7 @@ type RouteConfig struct {
 	App                *fiber.App
 	CakeController     *http.CakeController
 	CustomerController *http.CustomerController
+	CartController     *http.CartController
 	OrderController    *http.OrderController
 	PaymentController  http.PaymentController
 	JWTSecret          string
@@ -52,6 +53,13 @@ func (c *RouteConfig) SetupRoute() {
 	cakes.Post("/", middleware.RoleMiddleware(constants.RoleAdmin), c.CakeController.CreateCake)
 	cakes.Put("/:id", middleware.RoleMiddleware(constants.RoleAdmin), c.CakeController.UpdateCake)
 	cakes.Delete("/:id", middleware.RoleMiddleware(constants.RoleAdmin), c.CakeController.DeleteCake)
+
+	// Cart routes
+	carts := protectedRoutes.Group("/carts")
+	carts.Get("/", c.CartController.GetCart)
+	carts.Post("/", c.CartController.AddItem)
+	carts.Put("/:itemId", c.CartController.UpdateItemQuantity)
+	carts.Delete("/:itemId", c.CartController.RemoveItem)
 
 	// Order routes
 	orders := protectedRoutes.Group("/orders")

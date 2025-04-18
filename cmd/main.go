@@ -37,6 +37,8 @@ func main() {
 		&entity.Order{},
 		&entity.OrderItem{},
 		&entity.Payment{},
+		&entity.Cart{},
+		&entity.CartItem{},
 	)
 	if err != nil {
 		log.Fatalf("❌ Failed to run database migrations: %v", err)
@@ -46,6 +48,7 @@ func main() {
 	// Initialize repositories
 	cakeRepository := repository.NewCakeRepository(db, logger)
 	customerRepository := repository.NewCustomerRepository(db, logger)
+	cartRepository := repository.NewCartRepository(db, logger)
 	orderRepository := repository.NewOrderRepository(db, logger)
 	paymentRepository := repository.NewPaymentRepository(db, logger)
 
@@ -64,6 +67,7 @@ func main() {
 	// usecase
 	cakeUseCase := usecase.NewCakeUseCase(cakeRepository, logger)
 	customerUseCase := usecase.NewCustomerUseCase(customerRepository, logger, cfg.JWT_SECRET)
+	cartUseCase := usecase.NewCartUseCase(cartRepository, cakeRepository, logger)
 	orderUseCase := usecase.NewOrderUseCase(orderRepository, cakeRepository, customerRepository, logger, cfg.SERVER_ENV)
 	paymentUsecase := usecase.NewPaymentUseCase(cfg.MIDTRANS_ENDPOINT, paymentRepository, logger, cfg.SERVER_ENV)
 
@@ -71,12 +75,14 @@ func main() {
 	cakeController := controller.NewCakeController(cakeUseCase, logger)
 	customerController := controller.NewCustomerController(customerUseCase, logger)
 	orderController := controller.NewOrderController(orderUseCase, paymentUsecase, logger)
+	cartController := controller.NewCartController(cartUseCase, logger)
 	paymentController := controller.NewPaymentController(logger, cfg.MIDTRANS_SERVER_KEY, orderUseCase, paymentUsecase)
 
 	routeConfig := route.RouteConfig{
 		App:                app,
 		CakeController:     cakeController,
 		CustomerController: customerController,
+		CartController:     cartController,
 		OrderController:    orderController,
 		PaymentController:  paymentController,
 		JWTSecret:          cfg.JWT_SECRET,
