@@ -2,13 +2,13 @@ package model
 
 type OrderItemRequest struct {
 	CakeID   int     `json:"cake_id" validate:"required"`
+	Title    string  `json:"title" validate:"required"`
 	Quantity int     `json:"quantity" validate:"required,min=1"`
 	Price    float64 `json:"price" validate:"required,min=0"`
 }
 
 type CreateOrderRequest struct {
 	Items   []OrderItemRequest `json:"items" validate:"required,min=1,dive"`
-	Address string             `json:"delivery_address" validate:"required"`
 }
 
 type OrderItemResponse struct {

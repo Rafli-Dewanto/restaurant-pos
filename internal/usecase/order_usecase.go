@@ -74,7 +74,7 @@ func (uc *orderUseCase) CreateOrder(customerID int, request *model.CreateOrderRe
 		Customer:   *customer,
 		Status:     entity.OrderStatusPending,
 		TotalPrice: totalPrice,
-		Address:    request.Address,
+		Address:    customer.Address,
 		Items:      orderItems,
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
