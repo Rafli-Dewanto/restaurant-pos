@@ -56,7 +56,11 @@ func (c *cakeRepository) GetAll(params *model.CakeQueryParams) (*model.Paginatio
 		params.Page = 1
 	}
 	if params.PageSize < 1 {
-		params.PageSize = 10
+		if params.Limit == 0 {
+			params.PageSize = 10
+		} else {
+			params.PageSize = params.Limit
+		}
 	}
 
 	// Apply pagination and ordering

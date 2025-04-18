@@ -17,6 +17,7 @@ type CakeModel struct {
 type CakeQueryParams struct {
 	Page     int     `form:"page" binding:"omitempty,min=1"`
 	PageSize int     `form:"page_size" binding:"omitempty,min=1,max=100"`
+	Limit    int     `form:"limit" binding:"omitempty,min=1,max=100"`
 	Title    string  `form:"title" binding:"omitempty"`
 	MinPrice float64 `form:"min_price" binding:"omitempty,min=0"`
 	MaxPrice float64 `form:"max_price" binding:"omitempty,min=0"`

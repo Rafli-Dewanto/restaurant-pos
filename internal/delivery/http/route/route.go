@@ -7,6 +7,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/sirupsen/logrus"
 )
 
 type RouteConfig struct {
@@ -16,6 +17,7 @@ type RouteConfig struct {
 	OrderController    *http.OrderController
 	PaymentController  http.PaymentController
 	JWTSecret          string
+	Log                *logrus.Logger
 }
 
 func (c *RouteConfig) Setup() {
@@ -28,6 +30,7 @@ func (c *RouteConfig) SetupRoute() {
 		AllowMethods: "GET,POST,PATCH,PUT,DELETE",
 		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
 	}))
+	c.App.Use(middleware.LogMiddleware(c.Log))
 
 	// Public routes
 	c.App.Post("/register", c.CustomerController.Register)

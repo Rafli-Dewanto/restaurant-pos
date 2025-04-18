@@ -31,9 +31,6 @@ func NewCakeController(cakeUseCase usecase.CakeUseCase, logger *logrus.Logger) *
 }
 
 func (c *CakeController) GetAllCakes(ctx *fiber.Ctx) error {
-	ip := ctx.IP()
-	c.logger.Infof("GetAllCakes endpoint is called by %s", ip)
-
 	var params model.CakeQueryParams
 	if err := ctx.QueryParser(&params); err != nil {
 		c.logger.Error("Failed to parse query params: ", err)

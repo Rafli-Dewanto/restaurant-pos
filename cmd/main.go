@@ -80,6 +80,7 @@ func main() {
 		OrderController:    orderController,
 		PaymentController:  paymentController,
 		JWTSecret:          cfg.JWT_SECRET,
+		Log:                logger,
 	}
 	routeConfig.Setup()
 
