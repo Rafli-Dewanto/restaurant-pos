@@ -5,19 +5,16 @@ import (
 	"cakestore/internal/domain/entity"
 	"cakestore/internal/domain/model"
 	"cakestore/internal/repository"
-	"errors"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/sirupsen/logrus"
 )
 
 type CartUseCase interface {
-	CreateCart(customerID int) (*entity.Cart, error)
-	GetCartByID(id int) (*entity.Cart, error)
+	CreateCart(customerID int, req *model.AddCart) error
+	GetCartByID(id int) (*model.CartModel, error)
 	GetCartByCustomerID(customerID int, params *model.PaginationQuery) (*model.PaginationResponse, error)
-	AddItem(cartID int, cakeID int, quantity int) error
-	UpdateItemQuantity(cartID int, itemID int, quantity int) error
-	RemoveItem(cartID int, itemID int) error
 	ClearCart(cartID int) error
 }
 
@@ -41,112 +38,89 @@ func NewCartUseCase(
 	}
 }
 
-func (uc *cartUseCase) CreateCart(customerID int) (*entity.Cart, error) {
-	cart := &entity.Cart{
+func (uc *cartUseCase) CreateCart(customerID int, req *model.AddCart) error {
+	if err := uc.validate.Struct(req); err != nil {
+		uc.logger.Errorf("Validation failed for request: %v", err)
+		return err
+	}
+
+	cake, err := uc.cakeRepo.GetByID(req.CakeID)
+	if err != nil {
+		uc.logger.Errorf("Error getting cake with ID %d: %v", req.CakeID, err)
+		return err
+	}
+
+	// check if customer already have the same cake added, if so update the quantity
+	cart, err := uc.cartRepo.GetByCustomerIDAndCakeID(customerID, req.CakeID)
+	if err != nil {
+		uc.logger.Errorf("Error getting cart with customer ID %d and cake ID %d: %v", customerID, req.CakeID, err)
+		return err
+	}
+	if cart != nil {
+		cart.Quantity += req.Quantity
+		cart.Subtotal = cake.Price * float64(cart.Quantity)
+		if err := uc.cartRepo.Update(cart); err != nil {
+			uc.logger.Errorf("Error updating cart with customer ID %d and cake ID %d: %v", customerID, req.CakeID, err)
+			return err
+		}
+		uc.logger.Infof("Successfully updated cart with customer ID %d and cake ID %d", customerID, req.CakeID)
+		return nil
+	}
+
+	cartModel := &model.CartModel{
 		CustomerID: customerID,
-		Total:      0,
+		CakeID:     req.CakeID,
+		Quantity:   req.Quantity,
+		Price:      cake.Price,
+		Subtotal:   cake.Price * float64(req.Quantity),
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
 	}
 
-	if err := uc.cartRepo.Create(cart); err != nil {
-		uc.logger.Errorf("Error creating cart for customer %d: %v", customerID, err)
-		return nil, err
-	}
+	cartEntity := model.ToCartEntity(cartModel)
 
-	return cart, nil
+	if err := uc.cartRepo.Create(cartEntity); err != nil {
+		uc.logger.Errorf("Error creating cart: %v", err)
+		return err
+	}
+	uc.logger.Infof("Successfully created cart for customer ID %d", customerID)
+	return nil
 }
 
-func (uc *cartUseCase) GetCartByID(id int) (*entity.Cart, error) {
+func (uc *cartUseCase) GetCartByID(id int) (*model.CartModel, error) {
 	cart, err := uc.cartRepo.GetByID(id)
 	if err != nil {
-		uc.logger.Errorf("Error getting cart by ID %d: %v", id, err)
+		uc.logger.Errorf("Error fetching cart by ID %d: %v", id, err)
 		return nil, err
 	}
-	return cart, nil
+	return model.ToCartModel(cart), nil
 }
 
 func (uc *cartUseCase) GetCartByCustomerID(customerID int, params *model.PaginationQuery) (*model.PaginationResponse, error) {
-	if params == nil {
-		params = &model.PaginationQuery{}
-	}
-	cart, err := uc.cartRepo.GetByCustomerID(customerID, params)
+	data, err := uc.cartRepo.GetByCustomerID(customerID, params)
 	if err != nil {
-		// If cart doesn't exist, create a new one
-		if errors.Is(err, constants.ErrNotFound) {
-			newCart, createErr := uc.CreateCart(customerID)
-			if createErr != nil {
-				uc.logger.Errorf("Error creating cart for customer %d: %v", customerID, createErr)
-				return nil, createErr
-			}
-			// Convert single cart to pagination response
-			return &model.PaginationResponse{
-				Data:       []interface{}{newCart},
-				Total:      1,
-				Page:       1,
-				TotalPages: 1,
-			}, nil
-		}
-		uc.logger.Errorf("Error getting cart for customer %d: %v", customerID, err)
+		uc.logger.Errorf("Error fetching carts for customer ID %d: %v", customerID, err)
 		return nil, err
 	}
-	return cart, nil
-}
 
-func (uc *cartUseCase) AddItem(cartID int, cakeID int, quantity int) error {
-	if quantity <= 0 {
-		return errors.New("quantity must be greater than 0")
+	carts, ok := data.Data.([]*entity.Cart)
+	if !ok {
+		uc.logger.Error("Invalid data type for carts.Data")
+		return nil, constants.ErrInvalidInterfaceConversion
 	}
 
-	// Get cake details
-	cake, err := uc.cakeRepo.GetByID(cakeID)
-	if err != nil {
-		uc.logger.Errorf("Error getting cake details: %v", err)
-		return err
-	}
+	var cartModels []*model.CartModel
 
-	// Create cart item
-	cartItem := &entity.CartItem{
-		CartID:   cartID,
-		CakeID:   cakeID,
-		Quantity: quantity,
-		Price:    cake.Price,
-		Subtotal: cake.Price * float64(quantity),
-	}
-
-	if err := uc.cartRepo.AddItem(cartItem); err != nil {
-		uc.logger.Errorf("Error adding item to cart: %v", err)
-		return err
-	}
-
-	return nil
-}
-
-func (uc *cartUseCase) UpdateItemQuantity(cartID int, itemID int, quantity int) error {
-	if quantity <= 0 {
-		return errors.New("quantity must be greater than 0")
-	}
-
-	if err := uc.cartRepo.UpdateItemQuantity(itemID, quantity); err != nil {
-		uc.logger.Errorf("Error updating item quantity: %v", err)
-		return err
-	}
-
-	return nil
-}
-
-func (uc *cartUseCase) RemoveItem(cartID int, itemID int) error {
-	if err := uc.cartRepo.RemoveItem(itemID); err != nil {
-		uc.logger.Errorf("Error removing item from cart: %v", err)
-		return err
-	}
-
-	return nil
+	// convert cart entity to cart model
+	for _, cart := range carts {
+		cartModels = append(cartModels, model.ToCartModel(cart))
+	} 
+	data.Data = cartModels
+	return data, nil
 }
 
 func (uc *cartUseCase) ClearCart(cartID int) error {
-	if err := uc.cartRepo.ClearCart(cartID); err != nil {
-		uc.logger.Errorf("Error clearing cart: %v", err)
-		return err
-	}
-
+	// ...logic to clear cart...
 	return nil
+
 }

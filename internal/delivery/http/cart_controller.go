@@ -1,11 +1,10 @@
 package controller
 
 import (
-	"cakestore/internal/domain/entity"
+	"cakestore/internal/constants"
 	"cakestore/internal/domain/model"
 	"cakestore/internal/usecase"
 	"cakestore/utils"
-	"net/http"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -24,161 +23,64 @@ func NewCartController(cartUseCase usecase.CartUseCase, logger *logrus.Logger) *
 	}
 }
 
-func (h *CartController) GetCart(c *fiber.Ctx) error {
-	customerID := c.Locals("customerID")
-
-	var params model.PaginationQuery
-	if err := c.QueryParser(&params); err != nil {
-		h.logger.Error("Failed to parse query params: ", err)
-		return utils.WriteErrorResponse(c, fiber.StatusBadRequest, "Invalid query params")
-	}
-
-	// Set default values if not provided
-	if params.Page <= 0 {
-		params.Page = 1
-	}
-	if params.Limit <= 0 {
-		params.Limit = 10
-	}
-
-	if customerID == 0 {
-		return utils.WriteErrorResponse(c, http.StatusUnauthorized, "unauthorized")
-	}
-
-	cart, err := h.cartUseCase.GetCartByCustomerID(customerID.(int), &params)
-	if err != nil {
-		h.logger.Errorf("Error getting cart: %v", err)
-		return utils.WriteErrorResponse(c, http.StatusInternalServerError, err.Error())
-	}
-
-	return utils.WriteResponse(c, http.StatusOK, cart, "Success", nil)
-}
-
-func (h *CartController) AddItem(c *fiber.Ctx) error {
-	h.logger.Info("AddItem")
-	customerID := c.Locals("customer_id").(int)
-
-	if customerID == 0 {
-		return utils.WriteErrorResponse(c, http.StatusUnauthorized, "unauthorized")
-	}
+func (c *CartController) AddCart(ctx *fiber.Ctx) error {
+	customerID := ctx.Locals(constants.ClaimsKeyID).(int)
 	var req model.AddCart
 
-	if err := c.BodyParser(&req); err != nil {
-		h.logger.Error("Failed to parse body: ", err)
-		return utils.WriteErrorResponse(c, http.StatusBadRequest, "Invalid request body")
+	if err := ctx.BodyParser(&req); err != nil {
+		c.logger.Errorf("❌ Failed to parse request body: %v", err)
+		utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, err.Error())
 	}
 
-	cart, err := h.cartUseCase.GetCartByCustomerID(customerID, nil)
+	err := c.cartUseCase.CreateCart(customerID, &req)
 	if err != nil {
-		h.logger.Errorf("Error getting/creating cart: %v", err)
-		return utils.WriteErrorResponse(c, http.StatusInternalServerError, err.Error())
-	}
-	cartData, ok := cart.Data.(entity.Cart)
-	if !ok {
-		return utils.WriteErrorResponse(c, http.StatusInternalServerError, "Invalid cart data")
+		c.logger.Errorf("❌ Failed to create cart: %v", err)
+		utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, err.Error())
+		return nil
 	}
 
-	if err := h.cartUseCase.AddItem(cartData.ID, req.CakeID, req.Quantity); err != nil {
-		h.logger.Errorf("Error adding item to cart: %v", err)
-		return utils.WriteErrorResponse(c, http.StatusInternalServerError, err.Error())
-	}
-
-	return utils.WriteResponse(c, http.StatusOK, nil, "Item added to cart successfully", nil)
+	utils.WriteResponse(ctx, fiber.StatusCreated, nil, "Cart created successfully", nil)
+	return nil
 }
 
-func (h *CartController) UpdateItemQuantity(c *fiber.Ctx) error {
-	customerID := c.Locals("customerID")
-	if customerID == 0 {
-		return utils.WriteErrorResponse(c, http.StatusUnauthorized, "unauthorized")
-	}
-
-	itemID, err := strconv.Atoi(c.Params("itemId"))
+func (c *CartController) GetCartByID(ctx *fiber.Ctx) error {
+	id := ctx.Params("id")
+	cartID, err := strconv.Atoi(id)
 	if err != nil {
-		return utils.WriteErrorResponse(c, http.StatusBadRequest, "invalid item ID")
+		c.logger.Errorf("❌ Failed to parse cart ID: %v", err)
+		utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, err.Error())
+		return nil
 	}
 
-	var req struct {
-		Quantity int `json:"quantity" validate:"required,min=1"`
-	}
-
-	if err := c.BodyParser(&req); err != nil {
-		h.logger.Error("Failed to parse body: ", err)
-		return utils.WriteErrorResponse(c, http.StatusBadRequest, "Invalid request body")
-	}
-
-	// Get cart for customer
-	cart, err := h.cartUseCase.GetCartByCustomerID(customerID.(int), nil)
+	cart, err := c.cartUseCase.GetCartByID(cartID)
 	if err != nil {
-		h.logger.Errorf("Error getting cart: %v", err)
-		return utils.WriteErrorResponse(c, http.StatusInternalServerError, err.Error())
-	}
-	cartData, ok := cart.Data.(entity.Cart)
-	if !ok {
-		return utils.WriteErrorResponse(c, http.StatusInternalServerError, "Invalid cart data")
+		c.logger.Errorf("❌ Failed to fetch cart: %v", err)
+		utils.WriteErrorResponse(ctx, fiber.StatusNotFound, err.Error())
+		return nil
 	}
 
-	if err := h.cartUseCase.UpdateItemQuantity(cartData.ID, itemID, req.Quantity); err != nil {
-		h.logger.Errorf("Error updating item quantity: %v", err)
-		return utils.WriteErrorResponse(c, http.StatusInternalServerError, err.Error())
-	}
-
-	return utils.WriteResponse(c, http.StatusOK, nil, "Item quantity updated successfully", nil)
+	utils.WriteResponse(ctx, fiber.StatusOK, cart, "Cart fetched successfully", nil)
+	return nil
 }
 
-func (h *CartController) RemoveItem(c *fiber.Ctx) error {
-	customerID := c.Locals("customerID")
-	if customerID == 0 {
-		return utils.WriteErrorResponse(c, http.StatusUnauthorized, "unauthorized")
+func (c *CartController) GetCartByCustomerID(ctx *fiber.Ctx) error {
+	customerID := ctx.Locals(constants.ClaimsKeyID).(int)
+
+	params := new(model.PaginationQuery)
+	if err := ctx.QueryParser(params); err != nil {
+		c.logger.Errorf("❌ Failed to parse query params: %v", err)
+		utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, err.Error())
+		return nil
 	}
 
-	itemID, err := strconv.Atoi(c.Params("itemId"))
+	data, err := c.cartUseCase.GetCartByCustomerID(customerID, params)
 	if err != nil {
-		return utils.WriteErrorResponse(c, http.StatusBadRequest, "invalid item ID")
+		c.logger.Errorf("❌ Failed to fetch carts: %v", err)
+		utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, err.Error())
+		return nil
 	}
+	metaData := model.ToPaginatedMeta(data)
 
-	// Get cart for customer
-	cart, err := h.cartUseCase.GetCartByCustomerID(customerID.(int), nil)
-	if err != nil {
-		h.logger.Errorf("Error getting cart: %v", err)
-		return utils.WriteErrorResponse(c, http.StatusInternalServerError, err.Error())
-	}
-	cartData, ok := cart.Data.(entity.Cart)
-	if !ok {
-		return utils.WriteErrorResponse(c, http.StatusInternalServerError, "Invalid cart data")
-	}
-
-	// Remove item from cart
-	if err := h.cartUseCase.RemoveItem(cartData.ID, itemID); err != nil {
-		h.logger.Errorf("Error removing item from cart: %v", err)
-		return utils.WriteErrorResponse(c, http.StatusInternalServerError, err.Error())
-	}
-
-	return utils.WriteResponse(c, http.StatusOK, nil, "Item removed from cart successfully", nil)
-}
-
-func (h *CartController) ClearCart(c *fiber.Ctx) error {
-	customerID := c.Locals("customerID")
-	if customerID == 0 {
-		return utils.WriteErrorResponse(c, http.StatusUnauthorized, "unauthorized")
-	}
-
-	// Get cart for customer
-	cart, err := h.cartUseCase.GetCartByCustomerID(customerID.(int), nil)
-	if err != nil {
-		h.logger.Errorf("Error getting cart: %v", err)
-		return utils.WriteErrorResponse(c, http.StatusInternalServerError, err.Error())
-	}
-
-	cartData, ok := cart.Data.(entity.Cart)
-	if !ok {
-		return utils.WriteErrorResponse(c, http.StatusInternalServerError, "Invalid cart data")
-	}
-
-	// Clear cart
-	if err := h.cartUseCase.ClearCart(cartData.ID); err != nil {
-		h.logger.Errorf("Error clearing cart: %v", err)
-		return utils.WriteErrorResponse(c, http.StatusInternalServerError, err.Error())
-	}
-
-	return utils.WriteResponse(c, http.StatusOK, nil, "Cart cleared successfully", nil)
+	utils.WriteResponse(ctx, fiber.StatusOK, data.Data, "Carts fetched successfully", metaData)
+	return nil
 }

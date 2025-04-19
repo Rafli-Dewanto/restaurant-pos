@@ -38,7 +38,6 @@ func main() {
 		&entity.OrderItem{},
 		&entity.Payment{},
 		&entity.Cart{},
-		&entity.CartItem{},
 	)
 	if err != nil {
 		log.Fatalf("❌ Failed to run database migrations: %v", err)

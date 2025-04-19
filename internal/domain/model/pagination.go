@@ -22,3 +22,14 @@ type PaginationResponse struct {
 	PageSize   int         `json:"page_size"`
 	TotalPages int         `json:"total_pages"`
 }
+
+func ToPaginatedMeta(PaginationResponse *PaginationResponse) *PaginatedMeta {
+	return &PaginatedMeta{
+		CurrentPage: int64(PaginationResponse.Page),
+		Total:       PaginationResponse.Total,
+		PerPage:     int64(PaginationResponse.PageSize),
+		LastPage:    PaginationResponse.TotalPages,
+		HasNextPage: PaginationResponse.Page < PaginationResponse.TotalPages,
+		HasPrevPage: PaginationResponse.Page > 1,
+	}
+}
