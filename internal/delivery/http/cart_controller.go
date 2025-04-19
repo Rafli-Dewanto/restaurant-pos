@@ -84,3 +84,37 @@ func (c *CartController) GetCartByCustomerID(ctx *fiber.Ctx) error {
 	utils.WriteResponse(ctx, fiber.StatusOK, data.Data, "Carts fetched successfully", metaData)
 	return nil
 }
+
+func (c *CartController) RemoveCart(ctx *fiber.Ctx) error {
+	customerID := ctx.Locals(constants.ClaimsKeyID).(int)
+	cartID, err := strconv.Atoi(ctx.Params("id"))
+	if err != nil {
+		c.logger.Errorf("❌ Failed to parse cart ID: %v", err)
+		utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, err.Error())
+		return nil
+	}
+
+	err = c.cartUseCase.RemoveCart(customerID, cartID)
+	if err != nil {
+		c.logger.Errorf("❌ Failed to remove cart: %v", err)
+		utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, err.Error())
+		return nil
+	}
+
+	utils.WriteResponse(ctx, fiber.StatusOK, nil, "Cart removed successfully", nil)
+	return nil
+}
+
+func (c *CartController) ClearCart(ctx *fiber.Ctx) error {
+	customerID := ctx.Locals(constants.ClaimsKeyID).(int)
+
+	err := c.cartUseCase.ClearCart(customerID)
+	if err != nil {
+		c.logger.Errorf("❌ Failed to clear cart: %v", err)
+		utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, err.Error())
+		return nil
+	}
+
+	utils.WriteResponse(ctx, fiber.StatusOK, nil, "Cart cleared successfully", nil)
+	return nil
+}

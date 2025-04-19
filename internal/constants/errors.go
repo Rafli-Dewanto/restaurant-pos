@@ -3,6 +3,11 @@ package constants
 import "errors"
 
 var (
+	ErrInternalServerError        = errors.New("internal server error")
+	ErrInvalidRequest             = errors.New("invalid request")
+	ErrInvalidRequestBody         = errors.New("invalid request body")
+	ErrInvalidRequestParam        = errors.New("invalid request param")
+	ErrUnauthorized               = errors.New("unauthorized")
 	ErrInvalidEmail               = errors.New("invalid email")
 	ErrInvalidPassword            = errors.New("invalid password")
 	ErrInvalidName                = errors.New("invalid name")

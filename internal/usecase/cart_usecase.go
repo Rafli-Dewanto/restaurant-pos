@@ -15,6 +15,7 @@ type CartUseCase interface {
 	CreateCart(customerID int, req *model.AddCart) error
 	GetCartByID(id int) (*model.CartModel, error)
 	GetCartByCustomerID(customerID int, params *model.PaginationQuery) (*model.PaginationResponse, error)
+	RemoveCart(customerID int, cartID int) error
 	ClearCart(cartID int) error
 }
 
@@ -118,8 +119,35 @@ func (uc *cartUseCase) GetCartByCustomerID(customerID int, params *model.Paginat
 	return data, nil
 }
 
-func (uc *cartUseCase) ClearCart(cartID int) error {
-	// ...logic to clear cart...
-	return nil
+func (uc *cartUseCase) RemoveCart(customerID int, cartID int) error {
+	// Verify the cart exists and belongs to the customer
+	cart, err := uc.cartRepo.GetByID(cartID)
+	if err != nil {
+		uc.logger.Errorf("Error fetching cart with ID %d: %v", cartID, err)
+		return err
+	}
 
+	if cart.CustomerID != customerID {
+		uc.logger.Errorf("Customer %d attempted to remove cart item %d belonging to customer %d", customerID, cartID, cart.CustomerID)
+		return constants.ErrUnauthorized
+	}
+
+	if err := uc.cartRepo.RemoveItem(customerID, cartID); err != nil {
+		uc.logger.Errorf("Error removing cart item %d for customer %d: %v", cartID, customerID, err)
+		return err
+	}
+
+	uc.logger.Infof("Successfully removed cart item %d for customer %d", cartID, customerID)
+	return nil
+}
+
+func (uc *cartUseCase) ClearCart(customerID int) error {
+	// Clear all cart items for the customer
+	if err := uc.cartRepo.ClearCustomerCart(customerID); err != nil {
+		uc.logger.Errorf("Error clearing cart for customer %d: %v", customerID, err)
+		return err
+	}
+
+	uc.logger.Infof("Successfully cleared cart for customer %d", customerID)
+	return nil
 }

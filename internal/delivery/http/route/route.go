@@ -59,6 +59,8 @@ func (c *RouteConfig) SetupRoute() {
 	carts.Post("/", c.CartController.AddCart)
 	carts.Get("/customer", c.CartController.GetCartByCustomerID)
 	carts.Get("/:id", c.CartController.GetCartByID)
+	carts.Delete("/:id", c.CartController.RemoveCart)
+	carts.Delete("/", c.CartController.ClearCart)
 
 	// Order routes
 	orders := protectedRoutes.Group("/orders")
