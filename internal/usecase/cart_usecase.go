@@ -52,9 +52,26 @@ func (uc *cartUseCase) CreateCart(customerID int, req *model.AddCart) error {
 
 	// check if customer already have the same cake added, if so update the quantity
 	cart, err := uc.cartRepo.GetByCustomerIDAndCakeID(customerID, req.CakeID)
+	// if not, create a new cart
 	if err != nil {
-		uc.logger.Errorf("Error getting cart with customer ID %d and cake ID %d: %v", customerID, req.CakeID, err)
-		return err
+		cartModel := &model.CartModel{
+			CustomerID: customerID,
+			CakeID:     req.CakeID,
+			Quantity:   req.Quantity,
+			Price:      cake.Price,
+			Subtotal:   cake.Price * float64(req.Quantity),
+			CreatedAt:  time.Now(),
+			UpdatedAt:  time.Now(),
+		}
+
+		cartEntity := model.ToCartEntity(cartModel)
+
+		if err := uc.cartRepo.Create(cartEntity); err != nil {
+			uc.logger.Errorf("Error creating cart: %v", err)
+			return err
+		}
+		uc.logger.Infof("Successfully created cart for customer ID %d", customerID)
+		return nil
 	}
 	if cart != nil {
 		cart.Quantity += req.Quantity
@@ -66,24 +83,6 @@ func (uc *cartUseCase) CreateCart(customerID int, req *model.AddCart) error {
 		uc.logger.Infof("Successfully updated cart with customer ID %d and cake ID %d", customerID, req.CakeID)
 		return nil
 	}
-
-	cartModel := &model.CartModel{
-		CustomerID: customerID,
-		CakeID:     req.CakeID,
-		Quantity:   req.Quantity,
-		Price:      cake.Price,
-		Subtotal:   cake.Price * float64(req.Quantity),
-		CreatedAt:  time.Now(),
-		UpdatedAt:  time.Now(),
-	}
-
-	cartEntity := model.ToCartEntity(cartModel)
-
-	if err := uc.cartRepo.Create(cartEntity); err != nil {
-		uc.logger.Errorf("Error creating cart: %v", err)
-		return err
-	}
-	uc.logger.Infof("Successfully created cart for customer ID %d", customerID)
 	return nil
 }
 
@@ -114,7 +113,7 @@ func (uc *cartUseCase) GetCartByCustomerID(customerID int, params *model.Paginat
 	// convert cart entity to cart model
 	for _, cart := range carts {
 		cartModels = append(cartModels, model.ToCartModel(cart))
-	} 
+	}
 	data.Data = cartModels
 	return data, nil
 }
