@@ -25,6 +25,12 @@ func NewCustomerController(customerUseCase usecase.CustomerUseCase, logger *logr
 	}
 }
 
+func (c *CustomerController) Authorize(ctx *fiber.Ctx) error {
+	c.logger.Tracef("Authorize controller")
+	utils.WriteResponse(ctx, fiber.StatusOK, nil, "Authorized successfully", nil)
+	return nil
+}
+
 func (c *CustomerController) Register(ctx *fiber.Ctx) error {
 	var request model.CreateCustomerRequest
 	if err := ctx.BodyParser(&request); err != nil {
