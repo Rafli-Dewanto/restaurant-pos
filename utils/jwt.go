@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	configs "cakestore/config"
+	configs "cakestore/internal/config"
 
 	"github.com/golang-jwt/jwt/v5"
 )

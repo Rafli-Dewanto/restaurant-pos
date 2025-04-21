@@ -2,7 +2,7 @@ package test
 
 import (
 	"bytes"
-	configs "cakestore/config"
+	configs "cakestore/internal/config"
 	controller "cakestore/internal/delivery/http"
 	"cakestore/internal/domain/entity"
 	"cakestore/internal/domain/model"

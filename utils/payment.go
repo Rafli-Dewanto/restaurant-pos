@@ -1,7 +1,7 @@
 package utils
 
 import (
-	configs "cakestore/config"
+	configs "cakestore/internal/config"
 )
 
 func GenerateRequestHeader() map[string]string {
