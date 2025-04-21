@@ -12,6 +12,7 @@
 /build/
 /bin/
 /dist/
+/tmp/
 
 # Go workspace file
 go.work
