@@ -2,7 +2,9 @@ package repository
 
 import (
 	"cakestore/internal/domain/entity"
+	"cakestore/internal/domain/model"
 	"errors"
+	"math"
 
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -11,6 +13,7 @@ import (
 type OrderRepository interface {
 	Create(order *entity.Order) error
 	GetByID(id int) (*entity.Order, error)
+	GetAll(params *model.PaginationQuery) ([]entity.Order, *model.PaginatedMeta, error)
 	GetByCustomerID(customerID int) ([]entity.Order, error)
 	Update(order *entity.Order) error
 	Delete(id int) error
@@ -29,6 +32,52 @@ func NewOrderRepository(db *gorm.DB, logger *logrus.Logger) OrderRepository {
 		db:     db,
 		logger: logger,
 	}
+}
+
+func (r *orderRepository) GetAll(params *model.PaginationQuery) ([]entity.Order, *model.PaginatedMeta, error) {
+	var orders []entity.Order
+	var total int64
+	var page int64
+	var perPage int64
+	var meta *model.PaginatedMeta
+
+	if params != nil {
+		page = int64(params.Page)
+		perPage = int64(params.Limit)
+	}
+
+	if params != nil && params.Page == 0 {
+		page = 1
+	}
+
+	if params != nil && params.Limit == 0 {
+		perPage = 10
+	}
+
+	if err := r.db.Model(&entity.Order{}).Count(&total).Error; err != nil {
+		r.logger.Errorf("Error getting total orders: %v", err)
+		return nil, nil, err
+	}
+	lastPage := int(math.Ceil(float64(total) / float64(perPage)))
+
+	meta = &model.PaginatedMeta{
+		Total:       total,
+		CurrentPage: page,
+		PerPage:     perPage,
+		LastPage:    lastPage,
+		HasNextPage: page < int64(lastPage),
+		HasPrevPage: page > 1,
+	}
+
+	if err := r.db.Preload("Items.Cake").
+		Preload("Customer").
+		Limit(int(perPage)).
+		Offset(int((page - 1) * perPage)).
+		Find(&orders).Error; err != nil {
+		r.logger.Errorf("Error getting orders: %v", err)
+		return nil, nil, err
+	}
+	return orders, meta, nil
 }
 
 func (r *orderRepository) Create(order *entity.Order) error {

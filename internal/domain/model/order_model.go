@@ -1,5 +1,10 @@
 package model
 
+import (
+	"cakestore/internal/domain/entity"
+	"time"
+)
+
 type OrderItemRequest struct {
 	CakeID   int     `json:"cake_id" validate:"required"`
 	Title    string  `json:"title" validate:"required"`
@@ -8,7 +13,7 @@ type OrderItemRequest struct {
 }
 
 type CreateOrderRequest struct {
-	Items   []OrderItemRequest `json:"items" validate:"required,min=1,dive"`
+	Items []OrderItemRequest `json:"items" validate:"required,min=1,dive"`
 }
 
 type OrderItemResponse struct {
@@ -31,4 +36,32 @@ type OrderResponse struct {
 
 type UpdateOrderStatusRequest struct {
 	Status string `json:"status" validate:"required,oneof=pending paid preparing delivered cancelled"`
+}
+
+func OrderToResponse(order *entity.Order) *OrderResponse {
+	itemResponses := make([]OrderItemResponse, len(order.Items))
+	for i, item := range order.Items {
+		itemResponses[i] = OrderItemResponse{
+			ID:       item.ID,
+			Cake:     *CakeToResponse(&item.Cake),
+			Quantity: item.Quantity,
+			Price:    item.Price,
+		}
+	}
+
+	return &OrderResponse{
+		ID: order.ID,
+		Customer: CustomerResponse{
+			ID:      order.Customer.ID,
+			Name:    order.Customer.Name,
+			Email:   order.Customer.Email,
+			Address: order.Customer.Address,
+		},
+		Status:     string(order.Status),
+		TotalPrice: order.TotalPrice,
+		Address:    order.Address,
+		Items:      itemResponses,
+		CreatedAt:  order.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:  order.UpdatedAt.Format(time.RFC3339),
+	}
 }

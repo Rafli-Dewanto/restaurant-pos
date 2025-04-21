@@ -95,3 +95,22 @@ func (c *OrderController) GetCustomerOrders(ctx *fiber.Ctx) error {
 	utils.WriteResponse(ctx, fiber.StatusOK, orders, "Customer orders fetched successfully", nil)
 	return nil
 }
+
+func (c *OrderController) GetAllOrders(ctx *fiber.Ctx) error {
+	c.logger.Tracef("GetAllOrders controller")
+
+	var params model.PaginationQuery
+	if err := ctx.QueryParser(&params); err != nil {
+		c.logger.Error("Failed to parse pagination query: ", err)
+		utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid pagination query")
+		return nil
+	}
+
+	orders, meta, err := c.orderUseCase.GetAllOrders(&params)
+	if err != nil {
+		c.logger.Error("Failed to get all orders: ", err)
+		utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to get all orders")
+	}
+	utils.WriteResponse(ctx, fiber.StatusOK, orders, "All orders fetched successfully", meta)
+	return nil
+}

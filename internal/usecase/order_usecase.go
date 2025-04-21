@@ -14,12 +14,13 @@ import (
 type OrderUseCase interface {
 	CreateOrder(customerID int, request *model.CreateOrderRequest) (*entity.Order, error)
 	GetOrderByID(id int) (*model.OrderResponse, error)
+	GetAllOrders(params *model.PaginationQuery) (*[]model.OrderResponse, *model.PaginatedMeta, error)
 	GetCustomerOrders(customerID int) ([]model.OrderResponse, error)
 	UpdateOrderStatus(id string, status string) error
 	DeleteOrder(id int) error
 }
 
-type orderUseCase struct {
+type orderUseCaseImpl struct {
 	orderRepo    repository.OrderRepository
 	cakeRepo     repository.CakeRepository
 	customerRepo repository.CustomerRepository
@@ -34,7 +35,7 @@ func NewOrderUseCase(
 	logger *logrus.Logger,
 	env string,
 ) OrderUseCase {
-	return &orderUseCase{
+	return &orderUseCaseImpl{
 		orderRepo:    orderRepo,
 		cakeRepo:     cakeRepo,
 		customerRepo: customerRepo,
@@ -43,7 +44,7 @@ func NewOrderUseCase(
 	}
 }
 
-func (uc *orderUseCase) CreateOrder(customerID int, request *model.CreateOrderRequest) (*entity.Order, error) {
+func (uc *orderUseCaseImpl) CreateOrder(customerID int, request *model.CreateOrderRequest) (*entity.Order, error) {
 	customer, err := uc.customerRepo.GetByID(customerID)
 	if err != nil {
 		return nil, errors.New("customer not found")
@@ -88,16 +89,16 @@ func (uc *orderUseCase) CreateOrder(customerID int, request *model.CreateOrderRe
 	return order, nil
 }
 
-func (uc *orderUseCase) GetOrderByID(id int) (*model.OrderResponse, error) {
+func (uc *orderUseCaseImpl) GetOrderByID(id int) (*model.OrderResponse, error) {
 	order, err := uc.orderRepo.GetByID(id)
 	if err != nil {
 		return nil, err
 	}
 
-	return uc.orderToResponse(order), nil
+	return model.OrderToResponse(order), nil
 }
 
-func (uc *orderUseCase) GetCustomerOrders(customerID int) ([]model.OrderResponse, error) {
+func (uc *orderUseCaseImpl) GetCustomerOrders(customerID int) ([]model.OrderResponse, error) {
 	orders, err := uc.orderRepo.GetByCustomerID(customerID)
 	if err != nil {
 		return nil, err
@@ -105,13 +106,13 @@ func (uc *orderUseCase) GetCustomerOrders(customerID int) ([]model.OrderResponse
 
 	responses := make([]model.OrderResponse, len(orders))
 	for i, order := range orders {
-		responses[i] = *uc.orderToResponse(&order)
+		responses[i] = *model.OrderToResponse(&order)
 	}
 
 	return responses, nil
 }
 
-func (uc *orderUseCase) UpdateOrderStatus(id string, status string) error {
+func (uc *orderUseCaseImpl) UpdateOrderStatus(id string, status string) error {
 	orderStatus := entity.OrderStatus(status)
 	uc.logger.Tracef("UpdateOrderStatus usecase ~ in %s", uc.env)
 
@@ -140,7 +141,7 @@ func (uc *orderUseCase) UpdateOrderStatus(id string, status string) error {
 	return nil
 }
 
-func (uc *orderUseCase) DeleteOrder(id int) error {
+func (uc *orderUseCaseImpl) DeleteOrder(id int) error {
 	if err := uc.orderRepo.Delete(id); err != nil {
 		uc.logger.Errorf("Error deleting order: %v", err)
 		return err
@@ -148,30 +149,19 @@ func (uc *orderUseCase) DeleteOrder(id int) error {
 	return nil
 }
 
-func (uc *orderUseCase) orderToResponse(order *entity.Order) *model.OrderResponse {
-	itemResponses := make([]model.OrderItemResponse, len(order.Items))
-	for i, item := range order.Items {
-		itemResponses[i] = model.OrderItemResponse{
-			ID:       item.ID,
-			Cake:     *model.CakeToResponse(&item.Cake),
-			Quantity: item.Quantity,
-			Price:    item.Price,
-		}
+func (uc *orderUseCaseImpl) GetAllOrders(params *model.PaginationQuery) (*[]model.OrderResponse, *model.PaginatedMeta, error) {
+	uc.logger.Trace("GetAllOrders usecase ~ in ", uc.env)
+
+	orders, meta, err := uc.orderRepo.GetAll(params)
+	if err != nil {
+		uc.logger.Errorf("Error getting all orders: %v", err)
+		return nil, nil, err
 	}
 
-	return &model.OrderResponse{
-		ID: order.ID,
-		Customer: model.CustomerResponse{
-			ID:      order.Customer.ID,
-			Name:    order.Customer.Name,
-			Email:   order.Customer.Email,
-			Address: order.Customer.Address,
-		},
-		Status:     string(order.Status),
-		TotalPrice: order.TotalPrice,
-		Address:    order.Address,
-		Items:      itemResponses,
-		CreatedAt:  order.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:  order.UpdatedAt.Format(time.RFC3339),
+	responses := make([]model.OrderResponse, len(orders))
+	for i, order := range orders {
+		responses[i] = *model.OrderToResponse(&order)
 	}
+
+	return &responses, meta, nil
 }

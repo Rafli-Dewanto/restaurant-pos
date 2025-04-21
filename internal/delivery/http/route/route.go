@@ -64,6 +64,7 @@ func (c *RouteConfig) SetupRoute() {
 
 	// Order routes
 	orders := protectedRoutes.Group("/orders")
+	orders.Get("/customers", c.OrderController.GetAllOrders)
 	orders.Post("/", c.OrderController.CreateOrder)
 	orders.Get("/", c.OrderController.GetCustomerOrders)
 	orders.Get("/:id", c.OrderController.GetOrderByID)
