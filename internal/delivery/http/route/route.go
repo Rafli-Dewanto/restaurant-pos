@@ -38,6 +38,9 @@ func (c *RouteConfig) SetupRoute() {
 	c.App.Post("/login", c.CustomerController.Login)
 	// Midtrans notification webhook
 	c.App.Post("/payment/notification", c.PaymentController.GetTransactionStatus)
+	// cakes
+	c.App.Get("/cakes", c.CakeController.GetAllCakes)
+	c.App.Get("/cakes/:id", c.CakeController.GetCakeByID)
 
 	// Protected routes
 	protectedRoutes := c.App.Group("/", middleware.AuthMiddleware(c.JWTSecret))
@@ -49,8 +52,6 @@ func (c *RouteConfig) SetupRoute() {
 
 	// Cake routes
 	cakes := protectedRoutes.Group("/cakes")
-	cakes.Get("/", c.CakeController.GetAllCakes)
-	cakes.Get("/:id", c.CakeController.GetCakeByID)
 	cakes.Post("/", middleware.RoleMiddleware(constants.RoleAdmin), c.CakeController.CreateCake)
 	cakes.Put("/:id", middleware.RoleMiddleware(constants.RoleAdmin), c.CakeController.UpdateCake)
 	cakes.Delete("/:id", middleware.RoleMiddleware(constants.RoleAdmin), c.CakeController.DeleteCake)
