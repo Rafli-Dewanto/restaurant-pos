@@ -27,8 +27,7 @@ func NewCustomerController(customerUseCase usecase.CustomerUseCase, logger *logr
 
 func (c *CustomerController) Authorize(ctx *fiber.Ctx) error {
 	c.logger.Tracef("Authorize controller")
-	utils.WriteResponse(ctx, fiber.StatusOK, nil, "Authorized successfully", nil)
-	return nil
+	return utils.WriteResponse(ctx, fiber.StatusOK, nil, "Authorized successfully", nil)
 }
 
 func (c *CustomerController) Register(ctx *fiber.Ctx) error {
@@ -38,7 +37,6 @@ func (c *CustomerController) Register(ctx *fiber.Ctx) error {
 		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid request body")
 	}
 
-	c.logger.Debug("Request: ", request)
 	if err := c.validator.Struct(request); err != nil {
 		c.logger.Error("Validation failed: ", err)
 		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, err.Error())
@@ -57,8 +55,7 @@ func (c *CustomerController) Register(ctx *fiber.Ctx) error {
 		return utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to generate token")
 	}
 
-	utils.WriteResponse(ctx, fiber.StatusCreated, token, "Customer registered successfully", nil)
-	return nil
+	return utils.WriteResponse(ctx, fiber.StatusCreated, token, "Customer registered successfully", nil)
 }
 
 func (c *CustomerController) Login(ctx *fiber.Ctx) error {
@@ -70,8 +67,7 @@ func (c *CustomerController) Login(ctx *fiber.Ctx) error {
 
 	if err := c.validator.Struct(request); err != nil {
 		c.logger.Error("Validation failed: ", err)
-		utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid request body")
-		return nil
+		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid request body")
 	}
 
 	token, err := c.customerUseCase.Login(&request)
@@ -80,35 +76,33 @@ func (c *CustomerController) Login(ctx *fiber.Ctx) error {
 		return utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to login")
 	}
 
-	utils.WriteResponse(ctx, fiber.StatusOK, token, "Login successful", nil)
-	return nil
+	return utils.WriteResponse(ctx, fiber.StatusOK, token, "Login successful", nil)
 }
 
 func (c *CustomerController) UpdateProfile(ctx *fiber.Ctx) error {
 	customerID, err := strconv.Atoi(ctx.Params("id"))
 	if err != nil {
 		c.logger.Error("Failed to parse customer ID: ", err)
-		utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid customer ID")
+		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid customer ID")
 	}
 
 	var request model.CreateCustomerRequest
 	if err := ctx.BodyParser(&request); err != nil {
 		c.logger.Error("Failed to parse body: ", err)
-		utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid request body")
+		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid request body")
 	}
 
 	if err := c.validator.Struct(request); err != nil {
 		c.logger.Error("Validation failed: ", err)
-		utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, err.Error())
+		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, err.Error())
 	}
 
 	if err := c.customerUseCase.UpdateCustomer(customerID, &request); err != nil {
 		c.logger.Error("Failed to update profile: ", err)
-		utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to update profile")
+		return utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to update profile")
 	}
 
-	utils.WriteResponse(ctx, fiber.StatusOK, nil, "Profile updated successfully", nil)
-	return nil
+	return utils.WriteResponse(ctx, fiber.StatusOK, nil, "Profile updated successfully", nil)
 }
 
 func (c *CustomerController) GetCustomerByID(ctx *fiber.Ctx) error {
@@ -117,9 +111,8 @@ func (c *CustomerController) GetCustomerByID(ctx *fiber.Ctx) error {
 	customer, err := c.customerUseCase.GetCustomerByID(customerID)
 	if err != nil {
 		c.logger.Error("Failed to get customer: ", err)
-		utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to get customer")
+		return utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to get customer")
 	}
 
-	utils.WriteResponse(ctx, fiber.StatusOK, model.CustomerToResponse(customer), "Customer fetched successfully", nil)
-	return nil
+	return utils.WriteResponse(ctx, fiber.StatusOK, model.CustomerToResponse(customer), "Customer fetched successfully", nil)
 }

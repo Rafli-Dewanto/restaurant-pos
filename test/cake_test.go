@@ -83,36 +83,48 @@ func TestCakeHandlerSuite(t *testing.T) {
 }
 
 func (suite *CakeHandlerTestSuite) TestCreate() {
-	request := model.CreateUpdateCakeRequest{
-		Title:       "Test Cake",
-		Description: "Test Description",
-		Rating:      4.5,
-		ImageURL:    "http://example.com/test.jpg",
-	}
+	suite.T().Run("Test successful cake creation", func(t *testing.T) {
+		request := model.CreateUpdateCakeRequest{
+			Title:       "Test Cake",
+			Description: "Test Description",
+			Price:       90000,
+			Category:    "birthday_cake",
+			Rating:      4.5,
+			ImageURL:    "http://example.com/test.jpg",
+		}
 
-	jsonValue, _ := json.Marshal(request)
-	req := httptest.NewRequest("POST", "/cakes", bytes.NewBuffer(jsonValue))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+suite.token)
+		jsonValue, _ := json.Marshal(request)
+		req := httptest.NewRequest("POST", "/cakes", bytes.NewBuffer(jsonValue))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+suite.token)
 
-	resp, err := suite.app.Test(req)
-	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), fiber.StatusCreated, resp.StatusCode)
+		resp, err := suite.app.Test(req)
+		assert.NoError(suite.T(), err)
+		assert.Equal(suite.T(), fiber.StatusCreated, resp.StatusCode)
 
-	body, _ := io.ReadAll(resp.Body)
-	var response utils.Response
-	_ = json.Unmarshal(body, &response)
+		body, _ := io.ReadAll(resp.Body)
+		var response utils.Response
+		_ = json.Unmarshal(body, &response)
 
-	jsonCake, _ := json.Marshal(response.Data)
-	var cake entity.Cake
-	_ = json.Unmarshal(jsonCake, &cake)
+		jsonCake, _ := json.Marshal(response.Data)
+		var cake entity.Cake
+		_ = json.Unmarshal(jsonCake, &cake)
 
-	assert.NotZero(suite.T(), cake.ID)
-	assert.Equal(suite.T(), request.Title, cake.Title)
+		assert.NotZero(suite.T(), cake.ID)
+		assert.Equal(suite.T(), request.Title, cake.Title)
 
-	assert.NoError(suite.T(), err)
-	assert.NotZero(suite.T(), cake.ID)
-	assert.Equal(suite.T(), request.Title, cake.Title)
+		assert.NoError(suite.T(), err)
+		assert.NotZero(suite.T(), cake.ID)
+		assert.Equal(suite.T(), request.Title, cake.Title)
+	})
+
+	suite.T().Run("Test invalid request body", func(t *testing.T) {
+		req := httptest.NewRequest("POST", "/cakes", bytes.NewBuffer([]byte(`{invalid json}`)))
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := suite.app.Test(req)
+		assert.NoError(suite.T(), err)
+		assert.Equal(suite.T(), fiber.StatusBadRequest, resp.StatusCode)
+	})
 }
 
 func (suite *CakeHandlerTestSuite) TestGetByID() {

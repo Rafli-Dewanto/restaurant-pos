@@ -61,25 +61,23 @@ func (c *OrderController) CreateOrder(ctx *fiber.Ctx) error {
 		return utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to create payment URL")
 	}
 
-	utils.WriteResponse(ctx, fiber.StatusCreated, paymentURL, "Order created successfully", nil)
-	return nil
+	return utils.WriteResponse(ctx, fiber.StatusCreated, paymentURL, "Order created successfully", nil)
 }
 
 func (c *OrderController) GetOrderByID(ctx *fiber.Ctx) error {
 	orderID, err := strconv.Atoi(ctx.Params("id"))
 	if err != nil {
 		c.logger.Error("Failed to parse order ID: ", err)
-		utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid order ID")
+		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid order ID")
 	}
 
 	order, err := c.orderUseCase.GetOrderByID(orderID)
 	if err != nil {
 		c.logger.Error("Failed to get order: ", err)
-		utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to get order")
+		return utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to get order")
 	}
 
-	utils.WriteResponse(ctx, fiber.StatusOK, order, "Order fetched successfully", nil)
-	return nil
+	return utils.WriteResponse(ctx, fiber.StatusOK, order, "Order fetched successfully", nil)
 }
 
 func (c *OrderController) GetCustomerOrders(ctx *fiber.Ctx) error {
@@ -89,11 +87,10 @@ func (c *OrderController) GetCustomerOrders(ctx *fiber.Ctx) error {
 	orders, err := c.orderUseCase.GetCustomerOrders(customerID)
 	if err != nil {
 		c.logger.Error("Failed to get customer orders: ", err)
-		utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to get customer orders")
+		return utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to get customer orders")
 	}
 
-	utils.WriteResponse(ctx, fiber.StatusOK, orders, "Customer orders fetched successfully", nil)
-	return nil
+	return utils.WriteResponse(ctx, fiber.StatusOK, orders, "Customer orders fetched successfully", nil)
 }
 
 func (c *OrderController) GetAllOrders(ctx *fiber.Ctx) error {
@@ -102,15 +99,13 @@ func (c *OrderController) GetAllOrders(ctx *fiber.Ctx) error {
 	var params model.PaginationQuery
 	if err := ctx.QueryParser(&params); err != nil {
 		c.logger.Error("Failed to parse pagination query: ", err)
-		utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid pagination query")
-		return nil
+		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid pagination query")
 	}
 
 	orders, meta, err := c.orderUseCase.GetAllOrders(&params)
 	if err != nil {
 		c.logger.Error("Failed to get all orders: ", err)
-		utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to get all orders")
+		return utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to get all orders")
 	}
-	utils.WriteResponse(ctx, fiber.StatusOK, orders, "All orders fetched successfully", meta)
-	return nil
+	return utils.WriteResponse(ctx, fiber.StatusOK, orders, "All orders fetched successfully", meta)
 }
