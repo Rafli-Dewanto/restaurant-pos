@@ -1,16 +1,18 @@
 package usecase
 
 import (
+	"cakestore/internal/constants"
 	"cakestore/internal/domain/entity"
 	"cakestore/internal/domain/model"
 	"cakestore/internal/repository"
+	"errors"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/sirupsen/logrus"
 )
 
 type CakeUseCase interface {
-	GetAllCakes(params *model.CakeQueryParams) (*model.PaginationResponse, error)
+	GetAllCakes(params *model.CakeQueryParams) (*model.PaginationResponse[[]entity.Cake], error)
 	GetCakeByID(id int) (*entity.Cake, error)
 	CreateCake(cake *entity.Cake) error
 	UpdateCake(cake *entity.Cake) error
@@ -31,7 +33,7 @@ func NewCakeUseCase(repo repository.CakeRepository, logger *logrus.Logger) CakeU
 	}
 }
 
-func (uc *cakeUseCase) GetAllCakes(params *model.CakeQueryParams) (*model.PaginationResponse, error) {
+func (uc *cakeUseCase) GetAllCakes(params *model.CakeQueryParams) (*model.PaginationResponse[[]entity.Cake], error) {
 	if params == nil {
 		params = &model.CakeQueryParams{}
 	}
@@ -48,6 +50,9 @@ func (uc *cakeUseCase) GetAllCakes(params *model.CakeQueryParams) (*model.Pagina
 func (uc *cakeUseCase) GetCakeByID(id int) (*entity.Cake, error) {
 	cake, err := uc.repo.GetByID(id)
 	if err != nil {
+		if errors.Is(err, constants.ErrNotFound) {
+			return nil, constants.ErrNotFound
+		}
 		uc.logger.Errorf("Error fetching cake with ID %d: %v", id, err)
 		return nil, err
 	}
@@ -76,6 +81,9 @@ func (uc *cakeUseCase) UpdateCake(cake *entity.Cake) error {
 	}
 
 	if err := uc.repo.UpdateCake(cake); err != nil {
+		if errors.Is(err, constants.ErrNotFound) {
+			return constants.ErrNotFound
+		}
 		uc.logger.Errorf("Error updating cake: %v", err)
 		return err
 	}

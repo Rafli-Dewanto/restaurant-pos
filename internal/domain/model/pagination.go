@@ -15,15 +15,15 @@ type PaginatedMeta struct {
 	HasPrevPage bool  `json:"has_prev_page"`
 }
 
-type PaginationResponse struct {
-	Data       interface{} `json:"data"`
-	Total      int64       `json:"total"`
-	Page       int         `json:"page"`
-	PageSize   int         `json:"page_size"`
-	TotalPages int         `json:"total_pages"`
+type PaginationResponse[T any] struct {
+	Data       T     `json:"data"`
+	Total      int64 `json:"total"`
+	Page       int   `json:"page"`
+	PageSize   int   `json:"page_size"`
+	TotalPages int   `json:"total_pages"`
 }
 
-func ToPaginatedMeta(PaginationResponse *PaginationResponse) *PaginatedMeta {
+func ToPaginatedMeta[T any](PaginationResponse *PaginationResponse[T]) *PaginatedMeta {
 	return &PaginatedMeta{
 		CurrentPage: int64(PaginationResponse.Page),
 		Total:       PaginationResponse.Total,

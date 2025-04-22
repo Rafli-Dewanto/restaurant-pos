@@ -67,14 +67,13 @@ func (c *CartController) GetCartByCustomerID(ctx *fiber.Ctx) error {
 		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, err.Error())
 	}
 
-	data, err := c.cartUseCase.GetCartByCustomerID(customerID, params)
+	data, meta, err := c.cartUseCase.GetCartByCustomerID(customerID, params)
 	if err != nil {
 		c.logger.Errorf("❌ Failed to fetch carts: %v", err)
 		return utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, err.Error())
 	}
-	metaData := model.ToPaginatedMeta(data)
 
-	return utils.WriteResponse(ctx, fiber.StatusOK, data.Data, "Carts fetched successfully", metaData)
+	return utils.WriteResponse(ctx, fiber.StatusOK, data, "Carts fetched successfully", meta)
 }
 
 func (c *CartController) RemoveCart(ctx *fiber.Ctx) error {

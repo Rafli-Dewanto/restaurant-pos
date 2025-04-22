@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"cakestore/internal/constants"
 	"cakestore/internal/domain/entity"
 	"cakestore/internal/domain/model"
 	"errors"
@@ -11,7 +12,7 @@ import (
 )
 
 type CakeRepository interface {
-	GetAll(params *model.CakeQueryParams) (*model.PaginationResponse, error)
+	GetAll(params *model.CakeQueryParams) (*model.PaginationResponse[[]entity.Cake], error)
 	GetByID(id int) (*entity.Cake, error)
 	Create(cake *entity.Cake) error
 	UpdateCake(cake *entity.Cake) error
@@ -27,7 +28,7 @@ func NewCakeRepository(db *gorm.DB, log *logrus.Logger) CakeRepository {
 	return &cakeRepository{db: db, log: log}
 }
 
-func (c *cakeRepository) GetAll(params *model.CakeQueryParams) (*model.PaginationResponse, error) {
+func (c *cakeRepository) GetAll(params *model.CakeQueryParams) (*model.PaginationResponse[[]entity.Cake], error) {
 	var cakes []entity.Cake
 	var total int64
 
@@ -75,7 +76,7 @@ func (c *cakeRepository) GetAll(params *model.CakeQueryParams) (*model.Paginatio
 		totalPages++
 	}
 
-	return &model.PaginationResponse{
+	return &model.PaginationResponse[[]entity.Cake]{
 		Data:       cakes,
 		Total:      total,
 		Page:       params.Page,
@@ -87,6 +88,9 @@ func (c *cakeRepository) GetAll(params *model.CakeQueryParams) (*model.Paginatio
 func (c *cakeRepository) GetByID(id int) (*entity.Cake, error) {
 	var cake entity.Cake
 	err := c.db.Where("deleted_at IS NULL").First(&cake, id).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, constants.ErrNotFound
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -108,12 +112,12 @@ func (c *cakeRepository) UpdateCake(cake *entity.Cake) error {
 			"updated_at":  time.Now(),
 		})
 
-	if result.Error != nil {
-		return result.Error
+	if result.RowsAffected == 0 {
+		return constants.ErrNotFound
 	}
 
-	if result.RowsAffected == 0 {
-		return errors.New("no rows updated, cake not found")
+	if result.Error != nil {
+		return result.Error
 	}
 
 	return nil

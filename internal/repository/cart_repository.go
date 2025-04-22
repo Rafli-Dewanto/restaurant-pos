@@ -11,7 +11,7 @@ import (
 type CartRepository interface {
 	Create(cart *entity.Cart) error
 	GetByID(id int) (*entity.Cart, error)
-	GetByCustomerID(customerID int, params *model.PaginationQuery) (*model.PaginationResponse, error)
+	GetByCustomerID(customerID int, params *model.PaginationQuery) (*model.PaginationResponse[[]*entity.Cart], error)
 	GetByCustomerIDAndCakeID(customerID int, cakeID int) (*entity.Cart, error)
 	Update(cart *entity.Cart) error
 	Delete(cartID int) error
@@ -43,7 +43,7 @@ func (r *cartRepository) GetByID(id int) (*entity.Cart, error) {
 	return &cart, nil
 }
 
-func (r *cartRepository) GetByCustomerID(customerID int, params *model.PaginationQuery) (*model.PaginationResponse, error) {
+func (r *cartRepository) GetByCustomerID(customerID int, params *model.PaginationQuery) (*model.PaginationResponse[[]*entity.Cart], error) {
 	var carts []*entity.Cart
 	var total int64
 	var perPage int
@@ -67,7 +67,7 @@ func (r *cartRepository) GetByCustomerID(customerID int, params *model.Paginatio
 		return nil, err
 	}
 
-	return &model.PaginationResponse{
+	return &model.PaginationResponse[[]*entity.Cart]{
 		Total:      total,
 		Data:       carts,
 		Page:       page,

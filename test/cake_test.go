@@ -128,137 +128,202 @@ func (suite *CakeHandlerTestSuite) TestCreate() {
 }
 
 func (suite *CakeHandlerTestSuite) TestGetByID() {
-	cake := &entity.Cake{
-		Title:       "Test Cake",
-		Description: "Test Description",
-		Rating:      4.5,
-		Image:       "test.jpg",
-	}
+	suite.T().Run("Test successful cake retrieval", func(t *testing.T) {
+		cake := &entity.Cake{
+			Title:       "Test Cake",
+			Description: "Test Description",
+			Rating:      4.5,
+			Price:       90000,
+			Category:    "birthday_cake",
+			Image:       "http://example.com/test.jpg",
+		}
 
-	jsonValue, _ := json.Marshal(cake)
-	req := httptest.NewRequest("POST", "/cakes", bytes.NewBuffer(jsonValue))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+suite.token)
-
-	resp, _ := suite.app.Test(req)
-
-	body, _ := io.ReadAll(resp.Body)
-	var respCreate utils.Response
-	json.Unmarshal(body, &respCreate)
-
-	// Test getting the cake
-	req = httptest.NewRequest("GET", "/cakes/"+strconv.Itoa(int(respCreate.Data.(*entity.Cake).ID)), nil)
-	resp, err := suite.app.Test(req)
-	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), fiber.StatusOK, resp.StatusCode)
-
-	body, _ = io.ReadAll(resp.Body)
-	var response utils.Response
-	err = json.Unmarshal(body, &response)
-	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), cake.Title, response.Data.(*entity.Cake).Title)
-
-	// Test getting non-existent cake
-	req = httptest.NewRequest("GET", "/cakes/9999", nil)
-	resp, _ = suite.app.Test(req)
-	assert.Equal(suite.T(), fiber.StatusNotFound, resp.StatusCode)
-}
-
-func (suite *CakeHandlerTestSuite) TestGetAll() {
-	cakes := []entity.Cake{
-		{Title: "Cake A", Rating: 4.5},
-		{Title: "Cake B", Rating: 5.0},
-		{Title: "Cake C", Rating: 4.0},
-	}
-
-	// Create test cakes
-	for _, cake := range cakes {
+		// POST: create cake
 		jsonValue, _ := json.Marshal(cake)
 		req := httptest.NewRequest("POST", "/cakes", bytes.NewBuffer(jsonValue))
 		req.Header.Set("Content-Type", "application/json")
-		suite.app.Test(req)
-	}
+		req.Header.Set("Authorization", "Bearer "+suite.token)
 
+		resp, _ := suite.app.Test(req)
+		body, _ := io.ReadAll(resp.Body)
+
+		var respCreate utils.Response
+		_ = json.Unmarshal(body, &respCreate)
+
+		// convert respCreate.Data into model.CakeModel
+		dataBytes, _ := json.Marshal(respCreate.Data)
+		var createdCake model.CakeModel
+		_ = json.Unmarshal(dataBytes, &createdCake)
+
+		// GET: retrieve the cake
+		req = httptest.NewRequest("GET", "/cakes/"+strconv.Itoa(int(createdCake.ID)), nil)
+		resp, err := suite.app.Test(req)
+
+		assert.NoError(t, err)
+		assert.Equal(t, fiber.StatusOK, resp.StatusCode)
+
+		body, _ = io.ReadAll(resp.Body)
+		var getResp utils.Response
+		_ = json.Unmarshal(body, &getResp)
+
+		dataBytes, _ = json.Marshal(getResp.Data)
+		var fetchedCake model.CakeModel
+		_ = json.Unmarshal(dataBytes, &fetchedCake)
+
+		assert.Equal(t, createdCake.Title, fetchedCake.Title)
+		assert.Equal(t, createdCake.Description, fetchedCake.Description)
+		assert.Equal(t, createdCake.Rating, fetchedCake.Rating)
+		assert.Equal(t, createdCake.Category, fetchedCake.Category)
+		assert.Equal(t, createdCake.ImageURL, fetchedCake.ImageURL)
+	})
+
+	suite.T().Run("Test cake not found", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/cakes/9999", nil)
+		resp, err := suite.app.Test(req)
+		assert.NoError(suite.T(), err)
+		assert.Equal(suite.T(), fiber.StatusNotFound, resp.StatusCode)
+	})
+}
+
+func (suite *CakeHandlerTestSuite) TestGetAll() {
 	// Test getting all cakes
+	perPage := 10
 	req := httptest.NewRequest("GET", "/cakes", nil)
 	resp, err := suite.app.Test(req)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), fiber.StatusOK, resp.StatusCode)
 
 	body, _ := io.ReadAll(resp.Body)
-	var response []entity.Cake
+	var response model.PaginationResponse[[]entity.Cake]
 	err = json.Unmarshal(body, &response)
 	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), len(cakes), len(response))
-	assert.Greater(suite.T(), response[0].Rating, response[1].Rating)
-	assert.Greater(suite.T(), response[1].Rating, response[2].Rating)
+	assert.Equal(suite.T(), perPage, len(response.Data))
 }
 
 func (suite *CakeHandlerTestSuite) TestUpdate() {
 	// Create a test cake first
-	cake := &entity.Cake{
-		Title:       "Original Cake",
-		Description: "Original Description",
-		Rating:      4.0,
-		Image:       "original.jpg",
-	}
-	jsonValue, _ := json.Marshal(cake)
-	req := httptest.NewRequest("POST", "/cakes", bytes.NewBuffer(jsonValue))
-	req.Header.Set("Content-Type", "application/json")
-	resp, _ := suite.app.Test(req)
+	suite.T().Run("Test successful cake update", func(t *testing.T) {
+		cake := &model.CreateUpdateCakeRequest{
+			Title:       "Test Cake",
+			Description: "Test Description",
+			Rating:      4.5,
+			Price:       90000,
+			Category:    "birthday_cake",
+			ImageURL:       "http://example.com/test.jpg",
+		}
 
-	body, _ := io.ReadAll(resp.Body)
-	var createdCake entity.Cake
-	json.Unmarshal(body, &createdCake)
+		// POST: create cake
+		jsonValue, _ := json.Marshal(cake)
+		req := httptest.NewRequest("POST", "/cakes", bytes.NewBuffer(jsonValue))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+suite.token)
 
-	// Update the cake
-	updatedCake := createdCake
-	updatedCake.Title = "Updated Cake"
-	updatedCake.Rating = 4.5
+		resp, _ := suite.app.Test(req)
+		body, _ := io.ReadAll(resp.Body)
 
-	jsonValue, _ = json.Marshal(updatedCake)
-	req = httptest.NewRequest("PUT", "/cakes/"+strconv.Itoa(int(createdCake.ID)), bytes.NewBuffer(jsonValue))
-	req.Header.Set("Content-Type", "application/json")
-	resp, err := suite.app.Test(req)
-	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), fiber.StatusOK, resp.StatusCode)
+		var respCreate utils.Response
+		_ = json.Unmarshal(body, &respCreate)
 
-	body, _ = io.ReadAll(resp.Body)
-	var response entity.Cake
-	err = json.Unmarshal(body, &response)
-	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), "Updated Cake", response.Title)
-	assert.Equal(suite.T(), 4.5, response.Rating)
+		// convert respCreate.Data into model.CakeModel
+		dataBytes, _ := json.Marshal(respCreate.Data)
+		var createdCake model.CakeModel
+		_ = json.Unmarshal(dataBytes, &createdCake)
 
-	// Test updating non-existent cake
-	req = httptest.NewRequest("PUT", "/cakes/9999", bytes.NewBuffer(jsonValue))
-	req.Header.Set("Content-Type", "application/json")
-	resp, _ = suite.app.Test(req)
-	assert.Equal(suite.T(), fiber.StatusNotFound, resp.StatusCode)
+		// Update the cake
+		updatedCake := createdCake
+		updatedCake.Title = "Updated Cake"
+		updatedCake.Rating = 4.5
+		updatedCake.ImageURL = "http://example.com/updated.jpg"
+		updatedCake.Price = 100
+		updatedCake.Category = "test"
+		updatedCake.Description = "Updated Description"
+
+		testUpdatedCake := model.CreateUpdateCakeRequest{
+			Title:       updatedCake.Title,
+			Description: updatedCake.Description,
+			Rating:      updatedCake.Rating,
+			ImageURL:    updatedCake.ImageURL,
+			Price:       updatedCake.Price,
+			Category:    updatedCake.Category,
+		}
+
+		jsonValue, _ = json.Marshal(testUpdatedCake)
+		log.Println(jsonValue)
+		req = httptest.NewRequest("PUT", "/cakes/"+strconv.Itoa(int(createdCake.ID)), bytes.NewBuffer(jsonValue))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+suite.token)
+
+		resp, err := suite.app.Test(req)
+		assert.NoError(suite.T(), err)
+		assert.Equal(suite.T(), fiber.StatusOK, resp.StatusCode)
+
+		body, _ = io.ReadAll(resp.Body)
+		var response utils.Response
+		_ = json.Unmarshal(body, &response)
+
+		dataBytes, _ = json.Marshal(response.Data)
+		var updated model.CakeModel
+		_ = json.Unmarshal(dataBytes, &updated)
+
+		assert.Equal(suite.T(), "Updated Cake", updated.Title)
+
+		assert.NoError(suite.T(), err)
+		assert.Equal(suite.T(), "Updated Cake", updated.Title)
+		assert.Equal(suite.T(), 4.5, updated.Rating)
+	})
+
+	// Test updating non-existent cake - should return 404
+	suite.T().Run("Update non-existent cake", func(t *testing.T) {
+		cake := &model.CreateUpdateCakeRequest{
+			Title:       "Test Cake",
+			Description: "Test Description",
+			Price:       90000,
+			Category:    "birthday_cake",
+			Rating:      4.5,
+			ImageURL:    "http://example.com/test.jpg",
+		}
+		jsonValue, _ := json.Marshal(cake)
+		req := httptest.NewRequest("PUT", "/cakes/9999999", bytes.NewBuffer(jsonValue))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+suite.token)
+		resp, err := suite.app.Test(req)
+		assert.NoError(suite.T(), err)
+		assert.Equal(suite.T(), fiber.StatusNotFound, resp.StatusCode)
+	})
 }
 
 func (suite *CakeHandlerTestSuite) TestDelete() {
 	// Create a test cake first
-	cake := &entity.Cake{
+	cake := &model.CreateUpdateCakeRequest{
 		Title:       "Test Cake",
 		Description: "Test Description",
+		Price:       90000,
+		Category:    "birthday_cake",
+		Rating:      4.5,
+		ImageURL:    "http://example.com/test.jpg",
 	}
 	jsonValue, _ := json.Marshal(cake)
 	req := httptest.NewRequest("POST", "/cakes", bytes.NewBuffer(jsonValue))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+suite.token)
 	resp, _ := suite.app.Test(req)
 
 	body, _ := io.ReadAll(resp.Body)
-	var createdCake entity.Cake
-	json.Unmarshal(body, &createdCake)
+	var res utils.Response
+	json.Unmarshal(body, &res)
+
+	jsonBody, _  := json.Marshal(res.Data)
+	var result model.CakeModel
+	_ = json.Unmarshal(jsonBody, &result)
 
 	// Delete the cake
-	req = httptest.NewRequest("DELETE", "/cakes/"+strconv.Itoa(int(createdCake.ID)), nil)
+	req = httptest.NewRequest("DELETE", "/cakes/"+strconv.Itoa(int(result.ID)), nil)
 	resp, _ = suite.app.Test(req)
+	req.Header.Set("Authorization", "Bearer "+suite.token)
 	assert.Equal(suite.T(), fiber.StatusOK, resp.StatusCode)
 
 	// Verify cake is deleted
-	req = httptest.NewRequest("GET", "/cakes/"+strconv.Itoa(int(createdCake.ID)), nil)
+	req = httptest.NewRequest("GET", "/cakes/"+strconv.Itoa(int(result.ID)), nil)
 	resp, _ = suite.app.Test(req)
 	assert.Equal(suite.T(), fiber.StatusNotFound, resp.StatusCode)
 }

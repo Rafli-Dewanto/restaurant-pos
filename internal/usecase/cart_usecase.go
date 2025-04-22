@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"cakestore/internal/constants"
-	"cakestore/internal/domain/entity"
 	"cakestore/internal/domain/model"
 	"cakestore/internal/repository"
 	"time"
@@ -14,7 +13,7 @@ import (
 type CartUseCase interface {
 	CreateCart(customerID int, req *model.AddCart) error
 	GetCartByID(id int) (*model.CartModel, error)
-	GetCartByCustomerID(customerID int, params *model.PaginationQuery) (*model.PaginationResponse, error)
+	GetCartByCustomerID(customerID int, params *model.PaginationQuery) ([]*model.CartModel, *model.PaginatedMeta, error)
 	RemoveCart(customerID int, cartID int) error
 	ClearCart(cartID int) error
 }
@@ -96,27 +95,21 @@ func (uc *cartUseCase) GetCartByID(id int) (*model.CartModel, error) {
 	return model.ToCartModel(cart), nil
 }
 
-func (uc *cartUseCase) GetCartByCustomerID(customerID int, params *model.PaginationQuery) (*model.PaginationResponse, error) {
+func (uc *cartUseCase) GetCartByCustomerID(customerID int, params *model.PaginationQuery) ([]*model.CartModel, *model.PaginatedMeta, error) {
 	data, err := uc.cartRepo.GetByCustomerID(customerID, params)
 	if err != nil {
 		uc.logger.Errorf("Error fetching carts for customer ID %d: %v", customerID, err)
-		return nil, err
-	}
-
-	carts, ok := data.Data.([]*entity.Cart)
-	if !ok {
-		uc.logger.Error("Invalid data type for carts.Data")
-		return nil, constants.ErrInvalidInterfaceConversion
+		return nil, nil, err
 	}
 
 	var cartModels []*model.CartModel
 
 	// convert cart entity to cart model
-	for _, cart := range carts {
+	for _, cart := range data.Data {
 		cartModels = append(cartModels, model.ToCartModel(cart))
 	}
-	data.Data = cartModels
-	return data, nil
+
+	return cartModels, model.ToPaginatedMeta(data), nil
 }
 
 func (uc *cartUseCase) RemoveCart(customerID int, cartID int) error {
