@@ -248,7 +248,6 @@ func (suite *CakeHandlerTestSuite) TestUpdate() {
 		}
 
 		jsonValue, _ = json.Marshal(testUpdatedCake)
-		log.Println(jsonValue)
 		req = httptest.NewRequest("PUT", "/cakes/"+strconv.Itoa(int(createdCake.ID)), bytes.NewBuffer(jsonValue))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+suite.token)

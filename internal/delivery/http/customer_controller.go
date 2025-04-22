@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"cakestore/internal/constants"
 	"cakestore/internal/domain/model"
 	"cakestore/internal/usecase"
 	"cakestore/utils"
@@ -106,7 +107,14 @@ func (c *CustomerController) UpdateProfile(ctx *fiber.Ctx) error {
 }
 
 func (c *CustomerController) GetCustomerByID(ctx *fiber.Ctx) error {
-	customerID := ctx.Locals("customer_id").(int)
+	customerIDStr := ctx.Locals(constants.ClaimsKeyID)
+
+	customerID, ok := customerIDStr.(int)
+	if !ok {
+		c.logger.Infof("customer_id: %+v, type: %T", customerIDStr, customerIDStr)
+		c.logger.Error("Failed to parse customer ID: ")
+		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid customer ID")
+	}
 
 	customer, err := c.customerUseCase.GetCustomerByID(customerID)
 	if err != nil {

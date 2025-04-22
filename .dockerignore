@@ -1,0 +1,39 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go build cache and modules
+bin/
+build/
+dist/
+vendor/
+*.mod
+*.sum
+
+# Git stuff
+.git
+.gitignore
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Editor / IDE folders
+.vscode/
+.idea/
+*.swp
+
+# Docker files you don’t need inside the image
+Dockerfile
+.dockerignore
+
+# Test files and coverage reports
+*.log
+*.coverprofile
+*.testresult
+coverage.out
