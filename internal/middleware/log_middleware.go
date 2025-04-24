@@ -10,8 +10,21 @@ func LogMiddleware(logger *logrus.Logger) fiber.Handler {
 		ip := c.IP()
 		method := c.Method()
 		path := c.Path()
-		logger.Infof("IP: %s, Method: %s, Path: %s", ip, method, path)
-		c.Next()
-		return nil
+
+		// Process request
+		err := c.Next()
+
+		// Log after response is generated
+		status := c.Response().StatusCode()
+
+		logger.WithFields(logrus.Fields{
+			"ip":     ip,
+			"method": method,
+			"path":   path,
+			"status": status,
+			"error":  err,
+		}).Info("HTTP Request")
+
+		return err
 	}
 }

@@ -56,3 +56,38 @@ func (s *CustomerSeeder) SeedAdmin(email, password string) error {
 	s.logger.Info("Admin user created successfully")
 	return nil
 }
+
+func (s *CustomerSeeder) SeedBasic(email, password string) error {
+	// Check if admin already exists
+	existingCust, err := s.repo.GetByEmail(email)
+	if err == nil && existingCust != nil {
+		s.logger.Info("user already exists")
+		return nil
+	}
+
+	// Hash password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		s.logger.Errorf("Error hashing password: %v", err)
+		return err
+	}
+
+	// Create cust user
+	cust := &entity.Customer{
+		Name:      "Rafli Dewanto",
+		Email:     email,
+		Password:  string(hashedPassword),
+		Address:   "Bekasi",
+		Role:      constants.RoleCustomer,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	if err := s.repo.Create(cust); err != nil {
+		s.logger.Errorf("Error creating customer user: %v", err)
+		return err
+	}
+
+	s.logger.Info("customer created successfully")
+	return nil
+}

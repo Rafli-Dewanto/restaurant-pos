@@ -29,11 +29,16 @@ func (s *Seeder) SeedAll() error {
 		return err
 	}
 
-	// Seed cakes
-	if err := s.cakeSeeder.SeedCakes(); err != nil {
-		s.logger.Errorf("Error seeding cakes: %v", err)
+	if err := s.customerSeeder.SeedBasic("rafli@email.com", "master123"); err != nil {
+		s.logger.Errorf("Error seeding customer user: %v", err)
 		return err
 	}
+
+	// Seed cakes
+	// if err := s.cakeSeeder.SeedCakes(); err != nil {
+	// 	s.logger.Errorf("Error seeding cakes: %v", err)
+	// 	return err
+	// }
 
 	s.logger.Info("Database seeding completed successfully")
 	return nil

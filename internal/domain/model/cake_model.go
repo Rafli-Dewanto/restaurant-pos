@@ -11,7 +11,7 @@ type CakeModel struct {
 	Price       float64 `json:"price"`
 	Category    string  `json:"category"`
 	Rating      float64 `json:"rating"`
-	ImageURL    string  `json:"image_url"`
+	ImageURL    string  `json:"image"`
 }
 
 type CakeQueryParams struct {
@@ -29,7 +29,7 @@ type CreateUpdateCakeRequest struct {
 	Description string  `json:"description" validate:"required"`
 	Price       float64 `json:"price" validate:"required,gte=0"`
 	Category    string  `json:"category" validate:"required"`
-	Rating      float64 `json:"rating" validate:"required,gte=0,lte=10"`
+	Rating      float64 `json:"rating"`
 	ImageURL    string  `json:"image" validate:"required,url"`
 }
 
