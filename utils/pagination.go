@@ -3,7 +3,30 @@ package utils
 import (
 	"cakestore/internal/domain/model"
 	"math"
+	"strconv"
+
+	"github.com/gofiber/fiber/v2"
 )
+
+func GetPaginationFromRequest(c *fiber.Ctx) *model.PaginationQuery {
+	page := c.Query("page", "1")
+	perPage := c.Query("per_page", "10")
+
+	pageInt, err := strconv.Atoi(page)
+	if err != nil {
+		pageInt = 1
+	}
+
+	perPageInt, err := strconv.Atoi(perPage)
+	if err != nil {
+		perPageInt = 10
+	}
+
+	return &model.PaginationQuery{
+		Page:  pageInt,
+		Limit: perPageInt,
+	}
+}
 
 func CreatePaginationMeta(page, perPage int, total int64) *model.PaginatedMeta {
 	lastPage := int(math.Ceil(float64(total) / float64(perPage)))

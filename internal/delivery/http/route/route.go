@@ -16,6 +16,7 @@ type RouteConfig struct {
 	CustomerController *http.CustomerController
 	CartController     *http.CartController
 	OrderController    *http.OrderController
+	WishlistController *http.WishListController
 	PaymentController  http.PaymentController
 	JWTSecret          string
 	Log                *logrus.Logger
@@ -70,4 +71,9 @@ func (c *RouteConfig) SetupRoute() {
 	orders.Post("/", c.OrderController.CreateOrder)
 	orders.Get("/", c.OrderController.GetCustomerOrders)
 	orders.Get("/:id", c.OrderController.GetOrderByID)
+
+	wishlist := protectedRoutes.Group("/wishlists")
+	wishlist.Get("/", c.WishlistController.GetWishListByCustomerID)
+	wishlist.Post("/:cakeId", c.WishlistController.CreateWishList)
+	wishlist.Delete("/:cakeId", c.WishlistController.DeleteWishList)
 }
