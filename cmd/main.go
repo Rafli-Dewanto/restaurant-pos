@@ -18,13 +18,19 @@ func main() {
 	logger := utils.NewLogger()
 	cfg := configs.LoadConfig()
 	db := database.ConnectMySQL(cfg)
-	err := database.RunMigrations(db)
+
+	sqlx, err := database.NewDB(cfg)
+	if err != nil {
+		log.Fatalf("❌ Failed to create database connection: %v", err)
+	}
+
+	err = database.RunMigrations(db)
 	if err != nil {
 		log.Fatalf("❌ Failed to run database migrations: %v", err)
 	}
 
 	// Initialize repositories
-	cakeRepository := repository.NewCakeRepository(db, logger)
+	cakeRepository := repository.NewCakeRepository(sqlx, logger)
 	customerRepository := repository.NewCustomerRepository(db, logger)
 	cartRepository := repository.NewCartRepository(db, logger)
 	orderRepository := repository.NewOrderRepository(db, logger)

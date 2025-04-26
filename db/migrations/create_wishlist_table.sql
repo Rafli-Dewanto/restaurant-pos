@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS wishlists (
+    id bigint AUTO_INCREMENT,
+    customer_id bigint NOT NULL,
+    cake_id bigint NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    CONSTRAINT pk_wishlists PRIMARY KEY (id),
+    CONSTRAINT fk_wishlists_customers FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_wishlists_cakes FOREIGN KEY (cake_id) REFERENCES cakes (id) ON DELETE CASCADE ON UPDATE CASCADE
+);
