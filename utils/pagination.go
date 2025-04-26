@@ -12,12 +12,12 @@ func GetPaginationFromRequest(c *fiber.Ctx) *model.PaginationQuery {
 	page := c.Query("page", "1")
 	perPage := c.Query("per_page", "10")
 
-	pageInt, err := strconv.Atoi(page)
+	pageInt, err := strconv.ParseInt(page, 10, 64)
 	if err != nil {
 		pageInt = 1
 	}
 
-	perPageInt, err := strconv.Atoi(perPage)
+	perPageInt, err := strconv.ParseInt(perPage, 10, 64)
 	if err != nil {
 		perPageInt = 10
 	}
@@ -28,8 +28,8 @@ func GetPaginationFromRequest(c *fiber.Ctx) *model.PaginationQuery {
 	}
 }
 
-func CreatePaginationMeta(page, perPage int, total int64) *model.PaginatedMeta {
-	lastPage := int(math.Ceil(float64(total) / float64(perPage)))
+func CreatePaginationMeta(page, perPage int64, total int64) *model.PaginatedMeta {
+	lastPage := int64(math.Ceil(float64(total) / float64(perPage)))
 	return &model.PaginatedMeta{
 		Total:       total,
 		CurrentPage: int64(page),

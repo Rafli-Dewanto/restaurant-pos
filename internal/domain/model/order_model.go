@@ -6,9 +6,9 @@ import (
 )
 
 type OrderItemRequest struct {
-	CakeID   int     `json:"cake_id" validate:"required"`
+	CakeID   int64   `json:"cake_id" validate:"required"`
 	Title    string  `json:"title" validate:"required"`
-	Quantity int     `json:"quantity" validate:"required,min=1"`
+	Quantity int64   `json:"quantity" validate:"required,min=1"`
 	Price    float64 `json:"price" validate:"required,min=0"`
 }
 
@@ -17,14 +17,14 @@ type CreateOrderRequest struct {
 }
 
 type OrderItemResponse struct {
-	ID       int       `json:"id"`
+	ID       int64     `json:"id"`
 	Cake     CakeModel `json:"cake"`
-	Quantity int       `json:"quantity"`
+	Quantity int64     `json:"quantity"`
 	Price    float64   `json:"price"`
 }
 
 type OrderResponse struct {
-	ID         int                 `json:"id"`
+	ID         int64               `json:"id"`
 	Customer   CustomerResponse    `json:"customer"`
 	Status     string              `json:"status"`
 	TotalPrice float64             `json:"total_price"`

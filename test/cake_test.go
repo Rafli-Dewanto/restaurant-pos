@@ -209,7 +209,7 @@ func (suite *CakeHandlerTestSuite) TestUpdate() {
 			Rating:      4.5,
 			Price:       90000,
 			Category:    "birthday_cake",
-			ImageURL:       "http://example.com/test.jpg",
+			ImageURL:    "http://example.com/test.jpg",
 		}
 
 		// POST: create cake
@@ -311,7 +311,7 @@ func (suite *CakeHandlerTestSuite) TestDelete() {
 	var res utils.Response
 	json.Unmarshal(body, &res)
 
-	jsonBody, _  := json.Marshal(res.Data)
+	jsonBody, _ := json.Marshal(res.Data)
 	var result model.CakeModel
 	_ = json.Unmarshal(jsonBody, &result)
 

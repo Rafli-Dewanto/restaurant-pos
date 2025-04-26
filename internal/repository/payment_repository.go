@@ -11,10 +11,10 @@ import (
 
 type PaymentRepository interface {
 	CreatePayment(payment *entity.Payment) error
-	GetPaymentByOrderID(orderID int) (*entity.Payment, error)
+	GetPaymentByOrderID(orderID int64) (*entity.Payment, error)
 	UpdatePayment(payment *entity.Payment) error
 	// function to retrieve the first pending payment for testing purposes in development mode
-	GetPendingPayment() (int, error)
+	GetPendingPayment() (int64, error)
 }
 
 type paymentRespositoryImpl struct {
@@ -43,7 +43,7 @@ func (r *paymentRespositoryImpl) CreatePayment(payment *entity.Payment) error {
 	return nil
 }
 
-func (r *paymentRespositoryImpl) GetPaymentByOrderID(orderID int) (*entity.Payment, error) {
+func (r *paymentRespositoryImpl) GetPaymentByOrderID(orderID int64) (*entity.Payment, error) {
 	var payment entity.Payment
 	if err := r.db.Where("order_id = ?", orderID).First(&payment).Error; err != nil {
 		r.log.WithError(err).Error("Failed to get payment")
@@ -70,7 +70,7 @@ func (r *paymentRespositoryImpl) UpdatePayment(payment *entity.Payment) error {
 	return nil
 }
 
-func (r *paymentRespositoryImpl) GetPendingPayment() (int, error) {
+func (r *paymentRespositoryImpl) GetPendingPayment() (int64, error) {
 	var payment entity.Payment
 	if err := r.db.
 		Preload("Order").

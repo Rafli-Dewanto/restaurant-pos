@@ -13,10 +13,10 @@ import (
 
 type CakeUseCase interface {
 	GetAllCakes(params *model.CakeQueryParams) (*model.PaginationResponse[[]entity.Cake], error)
-	GetCakeByID(id int) (*entity.Cake, error)
+	GetCakeByID(id int64) (*entity.Cake, error)
 	CreateCake(cake *entity.Cake) error
 	UpdateCake(cake *entity.Cake) error
-	SoftDeleteCake(id int) error
+	SoftDeleteCake(id int64) error
 }
 
 type cakeUseCase struct {
@@ -47,7 +47,7 @@ func (uc *cakeUseCase) GetAllCakes(params *model.CakeQueryParams) (*model.Pagina
 	return response, nil
 }
 
-func (uc *cakeUseCase) GetCakeByID(id int) (*entity.Cake, error) {
+func (uc *cakeUseCase) GetCakeByID(id int64) (*entity.Cake, error) {
 	cake, err := uc.repo.GetByID(id)
 	if err != nil {
 		if errors.Is(err, constants.ErrNotFound) {
@@ -91,7 +91,7 @@ func (uc *cakeUseCase) UpdateCake(cake *entity.Cake) error {
 	return nil
 }
 
-func (uc *cakeUseCase) SoftDeleteCake(id int) error {
+func (uc *cakeUseCase) SoftDeleteCake(id int64) error {
 	if err := uc.repo.SoftDelete(id); err != nil {
 		uc.logger.Errorf("Error deleting cake with ID %d: %v", id, err)
 		return err

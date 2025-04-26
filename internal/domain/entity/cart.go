@@ -6,10 +6,10 @@ import (
 )
 
 type Cart struct {
-	ID         int          `gorm:"column:id;primaryKey"`
-	CustomerID int          `gorm:"column:customer_id"`
-	CakeID     int          `gorm:"column:cake_id"`
-	Quantity   int          `gorm:"column:quantity"`
+	ID         int64        `gorm:"column:id;primaryKey"`
+	CustomerID int64        `gorm:"column:customer_id"`
+	CakeID     int64        `gorm:"column:cake_id"`
+	Quantity   int64        `gorm:"column:quantity"`
 	Price      float64      `gorm:"column:price"`
 	Subtotal   float64      `gorm:"column:subtotal"`
 	CreatedAt  time.Time    `gorm:"column:created_at"`

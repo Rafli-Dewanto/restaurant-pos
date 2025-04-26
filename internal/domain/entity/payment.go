@@ -9,8 +9,8 @@ import (
 )
 
 type Payment struct {
-	ID           int                     `gorm:"column:id;primaryKey"`
-	OrderID      int                     `gorm:"column:order_id"`
+	ID           int64                   `gorm:"column:id;primaryKey"`
+	OrderID      int64                   `gorm:"column:order_id"`
 	Order        Order                   `gorm:"foreignKey:OrderID"`
 	Amount       float64                 `gorm:"column:amount"`
 	Status       constants.PaymentStatus `gorm:"column:status"`

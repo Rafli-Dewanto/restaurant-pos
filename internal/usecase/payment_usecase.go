@@ -47,7 +47,7 @@ func (uc *paymentUseCase) CreatePaymentURL(order *entity.Order) (*model.PaymentR
 	var req model.CreatePaymentRequest
 
 	req.TransactionDetails = midtrans.TransactionDetails{
-		OrderID:  strconv.Itoa(order.ID),
+		OrderID:  strconv.Itoa(int(order.ID)),
 		GrossAmt: int64(order.TotalPrice),
 	}
 
@@ -153,7 +153,7 @@ func (uc *paymentUseCase) UpdateOrderStatus(id string, status constants.PaymentS
 	}
 
 	uc.log.Info("Running in production mode, updating payment status")
-	orderID, err := strconv.Atoi(id)
+	orderID, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		return err
 	}

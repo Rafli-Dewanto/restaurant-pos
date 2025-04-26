@@ -13,10 +13,10 @@ import (
 
 type CakeRepository interface {
 	GetAll(params *model.CakeQueryParams) (*model.PaginationResponse[[]entity.Cake], error)
-	GetByID(id int) (*entity.Cake, error)
+	GetByID(id int64) (*entity.Cake, error)
 	Create(cake *entity.Cake) error
 	UpdateCake(cake *entity.Cake) error
-	SoftDelete(id int) error
+	SoftDelete(id int64) error
 }
 
 type cakeRepository struct {
@@ -66,13 +66,13 @@ func (c *cakeRepository) GetAll(params *model.CakeQueryParams) (*model.Paginatio
 
 	// Apply pagination and ordering
 	offset := (params.Page - 1) * params.PageSize
-	err := query.Order("rating DESC, title ASC").Offset(offset).Limit(params.PageSize).Find(&cakes).Error
+	err := query.Order("rating DESC, title ASC").Offset(int(offset)).Limit(int(params.PageSize)).Find(&cakes).Error
 	if err != nil {
 		return nil, err
 	}
 
-	totalPages := int(total) / params.PageSize
-	if int(total)%params.PageSize != 0 {
+	totalPages := int64(total) / params.PageSize
+	if int64(total)%params.PageSize != 0 {
 		totalPages++
 	}
 
@@ -85,7 +85,7 @@ func (c *cakeRepository) GetAll(params *model.CakeQueryParams) (*model.Paginatio
 	}, nil
 }
 
-func (c *cakeRepository) GetByID(id int) (*entity.Cake, error) {
+func (c *cakeRepository) GetByID(id int64) (*entity.Cake, error) {
 	var cake entity.Cake
 	err := c.db.Where("deleted_at IS NULL").First(&cake, id).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -123,7 +123,7 @@ func (c *cakeRepository) UpdateCake(cake *entity.Cake) error {
 	return nil
 }
 
-func (c *cakeRepository) SoftDelete(id int) error {
+func (c *cakeRepository) SoftDelete(id int64) error {
 	result := c.db.Model(&entity.Cake{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{

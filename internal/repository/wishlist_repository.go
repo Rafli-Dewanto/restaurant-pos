@@ -10,9 +10,9 @@ import (
 
 type WishListRepository interface {
 	Create(wishlist *entity.WishList) error
-	GetByCustomerID(customerID int, params *model.PaginationQuery) ([]entity.Cake, *model.PaginatedMeta, error)
-	Delete(customerID, cakeID int) error
-	GetByCustomerIDAndCakeID(customerID, cakeID int) (*entity.WishList, error)
+	GetByCustomerID(customerID int64, params *model.PaginationQuery) ([]entity.Cake, *model.PaginatedMeta, error)
+	Delete(customerID, cakeID int64) error
+	GetByCustomerIDAndCakeID(customerID, cakeID int64) (*entity.WishList, error)
 }
 
 type wishListRepository struct {
@@ -27,7 +27,7 @@ func NewWishListRepository(db *gorm.DB, logger *logrus.Logger) WishListRepositor
 	}
 }
 
-func (r *wishListRepository) GetByCustomerIDAndCakeID(customerID, cakeID int) (*entity.WishList, error) {
+func (r *wishListRepository) GetByCustomerIDAndCakeID(customerID, cakeID int64) (*entity.WishList, error) {
 	var wishlist entity.WishList
 	if err := r.db.Where("customer_id = ? AND cake_id = ?", customerID, cakeID).First(&wishlist).Error; err != nil {
 		return nil, err
@@ -39,7 +39,7 @@ func (r *wishListRepository) Create(wishlist *entity.WishList) error {
 	return r.db.Create(wishlist).Error
 }
 
-func (r *wishListRepository) GetByCustomerID(customerID int, params *model.PaginationQuery) ([]entity.Cake, *model.PaginatedMeta, error) {
+func (r *wishListRepository) GetByCustomerID(customerID int64, params *model.PaginationQuery) ([]entity.Cake, *model.PaginatedMeta, error) {
 	var cakes []entity.Cake
 	var total int64
 
@@ -63,20 +63,20 @@ func (r *wishListRepository) GetByCustomerID(customerID int, params *model.Pagin
 		return nil, nil, err
 	}
 
-	lastPage := int((int(params.Limit) + params.Limit - 1) / params.Limit)
+	lastPage := int64((int64(params.Limit) + params.Limit - 1) / params.Limit)
 	meta := &model.PaginatedMeta{
 		CurrentPage: int64(params.Page),
 		Total:       total,
 		PerPage:     int64(params.Limit),
 		LastPage:    lastPage,
-		HasNextPage: params.Page < int(lastPage),
+		HasNextPage: params.Page < int64(lastPage),
 		HasPrevPage: params.Page > 1,
 	}
 
 	return cakes, meta, nil
 }
 
-func (r *wishListRepository) Delete(customerID, cakeID int) error {
+func (r *wishListRepository) Delete(customerID, cakeID int64) error {
 	return r.db.
 		Where("customer_id = ? AND cake_id = ?", customerID, cakeID).
 		Delete(&entity.WishList{}).

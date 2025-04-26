@@ -63,7 +63,7 @@ func (c *CakeController) GetAllCakes(ctx *fiber.Ctx) error {
 }
 
 func (c *CakeController) GetCakeByID(ctx *fiber.Ctx) error {
-	id, err := strconv.Atoi(ctx.Params("id"))
+	id, err := strconv.ParseInt(ctx.Params("id"), 10, 64)
 	if err != nil {
 		c.logger.Error("Failed to parse cake ID: ", err)
 		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid cake ID")
@@ -125,7 +125,7 @@ func (c *CakeController) UpdateCake(ctx *fiber.Ctx) error {
 		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, err.Error())
 	}
 
-	cakeID, err := strconv.Atoi(ctx.Params("id"))
+	cakeID, err := strconv.ParseInt(ctx.Params("id"), 10, 64)
 	if err != nil {
 		c.logger.Errorf("❌ Failed to parse cake ID: %v", err)
 		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid cake ID")
@@ -153,7 +153,7 @@ func (c *CakeController) UpdateCake(ctx *fiber.Ctx) error {
 }
 
 func (c *CakeController) DeleteCake(ctx *fiber.Ctx) error {
-	id, err := strconv.Atoi(ctx.Params("id"))
+	id, err := strconv.ParseInt(ctx.Params("id"), 10, 64)
 	if err != nil {
 		c.logger.Error("Failed to parse cake ID: ", err)
 		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid cake ID")

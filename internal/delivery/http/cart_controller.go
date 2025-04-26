@@ -24,7 +24,7 @@ func NewCartController(cartUseCase usecase.CartUseCase, logger *logrus.Logger) *
 }
 
 func (c *CartController) AddCart(ctx *fiber.Ctx) error {
-	customerID := ctx.Locals(constants.ClaimsKeyID).(int)
+	customerID := ctx.Locals(constants.ClaimsKeyID).(int64)
 	var req model.AddCart
 
 	if err := ctx.BodyParser(&req); err != nil {
@@ -43,7 +43,7 @@ func (c *CartController) AddCart(ctx *fiber.Ctx) error {
 
 func (c *CartController) GetCartByID(ctx *fiber.Ctx) error {
 	id := ctx.Params("id")
-	cartID, err := strconv.Atoi(id)
+	cartID, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		c.logger.Errorf("❌ Failed to parse cart ID: %v", err)
 		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, err.Error())
@@ -59,7 +59,7 @@ func (c *CartController) GetCartByID(ctx *fiber.Ctx) error {
 }
 
 func (c *CartController) GetCartByCustomerID(ctx *fiber.Ctx) error {
-	customerID := ctx.Locals(constants.ClaimsKeyID).(int)
+	customerID := ctx.Locals(constants.ClaimsKeyID).(int64)
 
 	params := new(model.PaginationQuery)
 	if err := ctx.QueryParser(params); err != nil {
@@ -77,8 +77,8 @@ func (c *CartController) GetCartByCustomerID(ctx *fiber.Ctx) error {
 }
 
 func (c *CartController) RemoveCart(ctx *fiber.Ctx) error {
-	customerID := ctx.Locals(constants.ClaimsKeyID).(int)
-	cartID, err := strconv.Atoi(ctx.Params("id"))
+	customerID := ctx.Locals(constants.ClaimsKeyID).(int64)
+	cartID, err := strconv.ParseInt(ctx.Params("id"), 10, 64)
 	if err != nil {
 		c.logger.Errorf("❌ Failed to parse cart ID: %v", err)
 		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, err.Error())
@@ -94,7 +94,7 @@ func (c *CartController) RemoveCart(ctx *fiber.Ctx) error {
 }
 
 func (c *CartController) ClearCart(ctx *fiber.Ctx) error {
-	customerID := ctx.Locals(constants.ClaimsKeyID).(int)
+	customerID := ctx.Locals(constants.ClaimsKeyID).(int64)
 
 	err := c.cartUseCase.ClearCart(customerID)
 	if err != nil {

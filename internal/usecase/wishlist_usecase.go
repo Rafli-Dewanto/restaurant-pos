@@ -11,9 +11,9 @@ import (
 )
 
 type WishListUseCase interface {
-	CreateWishList(customerID, cakeID int) error
-	GetWishList(customerID int, params *model.PaginationQuery) ([]model.CakeModel, *model.PaginatedMeta, error)
-	DeleteWishList(customerID, cakeID int) error
+	CreateWishList(customerID, cakeID int64) error
+	GetWishList(customerID int64, params *model.PaginationQuery) ([]model.CakeModel, *model.PaginatedMeta, error)
+	DeleteWishList(customerID, cakeID int64) error
 }
 
 type wishListUseCase struct {
@@ -36,7 +36,7 @@ func NewWishListUseCase(
 	}
 }
 
-func (uc *wishListUseCase) CreateWishList(customerID, cakeID int) error {
+func (uc *wishListUseCase) CreateWishList(customerID, cakeID int64) error {
 	wishlist := &entity.WishList{
 		CustomerID: customerID,
 		CakeID:     cakeID,
@@ -50,7 +50,7 @@ func (uc *wishListUseCase) CreateWishList(customerID, cakeID int) error {
 	return uc.wishListRepo.Create(wishlist)
 }
 
-func (u *wishListUseCase) GetWishList(customerID int, params *model.PaginationQuery) ([]model.CakeModel, *model.PaginatedMeta, error) {
+func (u *wishListUseCase) GetWishList(customerID int64, params *model.PaginationQuery) ([]model.CakeModel, *model.PaginatedMeta, error) {
 	cakes, meta, err := u.wishListRepo.GetByCustomerID(customerID, params)
 	if err != nil {
 		return nil, nil, err
@@ -72,6 +72,6 @@ func (u *wishListUseCase) GetWishList(customerID int, params *model.PaginationQu
 	return cakeResponses, meta, nil
 }
 
-func (uc *wishListUseCase) DeleteWishList(customerID, cakeID int) error {
+func (uc *wishListUseCase) DeleteWishList(customerID, cakeID int64) error {
 	return uc.wishListRepo.Delete(customerID, cakeID)
 }

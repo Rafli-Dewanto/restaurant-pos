@@ -11,11 +11,11 @@ import (
 )
 
 type CartUseCase interface {
-	CreateCart(customerID int, req *model.AddCart) error
-	GetCartByID(id int) (*model.CartModel, error)
-	GetCartByCustomerID(customerID int, params *model.PaginationQuery) ([]*model.CartModel, *model.PaginatedMeta, error)
-	RemoveCart(customerID int, cartID int) error
-	ClearCart(cartID int) error
+	CreateCart(customerID int64, req *model.AddCart) error
+	GetCartByID(id int64) (*model.CartModel, error)
+	GetCartByCustomerID(customerID int64, params *model.PaginationQuery) ([]model.UserCartResponse, *model.PaginatedMeta, error)
+	RemoveCart(customerID int64, cartID int64) error
+	ClearCart(cartID int64) error
 }
 
 type cartUseCase struct {
@@ -38,7 +38,7 @@ func NewCartUseCase(
 	}
 }
 
-func (uc *cartUseCase) CreateCart(customerID int, req *model.AddCart) error {
+func (uc *cartUseCase) CreateCart(customerID int64, req *model.AddCart) error {
 	if err := uc.validate.Struct(req); err != nil {
 		uc.logger.Errorf("Validation failed for request: %v", err)
 		return err
@@ -86,7 +86,7 @@ func (uc *cartUseCase) CreateCart(customerID int, req *model.AddCart) error {
 	return nil
 }
 
-func (uc *cartUseCase) GetCartByID(id int) (*model.CartModel, error) {
+func (uc *cartUseCase) GetCartByID(id int64) (*model.CartModel, error) {
 	cart, err := uc.cartRepo.GetByID(id)
 	if err != nil {
 		uc.logger.Errorf("Error fetching cart by ID %d: %v", id, err)
@@ -95,24 +95,17 @@ func (uc *cartUseCase) GetCartByID(id int) (*model.CartModel, error) {
 	return model.ToCartModel(cart), nil
 }
 
-func (uc *cartUseCase) GetCartByCustomerID(customerID int, params *model.PaginationQuery) ([]*model.CartModel, *model.PaginatedMeta, error) {
+func (uc *cartUseCase) GetCartByCustomerID(customerID int64, params *model.PaginationQuery) ([]model.UserCartResponse, *model.PaginatedMeta, error) {
 	data, err := uc.cartRepo.GetByCustomerID(customerID, params)
 	if err != nil {
 		uc.logger.Errorf("Error fetching carts for customer ID %d: %v", customerID, err)
 		return nil, nil, err
 	}
 
-	var cartModels []*model.CartModel
-
-	// convert cart entity to cart model
-	for _, cart := range data.Data {
-		cartModels = append(cartModels, model.ToCartModel(cart))
-	}
-
-	return cartModels, model.ToPaginatedMeta(data), nil
+	return data.Data, model.ToPaginatedMeta(data), nil
 }
 
-func (uc *cartUseCase) RemoveCart(customerID int, cartID int) error {
+func (uc *cartUseCase) RemoveCart(customerID int64, cartID int64) error {
 	// Verify the cart exists and belongs to the customer
 	cart, err := uc.cartRepo.GetByID(cartID)
 	if err != nil {
@@ -134,7 +127,7 @@ func (uc *cartUseCase) RemoveCart(customerID int, cartID int) error {
 	return nil
 }
 
-func (uc *cartUseCase) ClearCart(customerID int) error {
+func (uc *cartUseCase) ClearCart(customerID int64) error {
 	// Clear all cart items for the customer
 	if err := uc.cartRepo.ClearCustomerCart(customerID); err != nil {
 		uc.logger.Errorf("Error clearing cart for customer %d: %v", customerID, err)

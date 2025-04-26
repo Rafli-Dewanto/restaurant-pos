@@ -10,10 +10,10 @@ import (
 
 type CustomerRepository interface {
 	Create(customer *entity.Customer) error
-	GetByID(id int) (*entity.Customer, error)
+	GetByID(id int64) (*entity.Customer, error)
 	GetByEmail(email string) (*entity.Customer, error)
 	Update(customer *entity.Customer) error
-	Delete(id int) error
+	Delete(id int64) error
 }
 
 type customerRepository struct {
@@ -36,7 +36,7 @@ func (r *customerRepository) Create(customer *entity.Customer) error {
 	return nil
 }
 
-func (r *customerRepository) GetByID(id int) (*entity.Customer, error) {
+func (r *customerRepository) GetByID(id int64) (*entity.Customer, error) {
 	var customer entity.Customer
 	if err := r.db.First(&customer, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -68,7 +68,7 @@ func (r *customerRepository) Update(customer *entity.Customer) error {
 	return nil
 }
 
-func (r *customerRepository) Delete(id int) error {
+func (r *customerRepository) Delete(id int64) error {
 	result := r.db.Delete(&entity.Customer{}, id)
 	if result.Error != nil {
 		r.logger.Errorf("Error deleting customer: %v", result.Error)

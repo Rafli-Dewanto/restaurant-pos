@@ -29,7 +29,7 @@ func NewOrderController(orderUseCase usecase.OrderUseCase, paymentUseCase usecas
 
 func (c *OrderController) CreateOrder(ctx *fiber.Ctx) error {
 	// Get customer ID from JWT token
-	customerID := ctx.Locals("customer_id").(int)
+	customerID := ctx.Locals("customer_id").(int64)
 
 	var request model.CreateOrderRequest
 	if err := ctx.BodyParser(&request); err != nil {
@@ -65,7 +65,7 @@ func (c *OrderController) CreateOrder(ctx *fiber.Ctx) error {
 }
 
 func (c *OrderController) GetOrderByID(ctx *fiber.Ctx) error {
-	orderID, err := strconv.Atoi(ctx.Params("id"))
+	orderID, err := strconv.ParseInt(ctx.Params("id"), 10, 64)
 	if err != nil {
 		c.logger.Error("Failed to parse order ID: ", err)
 		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid order ID")
@@ -82,7 +82,7 @@ func (c *OrderController) GetOrderByID(ctx *fiber.Ctx) error {
 
 func (c *OrderController) GetCustomerOrders(ctx *fiber.Ctx) error {
 	// Get customer ID from JWT token
-	customerID := ctx.Locals("customer_id").(int)
+	customerID := ctx.Locals("customer_id").(int64)
 
 	orders, err := c.orderUseCase.GetCustomerOrders(customerID)
 	if err != nil {

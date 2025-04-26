@@ -3,7 +3,7 @@ package model
 import "cakestore/internal/domain/entity"
 
 type CustomerResponse struct {
-	ID      int    `json:"id"`
+	ID      int64  `json:"id"`
 	Name    string `json:"name"`
 	Email   string `json:"email"`
 	Address string `json:"address"`

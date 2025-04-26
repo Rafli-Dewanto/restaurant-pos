@@ -7,10 +7,10 @@ import (
 )
 
 type CartModel struct {
-	ID         int       `json:"id" validate:"required"`
-	CustomerID int       `json:"customer_id"`
-	CakeID     int       `json:"cake_id"`
-	Quantity   int       `json:"quantity"`
+	ID         int64     `json:"id" validate:"required"`
+	CustomerID int64     `json:"customer_id"`
+	CakeID     int64     `json:"cake_id"`
+	Quantity   int64     `json:"quantity"`
 	Price      float64   `json:"price"`
 	Subtotal   float64   `json:"subtotal"`
 	CreatedAt  time.Time `json:"created_at"`
@@ -18,8 +18,8 @@ type CartModel struct {
 }
 
 type AddCart struct {
-	CakeID   int `json:"cake_id" validate:"required"`
-	Quantity int `json:"quantity" validate:"required,min=1"`
+	CakeID   int64 `json:"cake_id" validate:"required"`
+	Quantity int64 `json:"quantity" validate:"required,min=1"`
 }
 
 func ToCartEntity(m *CartModel) *entity.Cart {

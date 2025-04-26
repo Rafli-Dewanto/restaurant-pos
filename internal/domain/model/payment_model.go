@@ -9,8 +9,8 @@ import (
 )
 
 type PaymentModel struct {
-	ID           int                     `json:"id"`
-	OrderID      int                     `json:"order_id"`
+	ID           int64                   `json:"id"`
+	OrderID      int64                   `json:"order_id"`
 	Amount       float64                 `json:"amount"`
 	Status       constants.PaymentStatus `json:"status"`
 	PaymentToken string                  `json:"payment_token"`

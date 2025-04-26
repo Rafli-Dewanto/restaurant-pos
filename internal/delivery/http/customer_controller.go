@@ -81,7 +81,7 @@ func (c *CustomerController) Login(ctx *fiber.Ctx) error {
 }
 
 func (c *CustomerController) UpdateProfile(ctx *fiber.Ctx) error {
-	customerID, err := strconv.Atoi(ctx.Params("id"))
+	customerID, err := strconv.ParseInt(ctx.Params("id"), 10, 64)
 	if err != nil {
 		c.logger.Error("Failed to parse customer ID: ", err)
 		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid customer ID")
@@ -109,7 +109,7 @@ func (c *CustomerController) UpdateProfile(ctx *fiber.Ctx) error {
 func (c *CustomerController) GetCustomerByID(ctx *fiber.Ctx) error {
 	customerIDStr := ctx.Locals(constants.ClaimsKeyID)
 
-	customerID, ok := customerIDStr.(int)
+	customerID, ok := customerIDStr.(int64)
 	if !ok {
 		c.logger.Infof("customer_id: %+v, type: %T", customerIDStr, customerIDStr)
 		c.logger.Error("Failed to parse customer ID: ")

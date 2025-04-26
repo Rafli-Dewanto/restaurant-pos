@@ -32,7 +32,7 @@ func GenerateSHA256Hash(data string) string {
 }
 
 // GenerateRandomString generates a random string of the given length
-func GenerateRandomString(n int) (string, error) {
+func GenerateRandomString(n int64) (string, error) {
 	bytes := make([]byte, n)
 	if _, err := rand.Read(bytes); err != nil {
 		return "", err

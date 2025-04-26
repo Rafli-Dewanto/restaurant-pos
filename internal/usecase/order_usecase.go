@@ -12,12 +12,12 @@ import (
 )
 
 type OrderUseCase interface {
-	CreateOrder(customerID int, request *model.CreateOrderRequest) (*entity.Order, error)
-	GetOrderByID(id int) (*model.OrderResponse, error)
+	CreateOrder(customerID int64, request *model.CreateOrderRequest) (*entity.Order, error)
+	GetOrderByID(id int64) (*model.OrderResponse, error)
 	GetAllOrders(params *model.PaginationQuery) (*[]model.OrderResponse, *model.PaginatedMeta, error)
-	GetCustomerOrders(customerID int) ([]model.OrderResponse, error)
+	GetCustomerOrders(customerID int64) ([]model.OrderResponse, error)
 	UpdateOrderStatus(id string, status string) error
-	DeleteOrder(id int) error
+	DeleteOrder(id int64) error
 }
 
 type orderUseCaseImpl struct {
@@ -44,7 +44,7 @@ func NewOrderUseCase(
 	}
 }
 
-func (uc *orderUseCaseImpl) CreateOrder(customerID int, request *model.CreateOrderRequest) (*entity.Order, error) {
+func (uc *orderUseCaseImpl) CreateOrder(customerID int64, request *model.CreateOrderRequest) (*entity.Order, error) {
 	customer, err := uc.customerRepo.GetByID(customerID)
 	if err != nil {
 		return nil, errors.New("customer not found")
@@ -89,7 +89,7 @@ func (uc *orderUseCaseImpl) CreateOrder(customerID int, request *model.CreateOrd
 	return order, nil
 }
 
-func (uc *orderUseCaseImpl) GetOrderByID(id int) (*model.OrderResponse, error) {
+func (uc *orderUseCaseImpl) GetOrderByID(id int64) (*model.OrderResponse, error) {
 	order, err := uc.orderRepo.GetByID(id)
 	if err != nil {
 		return nil, err
@@ -98,7 +98,7 @@ func (uc *orderUseCaseImpl) GetOrderByID(id int) (*model.OrderResponse, error) {
 	return model.OrderToResponse(order), nil
 }
 
-func (uc *orderUseCaseImpl) GetCustomerOrders(customerID int) ([]model.OrderResponse, error) {
+func (uc *orderUseCaseImpl) GetCustomerOrders(customerID int64) ([]model.OrderResponse, error) {
 	orders, err := uc.orderRepo.GetByCustomerID(customerID)
 	if err != nil {
 		return nil, err
@@ -129,7 +129,7 @@ func (uc *orderUseCaseImpl) UpdateOrderStatus(id string, status string) error {
 		return nil
 	}
 
-	orderID, err := strconv.Atoi(id)
+	orderID, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		return err
 	}
@@ -141,7 +141,7 @@ func (uc *orderUseCaseImpl) UpdateOrderStatus(id string, status string) error {
 	return nil
 }
 
-func (uc *orderUseCaseImpl) DeleteOrder(id int) error {
+func (uc *orderUseCaseImpl) DeleteOrder(id int64) error {
 	if err := uc.orderRepo.Delete(id); err != nil {
 		uc.logger.Errorf("Error deleting order: %v", err)
 		return err

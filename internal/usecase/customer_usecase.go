@@ -16,8 +16,8 @@ import (
 type CustomerUseCase interface {
 	Register(request *model.CreateCustomerRequest) (*entity.Customer, error)
 	Login(request *model.LoginRequest) (*string, error)
-	GetCustomerByID(id int) (*entity.Customer, error)
-	UpdateCustomer(id int, request *model.CreateCustomerRequest) error
+	GetCustomerByID(id int64) (*entity.Customer, error)
+	UpdateCustomer(id int64, request *model.CreateCustomerRequest) error
 }
 
 type customerUseCase struct {
@@ -94,7 +94,7 @@ func (uc *customerUseCase) Login(request *model.LoginRequest) (*string, error) {
 	return &tokenString, nil
 }
 
-func (uc *customerUseCase) GetCustomerByID(id int) (*entity.Customer, error) {
+func (uc *customerUseCase) GetCustomerByID(id int64) (*entity.Customer, error) {
 	customer, err := uc.repo.GetByID(id)
 	if err != nil {
 		uc.logger.Errorf("Error getting customer by ID: %v", err)
@@ -103,7 +103,7 @@ func (uc *customerUseCase) GetCustomerByID(id int) (*entity.Customer, error) {
 	return customer, nil
 }
 
-func (uc *customerUseCase) UpdateCustomer(id int, request *model.CreateCustomerRequest) error {
+func (uc *customerUseCase) UpdateCustomer(id int64, request *model.CreateCustomerRequest) error {
 	customer, err := uc.repo.GetByID(id)
 	if err != nil {
 		return err

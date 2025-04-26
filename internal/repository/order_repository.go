@@ -12,14 +12,14 @@ import (
 
 type OrderRepository interface {
 	Create(order *entity.Order) error
-	GetByID(id int) (*entity.Order, error)
+	GetByID(id int64) (*entity.Order, error)
 	GetAll(params *model.PaginationQuery) ([]entity.Order, *model.PaginatedMeta, error)
-	GetByCustomerID(customerID int) ([]entity.Order, error)
+	GetByCustomerID(customerID int64) ([]entity.Order, error)
 	Update(order *entity.Order) error
-	Delete(id int) error
-	UpdateStatus(id int, status entity.OrderStatus) error
+	Delete(id int64) error
+	UpdateStatus(id int64, status entity.OrderStatus) error
 	// GetPendingOrder retrieves the first pending order from the database for testing purposes
-	GetPendingOrder() (int, error)
+	GetPendingOrder() (int64, error)
 }
 
 type orderRepository struct {
@@ -80,7 +80,7 @@ func (r *orderRepository) Create(order *entity.Order) error {
 	})
 }
 
-func (r *orderRepository) GetByID(id int) (*entity.Order, error) {
+func (r *orderRepository) GetByID(id int64) (*entity.Order, error) {
 	var order entity.Order
 	if err := r.db.Preload("Items.Cake").Preload("Customer").First(&order, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -92,7 +92,7 @@ func (r *orderRepository) GetByID(id int) (*entity.Order, error) {
 	return &order, nil
 }
 
-func (r *orderRepository) GetByCustomerID(customerID int) ([]entity.Order, error) {
+func (r *orderRepository) GetByCustomerID(customerID int64) ([]entity.Order, error) {
 	var orders []entity.Order
 	if err := r.db.Preload("Customer").Preload("Items.Cake").Where("customer_id = ?", customerID).Find(&orders).Error; err != nil {
 		r.logger.Errorf("Error getting orders by customer ID: %v", err)
@@ -118,7 +118,7 @@ func (r *orderRepository) Update(order *entity.Order) error {
 	})
 }
 
-func (r *orderRepository) Delete(id int) error {
+func (r *orderRepository) Delete(id int64) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where("order_id = ?", id).Delete(&entity.OrderItem{}).Error; err != nil {
 			r.logger.Errorf("Error deleting order items: %v", err)
@@ -137,7 +137,7 @@ func (r *orderRepository) Delete(id int) error {
 	})
 }
 
-func (r *orderRepository) UpdateStatus(id int, status entity.OrderStatus) error {
+func (r *orderRepository) UpdateStatus(id int64, status entity.OrderStatus) error {
 	result := r.db.Model(&entity.Order{}).Where("id = ?", id).Update("status", status)
 	if result.Error != nil {
 		r.logger.Errorf("UpdateStatus repository ~ Error updating order status: %v", result.Error)
@@ -150,7 +150,7 @@ func (r *orderRepository) UpdateStatus(id int, status entity.OrderStatus) error 
 }
 
 // GetPendingOrder retrieves the first pending order from the database for testing purposes
-func (r *orderRepository) GetPendingOrder() (int, error) {
+func (r *orderRepository) GetPendingOrder() (int64, error) {
 	var order entity.Order
 	if err := r.db.
 		Preload("Items.Cake").

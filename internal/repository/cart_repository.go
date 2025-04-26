@@ -10,13 +10,13 @@ import (
 
 type CartRepository interface {
 	Create(cart *entity.Cart) error
-	GetByID(id int) (*entity.Cart, error)
-	GetByCustomerID(customerID int, params *model.PaginationQuery) (*model.PaginationResponse[[]*entity.Cart], error)
-	GetByCustomerIDAndCakeID(customerID int, cakeID int) (*entity.Cart, error)
+	GetByID(id int64) (*entity.Cart, error)
+	GetByCustomerID(customerID int64, params *model.PaginationQuery) (*model.PaginationResponse[[]model.UserCartResponse], error)
+	GetByCustomerIDAndCakeID(customerID int64, cakeID int64) (*entity.Cart, error)
 	Update(cart *entity.Cart) error
-	Delete(cartID int) error
-	RemoveItem(customerID int, cartID int) error
-	ClearCustomerCart(customerID int) error
+	Delete(cartID int64) error
+	RemoveItem(customerID int64, cartID int64) error
+	ClearCustomerCart(customerID int64) error
 }
 
 type cartRepository struct {
@@ -35,7 +35,7 @@ func (r *cartRepository) Create(cart *entity.Cart) error {
 	return r.db.Create(cart).Error
 }
 
-func (r *cartRepository) GetByID(id int) (*entity.Cart, error) {
+func (r *cartRepository) GetByID(id int64) (*entity.Cart, error) {
 	var cart entity.Cart
 	if err := r.db.First(&cart, id).Error; err != nil {
 		return nil, err
@@ -43,40 +43,45 @@ func (r *cartRepository) GetByID(id int) (*entity.Cart, error) {
 	return &cart, nil
 }
 
-func (r *cartRepository) GetByCustomerID(customerID int, params *model.PaginationQuery) (*model.PaginationResponse[[]*entity.Cart], error) {
-	var carts []*entity.Cart
+func (r *cartRepository) GetByCustomerID(customerID int64, params *model.PaginationQuery) (*model.PaginationResponse[[]model.UserCartResponse], error) {
+	var carts []model.UserCartResponse
 	var total int64
-	var perPage int
-	var page int
-	if params.Page < 1 {
-		page = 1
+	var perPage int64
+	var page int64 = 1
+
+	if params.Page > 0 {
+		page = int64(params.Page)
 	}
 
-	query := r.db.Model(&entity.Cart{}).Where("customer_id = ?", customerID)
+	query := r.db.Model(&entity.Cart{}).
+						Select("carts.id, cakes.title as cake_name, cakes.image as cake_image, carts.customer_id, carts.cake_id, carts.quantity, carts.price, carts.subtotal, carts.created_at, carts.updated_at").
+						Joins("JOIN cakes ON cakes.id = carts.cake_id").
+						Where("carts.customer_id = ?", customerID)
+
 	query.Count(&total)
 
 	if params.Limit > 0 {
-		perPage = int(params.Limit)
+		perPage = int64(params.Limit)
 	} else {
 		perPage = 10
 	}
 
-	offSet := (params.Page - 1) * perPage
+	offset := (page - 1) * perPage
 
-	if err := query.Offset(offSet).Limit(perPage).Find(&carts).Error; err != nil {
+	if err := query.Offset(int(offset)).Limit(int(perPage)).Scan(&carts).Error; err != nil {
 		return nil, err
 	}
 
-	return &model.PaginationResponse[[]*entity.Cart]{
+	return &model.PaginationResponse[[]model.UserCartResponse]{
 		Total:      total,
 		Data:       carts,
 		Page:       page,
 		PageSize:   perPage,
-		TotalPages: int(total) / perPage,
+		TotalPages: (total + perPage - 1) / perPage, // better calculation for total pages
 	}, nil
 }
 
-func (r *cartRepository) GetByCustomerIDAndCakeID(customerID int, cakeID int) (*entity.Cart, error) {
+func (r *cartRepository) GetByCustomerIDAndCakeID(customerID int64, cakeID int64) (*entity.Cart, error) {
 	var cart entity.Cart
 	if err := r.db.Where("customer_id = ? AND cake_id = ?", customerID, cakeID).First(&cart).Error; err != nil {
 		return nil, err
@@ -88,13 +93,13 @@ func (r *cartRepository) Update(cart *entity.Cart) error {
 	return r.db.Save(cart).Error
 }
 
-func (r *cartRepository) Delete(cartID int) error {
+func (r *cartRepository) Delete(cartID int64) error {
 	return r.db.Delete(&entity.Cart{}, cartID).Error
 }
 
-func (r *cartRepository) RemoveItem(customerID int, cartID int) error {
+func (r *cartRepository) RemoveItem(customerID int64, cartID int64) error {
 	type result struct {
-		Quantity int
+		Quantity int64
 		Subtotal float64
 	}
 
@@ -133,7 +138,7 @@ func (r *cartRepository) RemoveItem(customerID int, cartID int) error {
 	return nil
 }
 
-func (r *cartRepository) ClearCustomerCart(customerID int) error {
+func (r *cartRepository) ClearCustomerCart(customerID int64) error {
 	result := r.db.Where("customer_id = ?", customerID).Delete(&entity.Cart{})
 	if result.Error != nil {
 		return result.Error

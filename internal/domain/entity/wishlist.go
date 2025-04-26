@@ -6,9 +6,9 @@ import (
 )
 
 type WishList struct {
-	ID         int          `gorm:"primaryKey"`
-	CustomerID int          `gorm:"not null"`
-	CakeID     int          `gorm:"column:cake_id"`
+	ID         int64        `gorm:"primaryKey"`
+	CustomerID int64        `gorm:"not null"`
+	CakeID     int64        `gorm:"column:cake_id"`
 	CreatedAt  time.Time    `gorm:"column:created_at;autoCreateTime"`
 	UpdatedAt  time.Time    `gorm:"column:updated_at;autoUpdateTime"`
 	DeletedAt  sql.NullTime `gorm:"column:deleted_at"`

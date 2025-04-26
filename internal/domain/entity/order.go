@@ -16,8 +16,8 @@ const (
 )
 
 type Order struct {
-	ID         int          `gorm:"column:id;primaryKey;autoIncrement"`
-	CustomerID int          `gorm:"column:customer_id"`
+	ID         int64        `gorm:"column:id;primaryKey;autoIncrement"`
+	CustomerID int64        `gorm:"column:customer_id"`
 	Customer   Customer     `gorm:"foreignKey:CustomerID"`
 	Status     OrderStatus  `gorm:"column:status"`
 	TotalPrice float64      `gorm:"column:total_price"`
@@ -29,11 +29,11 @@ type Order struct {
 }
 
 type OrderItem struct {
-	ID        int          `gorm:"column:id;primaryKey;autoIncrement"`
-	OrderID   int          `gorm:"column:order_id"`
-	CakeID    int          `gorm:"column:cake_id"`
+	ID        int64        `gorm:"column:id;primaryKey;autoIncrement"`
+	OrderID   int64        `gorm:"column:order_id"`
+	CakeID    int64        `gorm:"column:cake_id"`
 	Cake      Cake         `gorm:"foreignKey:CakeID"`
-	Quantity  int          `gorm:"column:quantity"`
+	Quantity  int64        `gorm:"column:quantity"`
 	Price     float64      `gorm:"column:price"`
 	CreatedAt time.Time    `gorm:"column:created_at"`
 	UpdatedAt time.Time    `gorm:"column:updated_at"`

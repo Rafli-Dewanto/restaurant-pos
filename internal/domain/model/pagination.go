@@ -1,16 +1,16 @@
 package model
 
 type PaginationQuery struct {
-	Page   int `json:"page"`
-	Limit  int `json:"limit"`
-	Offset int `json:"offset"`
+	Page   int64 `json:"page"`
+	Limit  int64 `json:"limit"`
+	Offset int64 `json:"offset"`
 }
 
 type PaginatedMeta struct {
 	CurrentPage int64 `json:"current_page"`
 	Total       int64 `json:"total"`
 	PerPage     int64 `json:"per_page"`
-	LastPage    int   `json:"last_page"`
+	LastPage    int64 `json:"last_page"`
 	HasNextPage bool  `json:"has_next_page"`
 	HasPrevPage bool  `json:"has_prev_page"`
 }
@@ -18,9 +18,9 @@ type PaginatedMeta struct {
 type PaginationResponse[T any] struct {
 	Data       T     `json:"data"`
 	Total      int64 `json:"total"`
-	Page       int   `json:"page"`
-	PageSize   int   `json:"page_size"`
-	TotalPages int   `json:"total_pages"`
+	Page       int64 `json:"page"`
+	PageSize   int64 `json:"page_size"`
+	TotalPages int64 `json:"total_pages"`
 }
 
 func ToPaginatedMeta[T any](PaginationResponse *PaginationResponse[T]) *PaginatedMeta {

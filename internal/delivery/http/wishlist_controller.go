@@ -28,8 +28,8 @@ func NewWishListController(
 
 func (h *WishListController) CreateWishList(ctx *fiber.Ctx) error {
 	h.logger.Trace("Creating wishlist")
-	customerID := ctx.Locals(constants.ClaimsKeyID).(int)
-	cakeID, err := strconv.Atoi(ctx.Params("cakeId"))
+	customerID := ctx.Locals(constants.ClaimsKeyID).(int64)
+	cakeID, err := strconv.ParseInt(ctx.Params("cakeId"), 10, 64)
 	if err != nil {
 		h.logger.Errorf("Error converting cake ID: %v", err)
 		return utils.WriteErrorResponse(ctx, http.StatusBadRequest, "Invalid cake ID")
@@ -50,7 +50,7 @@ func (h *WishListController) CreateWishList(ctx *fiber.Ctx) error {
 
 func (h *WishListController) GetWishListByCustomerID(ctx *fiber.Ctx) error {
 	h.logger.Trace("Getting wishlist by customer ID")
-	customerID := ctx.Locals(constants.ClaimsKeyID).(int)
+	customerID := ctx.Locals(constants.ClaimsKeyID).(int64)
 
 	paginationQuery := utils.GetPaginationFromRequest(ctx)
 
@@ -65,8 +65,8 @@ func (h *WishListController) GetWishListByCustomerID(ctx *fiber.Ctx) error {
 
 func (c *WishListController) DeleteWishList(ctx *fiber.Ctx) error {
 	c.logger.Trace("Deleting wishlist")
-	customerID := ctx.Locals(constants.ClaimsKeyID).(int)
-	cakeID, err := strconv.Atoi(ctx.Params("cakeId"))
+	customerID := ctx.Locals(constants.ClaimsKeyID).(int64)
+	cakeID, err := strconv.ParseInt(ctx.Params("cakeId"), 10, 64)
 	if err != nil {
 		c.logger.Errorf("Error converting cake ID: %v", err)
 		return utils.WriteErrorResponse(ctx, http.StatusBadRequest, "Invalid cake ID")

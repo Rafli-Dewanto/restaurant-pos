@@ -14,13 +14,13 @@ var cfg = configs.LoadConfig()
 type Claims struct {
 	Email      string `json:"email"`
 	Name       string `json:"name"`
-	CustomerID int    `json:"customer_id"`
+	CustomerID int64  `json:"customer_id"`
 	Role       string `json:"role"`
 	jwt.RegisteredClaims
 }
 
 // GenerateToken creates a new JWT token with email and name claims
-func GenerateToken(customerID int, email, name, role string) (string, error) {
+func GenerateToken(customerID int64, email, name, role string) (string, error) {
 	claims := &Claims{
 		Email:      email,
 		Name:       name,
