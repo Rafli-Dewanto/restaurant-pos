@@ -77,5 +77,5 @@ func main() {
 		port = "8080"
 	}
 	log.Printf("🚀 Server running on port %s", port)
-	log.Fatal(app.Listen(":" + port))
+	log.Fatal(app.Listen("0.0.0.0:" + port))
 }
