@@ -3,6 +3,7 @@ package test
 import (
 	"bytes"
 	configs "cakestore/internal/config"
+	"cakestore/internal/database"
 	controller "cakestore/internal/delivery/http"
 	"cakestore/internal/domain/entity"
 	"cakestore/internal/domain/model"
@@ -10,9 +11,7 @@ import (
 	"cakestore/internal/usecase"
 	"cakestore/utils"
 	"encoding/json"
-	"fmt"
 	"io"
-	"log"
 	"net/http/httptest"
 	"strconv"
 	"testing"
@@ -21,7 +20,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
@@ -39,17 +37,10 @@ type CakeHandlerTestSuite struct {
 func (suite *CakeHandlerTestSuite) SetupTest() {
 	cfg := configs.LoadConfig()
 
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-		cfg.DBUser, cfg.DBPassword, cfg.DBHost, cfg.DBPort, cfg.DBName)
-
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
-	if err != nil {
-		log.Println(dsn)
-		log.Fatalf("❌ Failed to connect to database: %v", err)
-	}
+	db := database.ConnectPostgres(cfg)
 
 	// Run migrations
-	err = db.AutoMigrate(&entity.Cake{})
+	err := db.AutoMigrate(&entity.Cake{})
 	assert.NoError(suite.T(), err)
 
 	suite.db = db

@@ -37,7 +37,7 @@ type AuthTestSuite struct {
 
 func (suite *AuthTestSuite) SetupTest() {
 	cfg := configs.LoadConfig()
-	db := database.ConnectMySQL(cfg)
+	db := database.ConnectPostgres(cfg)
 	// Run migrations
 	err := db.AutoMigrate(&entity.Customer{})
 	assert.NoError(suite.T(), err)

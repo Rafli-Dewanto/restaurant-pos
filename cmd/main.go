@@ -17,7 +17,7 @@ import (
 func main() {
 	logger := utils.NewLogger()
 	cfg := configs.LoadConfig()
-	db := database.ConnectMySQL(cfg)
+	db := database.ConnectPostgres(cfg)
 	err := database.RunMigrations(db)
 	if err != nil {
 		log.Fatalf("❌ Failed to run database migrations: %v", err)
