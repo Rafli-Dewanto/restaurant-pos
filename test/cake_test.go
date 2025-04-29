@@ -3,7 +3,6 @@ package test
 import (
 	"bytes"
 	configs "cakestore/internal/config"
-	"cakestore/internal/database"
 	controller "cakestore/internal/delivery/http"
 	"cakestore/internal/domain/entity"
 	"cakestore/internal/domain/model"
@@ -49,18 +48,13 @@ func (suite *CakeHandlerTestSuite) SetupTest() {
 		log.Fatalf("❌ Failed to connect to database: %v", err)
 	}
 
-	sqlx, err := database.NewDB(cfg)
-	if err != nil {
-		log.Fatalf("❌ Failed to create database connection: %v", err)
-	}
-
 	// Run migrations
 	err = db.AutoMigrate(&entity.Cake{})
 	assert.NoError(suite.T(), err)
 
 	suite.db = db
 	suite.logger = utils.NewLogger()
-	suite.repo = repository.NewCakeRepository(sqlx, suite.logger)
+	suite.repo = repository.NewCakeRepository(db, suite.logger)
 	suite.useCase = usecase.NewCakeUseCase(suite.repo, suite.logger)
 	suite.handler = controller.NewCakeController(suite.useCase, suite.logger)
 

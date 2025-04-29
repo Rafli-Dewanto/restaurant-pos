@@ -4,12 +4,11 @@ import (
 	"cakestore/internal/constants"
 	"cakestore/internal/domain/entity"
 	"cakestore/internal/domain/model"
-	"database/sql"
 	"errors"
-	"fmt"
+	"time"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 )
 
 type CakeRepository interface {
@@ -21,52 +20,39 @@ type CakeRepository interface {
 }
 
 type cakeRepository struct {
-	db  *sqlx.DB
+	db  *gorm.DB
 	log *logrus.Logger
 }
 
-func NewCakeRepository(db *sqlx.DB, log *logrus.Logger) CakeRepository {
+func NewCakeRepository(db *gorm.DB, log *logrus.Logger) CakeRepository {
 	return &cakeRepository{db: db, log: log}
 }
 
-func (r *cakeRepository) GetAll(params *model.CakeQueryParams) (*model.PaginationResponse[[]entity.Cake], error) {
+func (c *cakeRepository) GetAll(params *model.CakeQueryParams) (*model.PaginationResponse[[]entity.Cake], error) {
 	var cakes []entity.Cake
 	var total int64
 
-	// Build dynamic query
-	query := "SELECT * FROM cakes WHERE deleted_at IS NULL"
-	countQuery := "SELECT COUNT(*) FROM cakes WHERE deleted_at IS NULL"
-
-	var args []interface{}
-	where := ""
+	query := c.db.Model(&entity.Cake{}).Where("deleted_at IS NULL")
 
 	if params.Title != "" {
-		where += " AND title ILIKE ?"
-		args = append(args, "%"+params.Title+"%")
+		query = query.Where("title LIKE ?", "%"+params.Title+"%")
 	}
 	if params.MinPrice > 0 {
-		where += " AND price >= ?"
-		args = append(args, params.MinPrice)
+		query = query.Where("price >= ?", params.MinPrice)
 	}
 	if params.MaxPrice > 0 {
-		where += " AND price <= ?"
-		args = append(args, params.MaxPrice)
+		query = query.Where("price <= ?", params.MaxPrice)
 	}
 	if params.Category != "" {
-		where += " AND category = ?"
-		args = append(args, params.Category)
+		query = query.Where("category = ?", params.Category)
 	}
 
-	query += where
-	countQuery += where
-
-	// Get total
-	err := r.db.Get(&total, countQuery, args...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to count cakes: %w", err)
+	// Get total count for pagination
+	if err := query.Count(&total).Error; err != nil {
+		return nil, err
 	}
 
-	// Pagination
+	// Set default values for pagination
 	if params.Page < 1 {
 		params.Page = 1
 	}
@@ -77,19 +63,16 @@ func (r *cakeRepository) GetAll(params *model.CakeQueryParams) (*model.Paginatio
 			params.PageSize = params.Limit
 		}
 	}
+
+	// Apply pagination and ordering
 	offset := (params.Page - 1) * params.PageSize
-
-	// Final query with ordering and pagination
-	query += " ORDER BY rating DESC, title ASC LIMIT ? OFFSET ?"
-	args = append(args, params.PageSize, offset)
-
-	err = r.db.Select(&cakes, query, args...)
+	err := query.Order("rating DESC, title ASC").Offset(int(offset)).Limit(int(params.PageSize)).Find(&cakes).Error
 	if err != nil {
-		return nil, fmt.Errorf("failed to get cakes: %w", err)
+		return nil, err
 	}
 
-	totalPages := total / params.PageSize
-	if total%params.PageSize != 0 {
+	totalPages := int64(total) / params.PageSize
+	if int64(total)%params.PageSize != 0 {
 		totalPages++
 	}
 
@@ -102,77 +85,56 @@ func (r *cakeRepository) GetAll(params *model.CakeQueryParams) (*model.Paginatio
 	}, nil
 }
 
-func (r *cakeRepository) GetByID(id int64) (*entity.Cake, error) {
+func (c *cakeRepository) GetByID(id int64) (*entity.Cake, error) {
 	var cake entity.Cake
-	query := "SELECT * FROM cakes WHERE id = ? AND deleted_at IS NULL"
-	err := r.db.Get(&cake, query, id)
-	if errors.Is(err, sql.ErrNoRows) {
+	err := c.db.Where("deleted_at IS NULL").First(&cake, id).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, constants.ErrNotFound
 	}
 	if err != nil {
-		return nil, fmt.Errorf("failed to get cake by id: %w", err)
+		return nil, err
 	}
 	return &cake, nil
 }
 
-func (r *cakeRepository) Create(cake *entity.Cake) error {
-	query := `
-		INSERT INTO cakes (title, description, rating, image, price, category, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
-		RETURNING id
-	`
-	err := r.db.QueryRow(query,
-		cake.Title,
-		cake.Description,
-		cake.Rating,
-		cake.Image,
-		cake.Price,
-		cake.Category,
-	).Scan(&cake.ID)
-	if err != nil {
-		return fmt.Errorf("failed to create cake: %w", err)
-	}
-	return nil
+func (c *cakeRepository) Create(cake *entity.Cake) error {
+	return c.db.Create(cake).Error
 }
 
-func (r *cakeRepository) UpdateCake(cake *entity.Cake) error {
-	query := `
-		UPDATE cakes
-		SET title = ?, description = ?, rating = ?, image = ?, updated_at = NOW()
-		WHERE id = ? AND deleted_at IS NULL
-	`
-	result, err := r.db.Exec(query,
-		cake.Title,
-		cake.Description,
-		cake.Rating,
-		cake.Image,
-		cake.ID,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to update cake: %w", err)
-	}
+func (c *cakeRepository) UpdateCake(cake *entity.Cake) error {
+	result := c.db.Model(&entity.Cake{}).
+		Where("id = ?", cake.ID).
+		Updates(map[string]interface{}{
+			"title":       cake.Title,
+			"description": cake.Description,
+			"rating":      cake.Rating,
+			"image":       cake.Image,
+			"updated_at":  time.Now(),
+		})
 
-	rowsAffected, _ := result.RowsAffected()
-	if rowsAffected == 0 {
+	if result.RowsAffected == 0 {
 		return constants.ErrNotFound
 	}
 
+	if result.Error != nil {
+		return result.Error
+	}
+
 	return nil
 }
 
-func (r *cakeRepository) SoftDelete(id int64) error {
-	query := `
-		UPDATE cakes
-		SET deleted_at = NOW()
-		WHERE id = ? AND deleted_at IS NULL
-	`
-	result, err := r.db.Exec(query, id)
-	if err != nil {
-		return fmt.Errorf("failed to soft delete cake: %w", err)
+func (c *cakeRepository) SoftDelete(id int64) error {
+	result := c.db.Model(&entity.Cake{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"deleted_at": time.Now(),
+		})
+
+	if result.Error != nil {
+		return result.Error
 	}
 
-	rowsAffected, _ := result.RowsAffected()
-	if rowsAffected == 0 {
+	if result.RowsAffected == 0 {
 		return errors.New("no rows updated, cake not found")
 	}
 
