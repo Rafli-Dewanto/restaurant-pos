@@ -12,8 +12,6 @@ bin/
 build/
 dist/
 vendor/
-*.mod
-*.sum
 
 # Git stuff
 .git

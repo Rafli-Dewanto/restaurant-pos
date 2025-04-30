@@ -24,7 +24,7 @@ func (s *Seeder) SeedAll() error {
 	s.logger.Info("Starting database seeding...")
 
 	// Seed admin user
-	if err := s.customerSeeder.SeedAdmin("admin@example.com", "master123"); err != nil {
+	if err := s.customerSeeder.SeedAdmin("admin@email.com", "master123"); err != nil {
 		s.logger.Errorf("Error seeding admin user: %v", err)
 		return err
 	}
@@ -35,10 +35,10 @@ func (s *Seeder) SeedAll() error {
 	}
 
 	// Seed cakes
-	// if err := s.cakeSeeder.SeedCakes(); err != nil {
-	// 	s.logger.Errorf("Error seeding cakes: %v", err)
-	// 	return err
-	// }
+	if err := s.cakeSeeder.SeedCakes(); err != nil {
+		s.logger.Errorf("Error seeding cakes: %v", err)
+		return err
+	}
 
 	s.logger.Info("Database seeding completed successfully")
 	return nil

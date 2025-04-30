@@ -17,7 +17,7 @@ RUN go mod download
 COPY . .
 
 # Build the application
-RUN go build -o main .
+RUN go build -o main cmd/main.go
 
 # Runtime stage
 FROM alpine:3.18

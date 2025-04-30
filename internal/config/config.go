@@ -19,11 +19,11 @@ func LoadConfig() *Config {
 	viper := NewViper()
 
 	return &Config{
-		DBName:               viper.GetString("MYSQL_DATABASE"),
-		DBPassword:           viper.GetString("MYSQL_ROOT_PASSWORD"),
-		DBUser:               viper.GetString("MYSQL_USER"),
-		DBPort:               viper.GetString("MYSQL_PORT"),
-		DBHost:               viper.GetString("MYSQL_HOST"),
+		DBName:               viper.GetString("POSTGRES_DB"),
+		DBPassword:           viper.GetString("POSTGRES_PASSWORD"),
+		DBUser:               viper.GetString("POSTGRES_USER"),
+		DBPort:               viper.GetString("POSTGRES_PORT"),
+		DBHost:               viper.GetString("POSTGRES_HOST"),
 		JWT_SECRET:           viper.GetString("JWT_SECRET"),
 		MIDTRANS_MERCHANT_ID: viper.GetString("MIDTRANS_MERCHANT_ID"),
 		MIDTRANS_CLIENT_KEY:  viper.GetString("MIDTRANS_CLIENT_KEY"),

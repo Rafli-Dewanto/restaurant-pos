@@ -17,7 +17,7 @@ import (
 func main() {
 	logger := utils.NewLogger()
 	cfg := configs.LoadConfig()
-	db := database.ConnectMySQL(cfg)
+	db := database.ConnectPostgres(cfg)
 	err := database.RunMigrations(db)
 	if err != nil {
 		log.Fatalf("❌ Failed to run database migrations: %v", err)
@@ -77,5 +77,5 @@ func main() {
 		port = "8080"
 	}
 	log.Printf("🚀 Server running on port %s", port)
-	log.Fatal(app.Listen(":" + port))
+	log.Fatal(app.Listen("0.0.0.0:" + port))
 }

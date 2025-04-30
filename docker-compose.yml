@@ -2,15 +2,16 @@ version: "3.8"
 
 services:
   db:
-    image: mysql:8
+    image: postgres:16
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_DATABASE: cakestore
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: cakestore
+      POSTGRES_USER: postgres
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
-      - db_data:/var/lib/mysql
+      - db_data:/var/lib/postgresql/pgdata
     networks:
       - app-network
 
@@ -21,11 +22,11 @@ services:
     depends_on:
       - db
     environment:
-      - DB_HOST=db
-      - DB_PORT=3306
-      - DB_USER=root
-      - DB_PASSWORD=password
-      - DB_NAME=cakestore
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=cakestore
     ports:
       - "8080:8080"
     networks:
