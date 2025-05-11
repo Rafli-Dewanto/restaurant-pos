@@ -5,6 +5,7 @@ import (
 	"cakestore/internal/database"
 	controller "cakestore/internal/delivery/http"
 	"cakestore/internal/delivery/http/route"
+	"cakestore/internal/health"
 	"cakestore/internal/repository"
 	"cakestore/internal/seeder"
 	"cakestore/internal/usecase"
@@ -39,8 +40,13 @@ func main() {
 
 	app := fiber.New()
 
+	healthChecker := health.NewHealthChecker(db)
 	app.Get("/health", func(c *fiber.Ctx) error {
-		return c.SendString("OK")
+		health := healthChecker.Check()
+		if health.Status != "healthy" {
+			return c.Status(fiber.StatusServiceUnavailable).JSON(health)
+		}
+		return c.JSON(health)
 	})
 
 	// usecase
