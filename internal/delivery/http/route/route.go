@@ -51,6 +51,13 @@ func (c *RouteConfig) SetupRoute() {
 	protectedRoutes.Get("/customers/me", c.CustomerController.GetCustomerByID)
 	protectedRoutes.Put("/customers/:id", c.CustomerController.UpdateProfile)
 
+	// employee routes
+	employeeRoutes := protectedRoutes.Group("/employees")
+	employeeRoutes.Get("/", c.CustomerController.GetEmployees)
+	employeeRoutes.Get("/:id", c.CustomerController.GetEmployeeByID)
+	employeeRoutes.Put("/:id", middleware.RoleMiddleware(constants.RoleAdmin), c.CustomerController.UpdateEmployee)
+	employeeRoutes.Delete("/:id", middleware.RoleMiddleware(constants.RoleAdmin), c.CustomerController.DeleteEmployee)
+
 	// Cake routes
 	cakes := protectedRoutes.Group("/cakes")
 	cakes.Post("/", middleware.RoleMiddleware(constants.RoleAdmin, constants.RoleCashier, constants.RoleKitchen, constants.RoleWaitress), c.CakeController.CreateCake)

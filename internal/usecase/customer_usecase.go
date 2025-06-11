@@ -18,6 +18,10 @@ type CustomerUseCase interface {
 	Login(request *model.LoginRequest) (*string, error)
 	GetCustomerByID(id int64) (*entity.Customer, error)
 	UpdateCustomer(id int64, request *model.CreateCustomerRequest) error
+	GetEmployees() ([]entity.Customer, error)
+	GetEmployeeByID(id int64) (*entity.Customer, error)
+	UpdateEmployee(id int64, request *model.UpdateEmployeeRequest, role string) error
+	DeleteEmployee(id int64) error
 }
 
 type customerUseCase struct {
@@ -133,5 +137,57 @@ func (uc *customerUseCase) UpdateCustomer(id int64, request *model.CreateCustome
 		return err
 	}
 
+	return nil
+}
+
+func (uc *customerUseCase) GetEmployees() ([]entity.Customer, error) {
+	employees, err := uc.repo.GetEmployees()
+	if err != nil {
+		uc.logger.Errorf("Error getting employees: %v", err)
+		return nil, err
+	}
+	return employees, nil
+}
+
+func (uc *customerUseCase) GetEmployeeByID(id int64) (*entity.Customer, error) {
+	employee, err := uc.repo.GetEmployeeByID(id)
+	if err != nil {
+		if errors.Is(err, constants.ErrNotFound) {
+			return nil, err
+		}
+		uc.logger.Errorf("Error getting employee by ID: %v", err)
+		return nil, err
+	}
+	return employee, nil
+}
+
+func (uc *customerUseCase) UpdateEmployee(id int64, request *model.UpdateEmployeeRequest, role string) error {
+	employee, err := uc.repo.GetEmployeeByID(id)
+	if err != nil {
+		return err
+	}
+
+	// Update fields
+	employee.Name = request.Name
+	employee.Email = request.Email
+	employee.Address = request.Address
+	employee.UpdatedAt = time.Now()
+	if role != "" {
+		employee.Role = role
+	}
+
+	if err := uc.repo.UpdateEmployee(id, request, role); err != nil {
+		uc.logger.Errorf("Error updating employee: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func (uc *customerUseCase) DeleteEmployee(id int64) error {
+	if err := uc.repo.DeleteEmployee(id); err != nil {
+		uc.logger.Errorf("Error deleting employee: %v", err)
+		return err
+	}
 	return nil
 }

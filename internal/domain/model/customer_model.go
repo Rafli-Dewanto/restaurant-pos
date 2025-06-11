@@ -16,6 +16,12 @@ type CreateCustomerRequest struct {
 	Address  string `json:"address" validate:"required"`
 }
 
+type UpdateEmployeeRequest struct {
+	Name     string `json:"name" validate:"required"`
+	Email    string `json:"email" validate:"required,email"`
+	Address  string `json:"address" validate:"required"`
+}
+
 type LoginRequest struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required"`

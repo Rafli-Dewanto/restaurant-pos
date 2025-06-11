@@ -127,3 +127,77 @@ func (c *CustomerController) GetCustomerByID(ctx *fiber.Ctx) error {
 
 	return utils.WriteResponse(ctx, fiber.StatusOK, model.CustomerToResponse(customer), "Customer fetched successfully", nil)
 }
+
+func (c *CustomerController) GetEmployees(ctx *fiber.Ctx) error {
+	employees, err := c.customerUseCase.GetEmployees()
+	if err != nil {
+		c.logger.Error("Failed to get employees: ", err)
+		return utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to get employees")
+	}
+	var employeesResponse []model.CustomerResponse
+	for _, employee := range employees {
+		employeesResponse = append(employeesResponse, *model.CustomerToResponse(&employee))
+	}
+	return utils.WriteResponse(ctx, fiber.StatusOK, employeesResponse, "Employees fetched successfully", nil)
+}
+
+func (c *CustomerController) GetEmployeeByID(ctx *fiber.Ctx) error {
+	employeeIdStr := ctx.Params("id")
+	employeeId, err := strconv.ParseInt(employeeIdStr, 10, 64)
+	if err != nil {
+		c.logger.Error("Failed to parse employee ID: ", err)
+		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid employee ID")
+	}
+
+	employee, err := c.customerUseCase.GetEmployeeByID(employeeId)
+	if err != nil {
+		c.logger.Error("Failed to get employee: ", err)
+		return utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, err.Error())
+	}
+
+	return utils.WriteResponse(ctx, fiber.StatusOK, model.CustomerToResponse(employee), "Employee fetched successfully", nil)
+}
+
+func (c *CustomerController) UpdateEmployee(ctx *fiber.Ctx) error {
+	employeeID, err := strconv.ParseInt(ctx.Params("id"), 10, 64)
+	if err != nil {
+		c.logger.Error("Failed to parse employee ID: ", err)
+		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid employee ID")
+	}
+
+	// get header role
+	role := ctx.Get("x-app-role")
+
+	var request model.UpdateEmployeeRequest
+	if err := ctx.BodyParser(&request); err != nil {
+		c.logger.Error("Failed to parse body: ", err)
+		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid request body")
+	}
+
+	if err := c.validator.Struct(request); err != nil {
+		c.logger.Error("Validation failed: ", err)
+		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, err.Error())
+	}
+
+	if err := c.customerUseCase.UpdateEmployee(employeeID, &request, role); err != nil {
+		c.logger.Error("Failed to update employee: ", err)
+		return utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to update employee")
+	}
+
+	return utils.WriteResponse(ctx, fiber.StatusOK, nil, "Employee updated successfully", nil)
+}
+
+func (c *CustomerController) DeleteEmployee(ctx *fiber.Ctx) error {
+	employeeID, err := strconv.ParseInt(ctx.Params("id"), 10, 64)
+	if err != nil {
+		c.logger.Error("Failed to parse employee ID: ", err)
+		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid employee ID")
+	}
+
+	if err := c.customerUseCase.DeleteEmployee(employeeID); err != nil {
+		c.logger.Error("Failed to delete employee: ", err)
+		return utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to delete employee")
+	}
+
+	return utils.WriteResponse(ctx, fiber.StatusOK, nil, "Employee deleted successfully", nil)
+}
