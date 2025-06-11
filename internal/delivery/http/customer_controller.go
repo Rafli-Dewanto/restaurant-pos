@@ -125,7 +125,7 @@ func (c *CustomerController) GetCustomerByID(ctx *fiber.Ctx) error {
 		return utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to get customer")
 	}
 
-	return utils.WriteResponse(ctx, fiber.StatusOK, model.CustomerToResponse(customer), "Customer fetched successfully", nil)
+	return utils.WriteResponse(ctx, fiber.StatusOK, model.ToCustomerResponse(customer), "Customer fetched successfully", nil)
 }
 
 func (c *CustomerController) GetEmployees(ctx *fiber.Ctx) error {
@@ -134,9 +134,9 @@ func (c *CustomerController) GetEmployees(ctx *fiber.Ctx) error {
 		c.logger.Error("Failed to get employees: ", err)
 		return utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to get employees")
 	}
-	var employeesResponse []model.CustomerResponse
+	var employeesResponse []model.EmployeeResponse
 	for _, employee := range employees {
-		employeesResponse = append(employeesResponse, *model.CustomerToResponse(&employee))
+		employeesResponse = append(employeesResponse, *model.ToEmployeeResponse(&employee))
 	}
 	return utils.WriteResponse(ctx, fiber.StatusOK, employeesResponse, "Employees fetched successfully", nil)
 }
@@ -155,7 +155,7 @@ func (c *CustomerController) GetEmployeeByID(ctx *fiber.Ctx) error {
 		return utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, err.Error())
 	}
 
-	return utils.WriteResponse(ctx, fiber.StatusOK, model.CustomerToResponse(employee), "Employee fetched successfully", nil)
+	return utils.WriteResponse(ctx, fiber.StatusOK, model.ToEmployeeResponse(employee), "Employee fetched successfully", nil)
 }
 
 func (c *CustomerController) UpdateEmployee(ctx *fiber.Ctx) error {

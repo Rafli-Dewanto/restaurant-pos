@@ -9,6 +9,14 @@ type CustomerResponse struct {
 	Address string `json:"address"`
 }
 
+type EmployeeResponse struct {
+	ID      int64  `json:"id"`
+	Name    string `json:"name"`
+	Email   string `json:"email"`
+	Address string `json:"address"`
+	Role    string `json:"role"`
+}
+
 type CreateCustomerRequest struct {
 	Name     string `json:"name" validate:"required"`
 	Email    string `json:"email" validate:"required,email"`
@@ -17,9 +25,9 @@ type CreateCustomerRequest struct {
 }
 
 type UpdateEmployeeRequest struct {
-	Name     string `json:"name" validate:"required"`
-	Email    string `json:"email" validate:"required,email"`
-	Address  string `json:"address" validate:"required"`
+	Name    string `json:"name" validate:"required"`
+	Email   string `json:"email" validate:"required,email"`
+	Address string `json:"address" validate:"required"`
 }
 
 type LoginRequest struct {
@@ -31,12 +39,22 @@ type LoginResponse struct {
 	Token string `json:"token"`
 }
 
-func CustomerToResponse(customer *entity.Customer) *CustomerResponse {
+func ToCustomerResponse(customer *entity.Customer) *CustomerResponse {
 	return &CustomerResponse{
 		ID:      customer.ID,
 		Name:    customer.Name,
 		Email:   customer.Email,
 		Address: customer.Address,
+	}
+}
+
+func ToEmployeeResponse(customer *entity.Customer) *EmployeeResponse {
+	return &EmployeeResponse{
+		ID:      customer.ID,
+		Name:    customer.Name,
+		Email:   customer.Email,
+		Address: customer.Address,
+		Role:    customer.Role,
 	}
 }
 
