@@ -30,7 +30,7 @@ func (c *RouteConfig) SetupRoute() {
 	c.App.Use(cors.New(cors.Config{
 		AllowOrigins: "*",
 		AllowMethods: "GET,POST,PATCH,PUT,DELETE",
-		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
+		AllowHeaders: "Origin, Content-Type, Accept, Authorization, X-App-Role",
 	}))
 	c.App.Use(middleware.LogMiddleware(c.Log))
 
