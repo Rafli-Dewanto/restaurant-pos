@@ -14,7 +14,7 @@ import (
 )
 
 type CustomerUseCase interface {
-	Register(request *model.CreateCustomerRequest) (*entity.Customer, error)
+	Register(request *model.CreateCustomerRequest, role string) (*entity.Customer, error)
 	Login(request *model.LoginRequest) (*string, error)
 	GetCustomerByID(id int64) (*entity.Customer, error)
 	UpdateCustomer(id int64, request *model.CreateCustomerRequest) error
@@ -34,7 +34,7 @@ func NewCustomerUseCase(repo repository.CustomerRepository, logger *logrus.Logge
 	}
 }
 
-func (uc *customerUseCase) Register(request *model.CreateCustomerRequest) (*entity.Customer, error) {
+func (uc *customerUseCase) Register(request *model.CreateCustomerRequest, role string) (*entity.Customer, error) {
 	// Check if email already exists
 	existingCustomer, err := uc.repo.GetByEmail(request.Email)
 	if err == nil && existingCustomer != nil {
@@ -48,12 +48,16 @@ func (uc *customerUseCase) Register(request *model.CreateCustomerRequest) (*enti
 		return nil, err
 	}
 
+	if role == "" {
+		role = constants.RoleCustomer
+	}
+
 	customer := &entity.Customer{
 		Name:      request.Name,
 		Email:     request.Email,
 		Password:  string(hashedPassword),
 		Address:   request.Address,
-		Role:      constants.RoleCustomer,
+		Role:      role,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}

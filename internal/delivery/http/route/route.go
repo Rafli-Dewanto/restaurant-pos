@@ -53,9 +53,9 @@ func (c *RouteConfig) SetupRoute() {
 
 	// Cake routes
 	cakes := protectedRoutes.Group("/cakes")
-	cakes.Post("/", middleware.RoleMiddleware(constants.RoleAdmin), c.CakeController.CreateCake)
-	cakes.Put("/:id", middleware.RoleMiddleware(constants.RoleAdmin), c.CakeController.UpdateCake)
-	cakes.Delete("/:id", middleware.RoleMiddleware(constants.RoleAdmin), c.CakeController.DeleteCake)
+	cakes.Post("/", middleware.RoleMiddleware(constants.RoleAdmin, constants.RoleCashier, constants.RoleKitchen, constants.RoleWaitress), c.CakeController.CreateCake)
+	cakes.Put("/:id", middleware.RoleMiddleware(constants.RoleAdmin, constants.RoleCashier, constants.RoleKitchen, constants.RoleWaitress), c.CakeController.UpdateCake)
+	cakes.Delete("/:id", middleware.RoleMiddleware(constants.RoleAdmin, constants.RoleCashier, constants.RoleKitchen, constants.RoleWaitress), c.CakeController.DeleteCake)
 
 	// Cart routes
 	carts := protectedRoutes.Group("/carts")

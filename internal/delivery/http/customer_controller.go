@@ -38,12 +38,15 @@ func (c *CustomerController) Register(ctx *fiber.Ctx) error {
 		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid request body")
 	}
 
+	// get header role
+	role := ctx.Get("x-app-role")
+
 	if err := c.validator.Struct(request); err != nil {
 		c.logger.Error("Validation failed: ", err)
 		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, err.Error())
 	}
 
-	customer, err := c.customerUseCase.Register(&request)
+	customer, err := c.customerUseCase.Register(&request, role)
 	if err != nil {
 		c.logger.Error("Failed to register customer: ", err)
 		return utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, err.Error())

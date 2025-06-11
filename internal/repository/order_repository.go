@@ -20,6 +20,7 @@ type OrderRepository interface {
 	UpdateStatus(id int64, status entity.OrderStatus) error
 	// GetPendingOrder retrieves the first pending order from the database for testing purposes
 	GetPendingOrder() (int64, error)
+	FindByDateRange(startDate, endDate string) ([]entity.Order, error)
 }
 
 type orderRepository struct {
@@ -32,6 +33,15 @@ func NewOrderRepository(db *gorm.DB, logger *logrus.Logger) OrderRepository {
 		db:     db,
 		logger: logger,
 	}
+}
+
+func (r *orderRepository) FindByDateRange(startDate, endDate string) ([]entity.Order, error) {
+	var orders []entity.Order
+	if err := r.db.Preload("Items.Cake").Preload("Customer").Where("created_at BETWEEN ? AND ?", startDate, endDate).Find(&orders).Error; err != nil {
+		r.logger.Errorf("Error getting orders by date range: %v", err)
+		return nil, err
+	}
+	return orders, nil
 }
 
 func (r *orderRepository) GetAll(params *model.PaginationQuery) ([]entity.Order, *model.PaginatedMeta, error) {

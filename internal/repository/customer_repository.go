@@ -14,6 +14,7 @@ type CustomerRepository interface {
 	GetByEmail(email string) (*entity.Customer, error)
 	Update(customer *entity.Customer) error
 	Delete(id int64) error
+	GetEmployees() ([]entity.Customer, error)
 }
 
 type customerRepository struct {
@@ -26,6 +27,18 @@ func NewCustomerRepository(db *gorm.DB, logger *logrus.Logger) CustomerRepositor
 		db:     db,
 		logger: logger,
 	}
+}
+
+func (r *customerRepository) GetEmployees() ([]entity.Customer, error) {
+	var customer []entity.Customer
+	if err := r.db.Where("role != ?", "customer").Find(&customer).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("employee not found")
+		}
+		r.logger.Errorf("Error getting employee: %v", err)
+		return nil, err
+	}
+	return customer, nil
 }
 
 func (r *customerRepository) Create(customer *entity.Customer) error {
