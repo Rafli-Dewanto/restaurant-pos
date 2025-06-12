@@ -20,6 +20,7 @@ type RouteConfig struct {
 	PaymentController     http.PaymentController
 	ReservationController *http.ReservationController
 	InventoryController   *http.InventoryController
+	TableController       *http.TableController
 	JWTSecret             string
 	Log                   *logrus.Logger
 }
@@ -81,6 +82,7 @@ func (c *RouteConfig) SetupRoute() {
 	orders.Get("/", c.OrderController.GetCustomerOrders)
 	orders.Get("/:id", c.OrderController.GetOrderByID)
 
+	// Wishlist routes
 	wishlist := protectedRoutes.Group("/wishlists")
 	wishlist.Get("/", c.WishlistController.GetWishListByCustomerID)
 	wishlist.Post("/:cakeId", c.WishlistController.CreateWishList)
@@ -104,4 +106,13 @@ func (c *RouteConfig) SetupRoute() {
 	inventory.Put("/:id", middleware.RoleMiddleware(constants.RoleAdmin, constants.RoleKitchen), c.InventoryController.UpdateInventory)
 	inventory.Delete("/:id", middleware.RoleMiddleware(constants.RoleAdmin, constants.RoleKitchen), c.InventoryController.DeleteInventory)
 	inventory.Put("/:id/stock", middleware.RoleMiddleware(constants.RoleAdmin, constants.RoleKitchen), c.InventoryController.UpdateInventoryStock)
+
+	// Table routes
+	tables := protectedRoutes.Group("/tables")
+	tables.Get("/", c.TableController.GetAllTables)
+	tables.Get("/:id", c.TableController.GetTableByID)
+	tables.Post("/", middleware.RoleMiddleware(constants.RoleAdmin, constants.RoleKitchen), c.TableController.CreateTable)
+	tables.Put("/:id", middleware.RoleMiddleware(constants.RoleAdmin, constants.RoleKitchen), c.TableController.UpdateTable)
+	tables.Patch("/:id/availability", middleware.RoleMiddleware(constants.RoleAdmin, constants.RoleKitchen), c.TableController.UpdateTableAvailability)
+	tables.Delete("/:id", middleware.RoleMiddleware(constants.RoleAdmin, constants.RoleKitchen), c.TableController.DeleteTable)
 }

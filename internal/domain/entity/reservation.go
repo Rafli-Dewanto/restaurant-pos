@@ -19,6 +19,8 @@ type Reservation struct {
 	ID           uint              `json:"id" gorm:"primaryKey"`
 	CustomerID   uint              `json:"customer_id"`
 	Customer     Customer          `json:"customer" gorm:"foreignKey:CustomerID"`
+	TableID      *uint             `json:"table_id" gorm:"foreignKey:TableID"`
+	Table        *Table            `json:"table" gorm:"foreignKey:TableID"`
 	TableNumber  int               `json:"table_number"`
 	GuestCount   int               `json:"guest_count"`
 	ReserveDate  time.Time         `json:"reserve_date"`

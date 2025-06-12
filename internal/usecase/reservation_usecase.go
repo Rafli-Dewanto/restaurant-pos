@@ -18,14 +18,20 @@ type ReservationUseCase interface {
 }
 
 type reservationUseCase struct {
-	repo   repository.ReservationRepository
-	logger *logrus.Logger
+	repo            repository.ReservationRepository
+	tableRepository repository.TableRepository
+	logger          *logrus.Logger
 }
 
-func NewReservationUseCase(repo repository.ReservationRepository, logger *logrus.Logger) ReservationUseCase {
+func NewReservationUseCase(
+	repo repository.ReservationRepository,
+	logger *logrus.Logger,
+	tableRepository repository.TableRepository,
+) ReservationUseCase {
 	return &reservationUseCase{
-		repo:   repo,
-		logger: logger,
+		repo:            repo,
+		logger:          logger,
+		tableRepository: tableRepository,
 	}
 }
 
@@ -34,18 +40,27 @@ func (u *reservationUseCase) Create(customerID uint, request *model.CreateReserv
 		return nil, err
 	}
 
+	// Get table by ID
+	table, err := u.tableRepository.GetByID(request.TableID)
+	if err != nil {
+		u.logger.Errorf("Error getting table: %v", err)
+		return nil, err
+	}
+
 	// Check table availability
-	available, err := u.repo.CheckTableAvailability(request.TableNumber, request.ReserveDate)
+	isAvailable, err := u.repo.CheckTableAvailability(request.TableID, request.ReserveDate)
 	if err != nil {
 		return nil, err
 	}
-	if !available {
+	if !isAvailable {
 		return nil, errors.New("table is not available for the selected date")
 	}
 
 	reservation := &entity.Reservation{
 		CustomerID:   customerID,
-		TableNumber:  request.TableNumber,
+		TableID:      &request.TableID,
+		Table:        table,
+		TableNumber:  table.TableNumber,
 		GuestCount:   request.GuestCount,
 		ReserveDate:  request.ReserveDate,
 		Status:       entity.ReservationStatusPending,
@@ -144,7 +159,7 @@ func (u *reservationUseCase) Update(id uint, request *model.UpdateReservationReq
 			checkTable = existing.TableNumber
 		}
 
-		available, err := u.repo.CheckTableAvailability(checkTable, checkDate)
+		available, err := u.repo.CheckTableAvailability(uint(checkTable), checkDate)
 		if err != nil {
 			return nil, err
 		}

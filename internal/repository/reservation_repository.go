@@ -15,7 +15,7 @@ type ReservationRepository interface {
 	GetAll(params *model.ReservationQueryParams) (*model.PaginationResponse[[]entity.Reservation], error)
 	Update(reservation *entity.Reservation) error
 	Delete(id uint) error
-	CheckTableAvailability(tableNumber int, reserveDate time.Time) (bool, error)
+	CheckTableAvailability(tableID uint, reserveDate time.Time) (bool, error)
 }
 
 type reservationRepository struct {
@@ -109,14 +109,14 @@ func (r *reservationRepository) Delete(id uint) error {
 	return nil
 }
 
-func (r *reservationRepository) CheckTableAvailability(tableNumber int, reserveDate time.Time) (bool, error) {
+func (r *reservationRepository) CheckTableAvailability(tableID uint, reserveDate time.Time) (bool, error) {
 	var count int64
 	start := reserveDate.Truncate(24 * time.Hour)
 	end := start.Add(24 * time.Hour)
 
 	if err := r.db.Model(&entity.Reservation{}).Where(
-		"table_number = ? AND reserve_date BETWEEN ? AND ? AND status NOT IN ?",
-		tableNumber,
+		"table_id = ? AND reserve_date BETWEEN ? AND ? AND status NOT IN ?",
+		tableID,
 		start,
 		end,
 		[]string{string(entity.ReservationStatusCancelled), string(entity.ReservationStatusCompleted)},

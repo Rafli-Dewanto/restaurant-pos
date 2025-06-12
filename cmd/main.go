@@ -33,9 +33,10 @@ func main() {
 	wishlistRepository := repository.NewWishListRepository(db, logger)
 	reservationRepository := repository.NewReservationRepository(db, logger)
 	inventoryRepository := repository.NewInventoryRepository(db, logger)
+	tableRepository := repository.NewTableRepository(db, logger)
 
 	// Initialize and run seeder
-	dbSeeder := seeder.NewSeeder(customerRepository, cakeRepository, logger, inventoryRepository)
+	dbSeeder := seeder.NewSeeder(customerRepository, cakeRepository, logger, inventoryRepository, tableRepository)
 	if err := dbSeeder.SeedAll(); err != nil {
 		log.Printf("⚠️ Warning: Failed to seed database: %v", err)
 	}
@@ -58,8 +59,9 @@ func main() {
 	orderUseCase := usecase.NewOrderUseCase(orderRepository, cakeRepository, customerRepository, logger, cfg.SERVER_ENV)
 	paymentUsecase := usecase.NewPaymentUseCase(cfg.MIDTRANS_ENDPOINT, paymentRepository, logger, cfg.SERVER_ENV)
 	wishlistUseCase := usecase.NewWishListUseCase(wishlistRepository, cakeRepository, logger)
-	reservationUseCase := usecase.NewReservationUseCase(reservationRepository, logger)
+	reservationUseCase := usecase.NewReservationUseCase(reservationRepository, logger, tableRepository)
 	inventoryUseCase := usecase.NewInventoryUseCase(inventoryRepository, logger)
+	tableUseCase := usecase.NewTableUseCase(tableRepository, logger)
 
 	// controller
 	cakeController := controller.NewCakeController(cakeUseCase, logger)
@@ -70,6 +72,7 @@ func main() {
 	wishlistController := controller.NewWishListController(wishlistUseCase, logger)
 	reservationController := controller.NewReservationController(reservationUseCase, logger)
 	ingredientController := controller.NewInventoryController(inventoryUseCase, logger)
+	tableController := controller.NewTableController(tableUseCase, logger)
 
 	routeConfig := route.RouteConfig{
 		App:                   app,
@@ -81,6 +84,7 @@ func main() {
 		WishlistController:    wishlistController,
 		ReservationController: reservationController,
 		InventoryController:   ingredientController,
+		TableController:       tableController,
 		JWTSecret:             cfg.JWT_SECRET,
 		Log:                   logger,
 	}

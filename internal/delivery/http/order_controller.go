@@ -58,6 +58,11 @@ func (c *OrderController) CreateOrder(ctx *fiber.Ctx) error {
 	paymentURL, err := c.paymentUseCase.CreatePaymentURL(order)
 	if err != nil {
 		c.logger.Error("Failed to create payment URL: ", err.Error())
+		// if error delete previous order
+		if err := c.orderUseCase.DeleteOrder(order.ID); err != nil {
+			c.logger.Error("Failed to delete order: ", err)
+			return utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to delete order")
+		}
 		return utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to create payment URL")
 	}
 

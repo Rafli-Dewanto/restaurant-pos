@@ -19,6 +19,7 @@ func RunMigrations(db *gorm.DB) error {
 		&entity.WishList{},
 		&entity.Reservation{},
 		&entity.Inventory{},
+		&entity.Table{},
 	)
 	if err != nil {
 		return err
