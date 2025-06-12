@@ -35,7 +35,7 @@ func (c *cakeRepository) GetAll(params *model.CakeQueryParams) (*model.Paginatio
 	query := c.db.Model(&entity.Cake{}).Where("deleted_at IS NULL")
 
 	if params.Title != "" {
-		query = query.Where("title LIKE ?", "%"+params.Title+"%")
+		query = query.Where("LOWER(title) LIKE LOWER(?)", "%"+params.Title+"%")
 	}
 	if params.MinPrice > 0 {
 		query = query.Where("price >= ?", params.MinPrice)
@@ -44,7 +44,7 @@ func (c *cakeRepository) GetAll(params *model.CakeQueryParams) (*model.Paginatio
 		query = query.Where("price <= ?", params.MaxPrice)
 	}
 	if params.Category != "" {
-		query = query.Where("category = ?", params.Category)
+		query = query.Where("LOWER(category) LIKE LOWER(?)", "%"+params.Category+"%")
 	}
 
 	// Get total count for pagination
