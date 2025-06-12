@@ -25,7 +25,7 @@ func NewReservationController(useCase usecase.ReservationUseCase, logger *logrus
 }
 
 func (c *ReservationController) CreateReservation(ctx *fiber.Ctx) error {
-	customerID := ctx.Locals(constants.ClaimsKeyID).(uint)
+	customerID := ctx.Locals(constants.ClaimsKeyID).(int64)
 
 	var request model.CreateReservationRequest
 	if err := ctx.BodyParser(&request); err != nil {
@@ -33,7 +33,7 @@ func (c *ReservationController) CreateReservation(ctx *fiber.Ctx) error {
 		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid request body")
 	}
 
-	reservation, err := c.useCase.Create(customerID, &request)
+	reservation, err := c.useCase.Create(uint(customerID), &request)
 	if err != nil {
 		c.logger.Errorf("Error creating reservation: %v", err)
 		return utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to create reservation")
