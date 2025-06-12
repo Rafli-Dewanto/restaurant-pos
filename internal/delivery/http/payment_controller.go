@@ -41,6 +41,8 @@ func (c *PaymentControllerImpl) GetTransactionStatus(ctx *fiber.Ctx) error {
 	}
 
 	rawSignature := notif.OrderID + notif.StatusCode + notif.GrossAmount + c.midtransServerKey
+	// strip ORDER- from order id
+	notif.OrderID = notif.OrderID[6:]
 
 	hash := sha512.Sum512([]byte(rawSignature))
 	computedSignature := hex.EncodeToString(hash[:])

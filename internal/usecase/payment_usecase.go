@@ -9,6 +9,7 @@ import (
 	"cakestore/utils"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -47,7 +48,7 @@ func (uc *paymentUseCase) CreatePaymentURL(order *entity.Order) (*model.PaymentR
 	var req model.CreatePaymentRequest
 
 	req.TransactionDetails = midtrans.TransactionDetails{
-		OrderID:  strconv.Itoa(int(order.ID)),
+		OrderID:  "ORDER-" + strconv.Itoa(int(order.ID)),
 		GrossAmt: int64(order.TotalPrice),
 	}
 
@@ -74,8 +75,18 @@ func (uc *paymentUseCase) CreatePaymentURL(order *entity.Order) (*model.PaymentR
 	}
 	defer resp.Body.Close()
 
+	// read response body
+	// Read and cache the body
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	// Restore the body so it can be decoded again
+	resp.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+
 	if resp.StatusCode != http.StatusCreated {
-		return nil, fmt.Errorf("failed to create payment URL, status code: %d", resp.StatusCode)
+		return nil, fmt.Errorf("failed to create payment URL, status code: %d, body: %s", resp.StatusCode, string(bodyBytes))
 	}
 
 	var paymentResponse model.PaymentResponse
