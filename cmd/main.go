@@ -31,9 +31,11 @@ func main() {
 	orderRepository := repository.NewOrderRepository(db, logger)
 	paymentRepository := repository.NewPaymentRepository(db, logger)
 	wishlistRepository := repository.NewWishListRepository(db, logger)
+	reservationRepository := repository.NewReservationRepository(db, logger)
+	inventoryRepository := repository.NewInventoryRepository(db, logger)
 
 	// Initialize and run seeder
-	dbSeeder := seeder.NewSeeder(customerRepository, cakeRepository, logger)
+	dbSeeder := seeder.NewSeeder(customerRepository, cakeRepository, logger, inventoryRepository)
 	if err := dbSeeder.SeedAll(); err != nil {
 		log.Printf("⚠️ Warning: Failed to seed database: %v", err)
 	}
@@ -56,6 +58,8 @@ func main() {
 	orderUseCase := usecase.NewOrderUseCase(orderRepository, cakeRepository, customerRepository, logger, cfg.SERVER_ENV)
 	paymentUsecase := usecase.NewPaymentUseCase(cfg.MIDTRANS_ENDPOINT, paymentRepository, logger, cfg.SERVER_ENV)
 	wishlistUseCase := usecase.NewWishListUseCase(wishlistRepository, cakeRepository, logger)
+	reservationUseCase := usecase.NewReservationUseCase(reservationRepository, logger)
+	inventoryUseCase := usecase.NewInventoryUseCase(inventoryRepository, logger)
 
 	// controller
 	cakeController := controller.NewCakeController(cakeUseCase, logger)
@@ -64,17 +68,21 @@ func main() {
 	cartController := controller.NewCartController(cartUseCase, logger)
 	paymentController := controller.NewPaymentController(logger, cfg.MIDTRANS_SERVER_KEY, orderUseCase, paymentUsecase)
 	wishlistController := controller.NewWishListController(wishlistUseCase, logger)
+	reservationController := controller.NewReservationController(reservationUseCase, logger)
+	ingredientController := controller.NewInventoryController(inventoryUseCase, logger)
 
 	routeConfig := route.RouteConfig{
-		App:                app,
-		CakeController:     cakeController,
-		CustomerController: customerController,
-		CartController:     cartController,
-		OrderController:    orderController,
-		PaymentController:  paymentController,
-		WishlistController: wishlistController,
-		JWTSecret:          cfg.JWT_SECRET,
-		Log:                logger,
+		App:                   app,
+		CakeController:        cakeController,
+		CustomerController:    customerController,
+		CartController:        cartController,
+		OrderController:       orderController,
+		PaymentController:     paymentController,
+		WishlistController:    wishlistController,
+		ReservationController: reservationController,
+		InventoryController:   ingredientController,
+		JWTSecret:             cfg.JWT_SECRET,
+		Log:                   logger,
 	}
 	routeConfig.Setup()
 

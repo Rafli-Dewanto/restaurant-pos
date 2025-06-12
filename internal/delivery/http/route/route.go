@@ -11,15 +11,17 @@ import (
 )
 
 type RouteConfig struct {
-	App                *fiber.App
-	CakeController     *http.CakeController
-	CustomerController *http.CustomerController
-	CartController     *http.CartController
-	OrderController    *http.OrderController
-	WishlistController *http.WishListController
-	PaymentController  http.PaymentController
-	JWTSecret          string
-	Log                *logrus.Logger
+	App                   *fiber.App
+	CakeController        *http.CakeController
+	CustomerController    *http.CustomerController
+	CartController        *http.CartController
+	OrderController       *http.OrderController
+	WishlistController    *http.WishListController
+	PaymentController     http.PaymentController
+	ReservationController *http.ReservationController
+	InventoryController   *http.InventoryController
+	JWTSecret             string
+	Log                   *logrus.Logger
 }
 
 func (c *RouteConfig) Setup() {
@@ -83,4 +85,23 @@ func (c *RouteConfig) SetupRoute() {
 	wishlist.Get("/", c.WishlistController.GetWishListByCustomerID)
 	wishlist.Post("/:cakeId", c.WishlistController.CreateWishList)
 	wishlist.Delete("/:cakeId", c.WishlistController.DeleteWishList)
+
+	// Reservation routes
+	reservation := protectedRoutes.Group("/reservations")
+	reservation.Post("/", c.ReservationController.CreateReservation)
+	reservation.Get("/", c.ReservationController.GetAllReservations)
+	reservation.Get("/:id", c.ReservationController.GetReservationByID)
+	reservation.Put("/:id", c.ReservationController.UpdateReservation)
+	reservation.Delete("/:id", c.ReservationController.DeleteReservation)
+
+	// Ingredient routes
+	inventory := protectedRoutes.Group("/inventories")
+	inventory.Get("/", c.InventoryController.GetAllInventories)
+	inventory.Get("/low-stock", middleware.RoleMiddleware(constants.RoleAdmin, constants.RoleKitchen), c.InventoryController.GetLowStockInventories)
+	// temporary fix for conflicting route (/low-stock)
+	inventory.Get("/by-id/:id", middleware.RoleMiddleware(constants.RoleAdmin, constants.RoleKitchen), c.InventoryController.GetInventoryByID)
+	inventory.Post("/", middleware.RoleMiddleware(constants.RoleAdmin, constants.RoleKitchen), c.InventoryController.CreateInventory)
+	inventory.Put("/:id", middleware.RoleMiddleware(constants.RoleAdmin, constants.RoleKitchen), c.InventoryController.UpdateInventory)
+	inventory.Delete("/:id", middleware.RoleMiddleware(constants.RoleAdmin, constants.RoleKitchen), c.InventoryController.DeleteInventory)
+	inventory.Put("/:id/stock", middleware.RoleMiddleware(constants.RoleAdmin, constants.RoleKitchen), c.InventoryController.UpdateInventoryStock)
 }
