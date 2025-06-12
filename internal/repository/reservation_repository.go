@@ -13,6 +13,7 @@ type ReservationRepository interface {
 	Create(reservation *entity.Reservation) error
 	GetByID(id uint) (*entity.Reservation, error)
 	GetAll(params *model.ReservationQueryParams) (*model.PaginationResponse[[]entity.Reservation], error)
+	AdminGetAllCustomerReservations(params *model.PaginationQuery) (*model.PaginationResponse[[]entity.Reservation], error)
 	Update(reservation *entity.Reservation) error
 	Delete(id uint) error
 	CheckTableAvailability(tableID uint, reserveDate time.Time) (bool, error)
@@ -28,6 +29,33 @@ func NewReservationRepository(db *gorm.DB, logger *logrus.Logger) ReservationRep
 		db:     db,
 		logger: logger,
 	}
+}
+
+func (r *reservationRepository) AdminGetAllCustomerReservations(params *model.PaginationQuery) (*model.PaginationResponse[[]entity.Reservation], error) {
+	var reservations []entity.Reservation
+	var total int64
+
+	query := r.db.Model(&entity.Reservation{})
+
+	if err := query.Count(&total).Error; err != nil {
+		r.logger.Errorf("Error counting reservations: %v", err)
+		return nil, err
+	}
+
+	offset := (params.Page - 1) * params.Limit
+	query = query.Offset(int(offset)).Limit(int(params.Limit))
+	query = query.Preload("Customer")
+	if err := query.Find(&reservations).Error; err != nil {
+		r.logger.Errorf("Error getting reservations: %v", err)
+		return nil, err
+	}
+	return &model.PaginationResponse[[]entity.Reservation]{
+		Data:       reservations,
+		Total:      total,
+		Page:       params.Page,
+		PageSize:   params.Limit,
+		TotalPages: (total + int64(params.Limit) - 1) / int64(params.Limit),
+	}, nil
 }
 
 func (r *reservationRepository) Create(reservation *entity.Reservation) error {
@@ -52,7 +80,6 @@ func (r *reservationRepository) GetAll(params *model.ReservationQueryParams) (*m
 	var total int64
 
 	query := r.db.Model(&entity.Reservation{})
-
 	if params.CustomerID != 0 {
 		query = query.Where("customer_id = ?", params.CustomerID)
 	}
@@ -76,8 +103,8 @@ func (r *reservationRepository) GetAll(params *model.ReservationQueryParams) (*m
 		return nil, err
 	}
 
-	offset := (params.Page - 1) * params.Page
-	query = query.Offset(int(offset)).Limit(int(params.Page))
+	offset := (params.Page - 1) * params.Limit
+	query = query.Offset(int(offset)).Limit(int(params.Limit))
 	query = query.Preload("Customer")
 
 	if err := query.Find(&reservations).Error; err != nil {
@@ -89,6 +116,7 @@ func (r *reservationRepository) GetAll(params *model.ReservationQueryParams) (*m
 		Data:       reservations,
 		Total:      total,
 		Page:       params.Page,
+		PageSize:   params.Limit,
 		TotalPages: (total + int64(params.Limit) - 1) / int64(params.Limit),
 	}, nil
 }

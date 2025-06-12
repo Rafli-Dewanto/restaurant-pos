@@ -24,6 +24,23 @@ func NewReservationController(useCase usecase.ReservationUseCase, logger *logrus
 	}
 }
 
+func (c *ReservationController) AdminGetAllCustomerReservations(ctx *fiber.Ctx) error {
+	params := new(model.PaginationQuery)
+
+	// Parse pagination parameters
+	page, _ := strconv.Atoi(ctx.Query("page", "1"))
+	perPage, _ := strconv.Atoi(ctx.Query("per_page", "10"))
+	params.Page = int64(page)
+	params.Limit = int64(perPage)
+
+	reservations, err := c.useCase.AdminGetAllCustomerReservations(params)
+	if err!= nil {
+		c.logger.Errorf("Error getting reservations: %v", err)
+		return utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to get reservations")
+	}
+	return utils.WriteResponse(ctx, fiber.StatusOK, reservations.Data, "Reservations retrieved successfully", model.ToPaginatedMeta(reservations))
+}
+
 func (c *ReservationController) CreateReservation(ctx *fiber.Ctx) error {
 	customerID := ctx.Locals(constants.ClaimsKeyID).(int64)
 
@@ -73,12 +90,9 @@ func (c *ReservationController) GetAllReservations(ctx *fiber.Ctx) error {
 	params.Page = int64(page)
 	params.Limit = int64(perPage)
 
-	// Parse other query parameters
-	if customerID := ctx.Query("customer_id"); customerID != "" {
-		id, err := strconv.ParseUint(customerID, 10, 32)
-		if err == nil {
-			params.CustomerID = uint(id)
-		}
+	customerID := ctx.Locals(constants.ClaimsKeyID).(int64)
+	if customerID != 0 {
+		params.CustomerID = uint(customerID)
 	}
 
 	if status := ctx.Query("status"); status != "" {

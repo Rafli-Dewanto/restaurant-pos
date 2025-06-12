@@ -13,6 +13,7 @@ type ReservationUseCase interface {
 	Create(customerID uint, request *model.CreateReservationRequest) (*model.ReservationResponse, error)
 	GetByID(id uint) (*model.ReservationResponse, error)
 	GetAll(params *model.ReservationQueryParams) (*model.PaginationResponse[[]model.ReservationResponse], error)
+	AdminGetAllCustomerReservations(params *model.PaginationQuery) (*model.PaginationResponse[[]model.ReservationResponse], error)
 	Update(id uint, request *model.UpdateReservationRequest) (*model.ReservationResponse, error)
 	Delete(id uint) error
 }
@@ -33,6 +34,37 @@ func NewReservationUseCase(
 		logger:          logger,
 		tableRepository: tableRepository,
 	}
+}
+
+func (u *reservationUseCase) AdminGetAllCustomerReservations(params *model.PaginationQuery) (*model.PaginationResponse[[]model.ReservationResponse], error) {
+	result, err := u.repo.AdminGetAllCustomerReservations(params)
+	if err != nil {
+		return nil, err
+	}
+
+	responses := make([]model.ReservationResponse, len(result.Data))
+	for i, reservation := range result.Data {
+		responses[i] = model.ReservationResponse{
+			ID:           reservation.ID,
+			CustomerID:   reservation.CustomerID,
+			Customer:     *model.ToCustomerResponse(&reservation.Customer),
+			TableNumber:  reservation.TableNumber,
+			GuestCount:   reservation.GuestCount,
+			ReserveDate:  reservation.ReserveDate,
+			Status:       string(reservation.Status),
+			SpecialNotes: reservation.SpecialNotes,
+			CreatedAt:    reservation.CreatedAt,
+			UpdatedAt:    reservation.UpdatedAt,
+		}
+	}
+
+	return &model.PaginationResponse[[]model.ReservationResponse]{
+		Data:       responses,
+		Total:      result.Total,
+		Page:       result.Page,
+		PageSize:   result.PageSize,
+		TotalPages: result.TotalPages,
+	}, nil
 }
 
 func (u *reservationUseCase) Create(customerID uint, request *model.CreateReservationRequest) (*model.ReservationResponse, error) {
@@ -137,6 +169,7 @@ func (u *reservationUseCase) GetAll(params *model.ReservationQueryParams) (*mode
 		Data:       responses,
 		Total:      result.Total,
 		Page:       result.Page,
+		PageSize:   result.PageSize,
 		TotalPages: result.TotalPages,
 	}, nil
 }
