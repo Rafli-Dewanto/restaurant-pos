@@ -39,7 +39,7 @@ func (s *InventorySeeder) Seed() error {
 			Unit:            "grams",
 			MinimumStock:    5000,
 			ReorderPoint:    10000,
-			UnitPrice:       0.002,
+			UnitPrice:       40000,
 			LastRestockDate: time.Now(),
 		},
 		{
@@ -48,7 +48,7 @@ func (s *InventorySeeder) Seed() error {
 			Unit:            "grams",
 			MinimumStock:    4000,
 			ReorderPoint:    8000,
-			UnitPrice:       0.003,
+			UnitPrice:       32000,
 			LastRestockDate: time.Now(),
 		},
 		{
@@ -57,7 +57,7 @@ func (s *InventorySeeder) Seed() error {
 			Unit:            "grams",
 			MinimumStock:    2000,
 			ReorderPoint:    4000,
-			UnitPrice:       0.01,
+			UnitPrice:       60000,
 			LastRestockDate: time.Now(),
 		},
 		{
@@ -66,7 +66,7 @@ func (s *InventorySeeder) Seed() error {
 			Unit:            "pieces",
 			MinimumStock:    100,
 			ReorderPoint:    200,
-			UnitPrice:       0.2,
+			UnitPrice:       3000,
 			LastRestockDate: time.Now(),
 		},
 		{
@@ -75,7 +75,7 @@ func (s *InventorySeeder) Seed() error {
 			Unit:            "ml",
 			MinimumStock:    3000,
 			ReorderPoint:    6000,
-			UnitPrice:       0.003,
+			UnitPrice:       34000,
 			LastRestockDate: time.Now(),
 		},
 		{
@@ -84,7 +84,7 @@ func (s *InventorySeeder) Seed() error {
 			Unit:            "ml",
 			MinimumStock:    200,
 			ReorderPoint:    400,
-			UnitPrice:       0.05,
+			UnitPrice:       15000,
 			LastRestockDate: time.Now(),
 		},
 		{
@@ -93,7 +93,7 @@ func (s *InventorySeeder) Seed() error {
 			Unit:            "grams",
 			MinimumStock:    500,
 			ReorderPoint:    1000,
-			UnitPrice:       0.008,
+			UnitPrice:       10000,
 			LastRestockDate: time.Now(),
 		},
 		{
@@ -102,7 +102,7 @@ func (s *InventorySeeder) Seed() error {
 			Unit:            "grams",
 			MinimumStock:    300,
 			ReorderPoint:    600,
-			UnitPrice:       0.001,
+			UnitPrice:       10000,
 			LastRestockDate: time.Now(),
 		},
 	}
