@@ -65,3 +65,25 @@ func OrderToResponse(order *entity.Order) *OrderResponse {
 		UpdatedAt:  order.UpdatedAt.Format(time.RFC3339),
 	}
 }
+
+func ToOrderEntity(order *OrderResponse) *entity.Order {
+	var item entity.OrderItem
+	for _, itemResponse := range order.Items {
+		item = entity.OrderItem{
+			CakeID:   itemResponse.Cake.ID,
+			Quantity: itemResponse.Quantity,
+			Price:    itemResponse.Price,
+		}
+	}
+	return &entity.Order{
+		ID:         order.ID,
+		CustomerID: order.Customer.ID,
+		Customer:   entity.Customer{},
+		Status:     entity.OrderStatus(order.Status),
+		TotalPrice: order.TotalPrice,
+		Address:    order.Address,
+		Items:      []entity.OrderItem{item},
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
+	}
+}

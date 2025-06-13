@@ -82,6 +82,10 @@ func (c *RouteConfig) SetupRoute() {
 	orders.Get("/", c.OrderController.GetCustomerOrders)
 	orders.Get("/:id", c.OrderController.GetOrderByID)
 
+	// payment routes
+	payment := protectedRoutes.Group("/payments")
+	payment.Get("/:id", c.PaymentController.GetPaymentURL)
+
 	// Wishlist routes
 	wishlist := protectedRoutes.Group("/wishlists")
 	wishlist.Get("/", c.WishlistController.GetWishListByCustomerID)

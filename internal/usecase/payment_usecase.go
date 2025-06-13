@@ -21,6 +21,7 @@ type PaymentUseCase interface {
 	CreatePaymentURL(order *entity.Order) (*model.PaymentResponse, error)
 	GetOrderStatus(orderID string) (string, error)
 	UpdateOrderStatus(id string, status constants.PaymentStatus) error
+	GetPaymentByOrderID(order *entity.Order) (*entity.Payment, error)
 }
 
 type paymentUseCase struct {
@@ -42,6 +43,14 @@ func NewPaymentUseCase(
 		log:               log,
 		env:               env,
 	}
+}
+
+func (uc *paymentUseCase) GetPaymentByOrderID(order *entity.Order) (*entity.Payment, error) {
+	payment, err := uc.paymentRepository.GetPaymentByOrderID(order.ID)
+	if err != nil {
+		return nil, err
+	}
+	return payment, nil
 }
 
 func (uc *paymentUseCase) CreatePaymentURL(order *entity.Order) (*model.PaymentResponse, error) {

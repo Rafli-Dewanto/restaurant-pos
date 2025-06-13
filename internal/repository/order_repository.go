@@ -21,6 +21,7 @@ type OrderRepository interface {
 	// GetPendingOrder retrieves the first pending order from the database for testing purposes
 	GetPendingOrder() (int64, error)
 	FindByDateRange(startDate, endDate string) ([]entity.Order, error)
+	GetPendingPaymentByOrderID(customerID, orderID int64) (entity.Order, error)
 }
 
 type orderRepository struct {
@@ -33,6 +34,18 @@ func NewOrderRepository(db *gorm.DB, logger *logrus.Logger) OrderRepository {
 		db:     db,
 		logger: logger,
 	}
+}
+
+func (r *orderRepository) GetPendingPaymentByOrderID(customerID, orderID int64) (entity.Order, error) {
+	var order entity.Order
+	if err := r.db.Preload("Items.Cake").Preload("Customer").Where("customer_id = ? AND status = ? AND id = ?", customerID, entity.OrderStatusPending, orderID).First(&order).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return entity.Order{}, errors.New("order not found")
+		}
+		r.logger.Errorf("Error getting order by ID: %v", err)
+		return entity.Order{}, err
+	}
+	return order, nil
 }
 
 func (r *orderRepository) FindByDateRange(startDate, endDate string) ([]entity.Order, error) {

@@ -14,6 +14,7 @@ import (
 type OrderUseCase interface {
 	CreateOrder(customerID int64, request *model.CreateOrderRequest) (*entity.Order, error)
 	GetOrderByID(id int64) (*model.OrderResponse, error)
+	GetPendingOrder(customerID int64, orderID int64) (*model.OrderResponse, error)
 	GetAllOrders(params *model.PaginationQuery) (*[]model.OrderResponse, *model.PaginatedMeta, error)
 	GetCustomerOrders(customerID int64) ([]model.OrderResponse, error)
 	UpdateOrderStatus(id string, status string) error
@@ -42,6 +43,15 @@ func NewOrderUseCase(
 		logger:       logger,
 		env:          env,
 	}
+}
+
+func (uc *orderUseCaseImpl) GetPendingOrder(customerID int64, orderID int64) (*model.OrderResponse, error) {
+	order, err := uc.orderRepo.GetPendingPaymentByOrderID(customerID, orderID)
+	if err != nil {
+		return nil, err
+	}
+	response := model.OrderToResponse(&order)
+	return response, nil
 }
 
 func (uc *orderUseCaseImpl) CreateOrder(customerID int64, request *model.CreateOrderRequest) (*entity.Order, error) {
