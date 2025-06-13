@@ -23,7 +23,7 @@ type CreateReservationRequest struct {
 
 type UpdateReservationRequest struct {
 	Status       string    `json:"status" validate:"omitempty,oneof=pending confirmed cancelled completed"`
-	TableNumber  int       `json:"table_number" validate:"omitempty,min=1"`
+	TableNumber  int       `json:"table_number"`
 	GuestCount   int       `json:"guest_count" validate:"omitempty,min=1"`
 	ReserveDate  time.Time `json:"reserve_date" validate:"omitempty,future"`
 	SpecialNotes string    `json:"special_notes"`

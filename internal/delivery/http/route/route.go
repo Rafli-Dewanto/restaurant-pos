@@ -99,8 +99,8 @@ func (c *RouteConfig) SetupRoute() {
 	reservation.Get("/", c.ReservationController.GetAllReservations)
 	reservation.Get("/admin", middleware.RoleMiddleware(constants.RoleAdmin), c.ReservationController.AdminGetAllCustomerReservations)
 	reservation.Get("/:id", c.ReservationController.GetReservationByID)
-	reservation.Put("/:id", c.ReservationController.UpdateReservation)
-	reservation.Delete("/:id", c.ReservationController.DeleteReservation)
+	reservation.Put("/:id", middleware.RoleMiddleware(constants.RoleAdmin, constants.RoleWaitress), c.ReservationController.UpdateReservation)
+	reservation.Delete("/:id", middleware.RoleMiddleware(constants.RoleAdmin, constants.RoleWaitress), c.ReservationController.DeleteReservation)
 
 	// Ingredient routes
 	inventory := protectedRoutes.Group("/inventories")
