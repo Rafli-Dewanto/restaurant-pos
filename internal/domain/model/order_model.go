@@ -12,6 +12,10 @@ type OrderItemRequest struct {
 	Price    float64 `json:"price" validate:"required,min=0"`
 }
 
+type UpdateFoodStatusRequest struct {
+	FoodStatus string `json:"food_status" validate:"required,oneof=pending cooking ready delivered cancelled"`
+}
+
 type CreateOrderRequest struct {
 	Items []OrderItemRequest `json:"items" validate:"required,min=1,dive"`
 }
@@ -29,6 +33,7 @@ type OrderResponse struct {
 	Status     string              `json:"status"`
 	TotalPrice float64             `json:"total_price"`
 	Address    string              `json:"delivery_address"`
+	FoodStatus string              `json:"food_status"`
 	Items      []OrderItemResponse `json:"items"`
 	CreatedAt  string              `json:"created_at"`
 	UpdatedAt  string              `json:"updated_at"`
@@ -59,6 +64,7 @@ func OrderToResponse(order *entity.Order) *OrderResponse {
 		},
 		Status:     string(order.Status),
 		TotalPrice: order.TotalPrice,
+		FoodStatus: string(order.FoodStatus),
 		Address:    order.Address,
 		Items:      itemResponses,
 		CreatedAt:  order.CreatedAt.Format(time.RFC3339),
@@ -81,6 +87,7 @@ func ToOrderEntity(order *OrderResponse) *entity.Order {
 		Customer:   entity.Customer{},
 		Status:     entity.OrderStatus(order.Status),
 		TotalPrice: order.TotalPrice,
+		FoodStatus: entity.FoodStatus(order.FoodStatus),
 		Address:    order.Address,
 		Items:      []entity.OrderItem{item},
 		CreatedAt:  time.Now(),

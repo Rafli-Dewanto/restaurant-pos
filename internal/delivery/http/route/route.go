@@ -81,6 +81,7 @@ func (c *RouteConfig) SetupRoute() {
 	orders.Post("/", c.OrderController.CreateOrder)
 	orders.Get("/", c.OrderController.GetCustomerOrders)
 	orders.Get("/:id", c.OrderController.GetOrderByID)
+	orders.Patch("/:id/food-status", middleware.RoleMiddleware(constants.RoleAdmin, constants.RoleKitchen), c.OrderController.UpdateFoodStatus)
 
 	// payment routes
 	payment := protectedRoutes.Group("/payments")

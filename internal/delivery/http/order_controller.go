@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"cakestore/internal/domain/entity"
 	"cakestore/internal/domain/model"
 	"cakestore/internal/usecase"
 	"cakestore/utils"
@@ -113,4 +114,31 @@ func (c *OrderController) GetAllOrders(ctx *fiber.Ctx) error {
 		return utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to get all orders")
 	}
 	return utils.WriteResponse(ctx, fiber.StatusOK, orders, "All orders fetched successfully", meta)
+}
+
+func (c *OrderController) UpdateFoodStatus(ctx *fiber.Ctx) error {
+	orderID, err := strconv.ParseInt(ctx.Params("id"), 10, 64)
+	if err != nil {
+		c.logger.Error("Failed to parse order ID: ", err)
+		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid order ID")
+	}
+
+	var req model.UpdateFoodStatusRequest
+	err = ctx.BodyParser(&req)
+	if err != nil {
+		c.logger.Error("Failed to parse body: ", err)
+		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid request body")
+	}
+
+	if err := c.validator.Struct(req); err != nil {
+		c.logger.Error("Validation failed: ", err)
+		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, err.Error())
+	}
+
+	if err := c.orderUseCase.UpdateFoodStatus(orderID, entity.FoodStatus(req.FoodStatus)); err != nil {
+		c.logger.Error("Failed to update food status: ", err)
+		return utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to update food status")
+	}
+
+	return utils.WriteResponse(ctx, fiber.StatusOK, nil, "Food status updated successfully", nil)
 }

@@ -15,11 +15,22 @@ const (
 	OrderStatusCancelled OrderStatus = "cancelled"
 )
 
+type FoodStatus string
+
+const (
+	FoodStatusPending   FoodStatus = "pending"
+	FoodStatusCooking   FoodStatus = "cooking"
+	FoodStatusReady     FoodStatus = "ready"
+	FoodStatusDelivered FoodStatus = "delivered"
+	FoodStatusCancelled FoodStatus = "cancelled"
+)
+
 type Order struct {
 	ID         int64        `gorm:"column:id;primaryKey;autoIncrement"`
 	CustomerID int64        `gorm:"column:customer_id"`
 	Customer   Customer     `gorm:"foreignKey:CustomerID"`
 	Status     OrderStatus  `gorm:"column:status"`
+	FoodStatus FoodStatus   `gorm:"column:food_status"`
 	TotalPrice float64      `gorm:"column:total_price"`
 	Address    string       `gorm:"column:delivery_address"`
 	Items      []OrderItem  `gorm:"foreignKey:OrderID"`

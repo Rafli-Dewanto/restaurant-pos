@@ -22,6 +22,7 @@ type OrderRepository interface {
 	GetPendingOrder() (int64, error)
 	FindByDateRange(startDate, endDate string) ([]entity.Order, error)
 	GetPendingPaymentByOrderID(customerID, orderID int64) (entity.Order, error)
+	UpdateFoodStatus(orderID int64, foodStatus entity.FoodStatus) error
 }
 
 type orderRepository struct {
@@ -34,6 +35,18 @@ func NewOrderRepository(db *gorm.DB, logger *logrus.Logger) OrderRepository {
 		db:     db,
 		logger: logger,
 	}
+}
+
+func (r *orderRepository) UpdateFoodStatus(orderID int64, foodStatus entity.FoodStatus) error {
+	result := r.db.Model(&entity.Order{}).Where("id =?", orderID).Update("food_status", foodStatus)
+	if result.Error != nil {
+		r.logger.Errorf("UpdateFoodStatus repository ~ Error updating order status: %v", result.Error)
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return errors.New("order not found")
+	}
+	return nil
 }
 
 func (r *orderRepository) GetPendingPaymentByOrderID(customerID, orderID int64) (entity.Order, error) {

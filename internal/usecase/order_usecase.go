@@ -19,6 +19,7 @@ type OrderUseCase interface {
 	GetCustomerOrders(customerID int64) ([]model.OrderResponse, error)
 	UpdateOrderStatus(id string, status string) error
 	DeleteOrder(id int64) error
+	UpdateFoodStatus(orderID int64, foodStatus entity.FoodStatus) error
 }
 
 type orderUseCaseImpl struct {
@@ -43,6 +44,10 @@ func NewOrderUseCase(
 		logger:       logger,
 		env:          env,
 	}
+}
+
+func (uc *orderUseCaseImpl) UpdateFoodStatus(orderID int64, foodStatus entity.FoodStatus) error {
+	return uc.orderRepo.UpdateFoodStatus(orderID, foodStatus)
 }
 
 func (uc *orderUseCaseImpl) GetPendingOrder(customerID int64, orderID int64) (*model.OrderResponse, error) {
@@ -85,6 +90,7 @@ func (uc *orderUseCaseImpl) CreateOrder(customerID int64, request *model.CreateO
 		Customer:   *customer,
 		Status:     entity.OrderStatusPending,
 		TotalPrice: totalPrice,
+		FoodStatus: entity.FoodStatusPending,
 		Address:    customer.Address,
 		Items:      orderItems,
 		CreatedAt:  time.Now(),
