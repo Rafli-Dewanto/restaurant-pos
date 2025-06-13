@@ -72,31 +72,42 @@ func (u *reservationUseCase) Create(customerID uint, request *model.CreateReserv
 		return nil, err
 	}
 
-	// Get table by ID
-	table, err := u.tableRepository.GetByID(request.TableID)
-	if err != nil {
-		u.logger.Errorf("Error getting table: %v", err)
-		return nil, err
-	}
+	var table *entity.Table
+	var tableNumber int
 
-	// Check table availability
-	isAvailable, err := u.repo.CheckTableAvailability(request.TableID, request.ReserveDate)
-	if err != nil {
-		return nil, err
-	}
-	if !isAvailable {
-		return nil, errors.New("table is not available for the selected date")
+	// Only get table and set relation if TableID is provided (not zero)
+	if request.TableID != 0 {
+		var err error
+		table, err = u.tableRepository.GetByID(request.TableID)
+		if err != nil {
+			u.logger.Errorf("Error getting table: %v", err)
+			return nil, err
+		}
+
+		// Check table availability
+		isAvailable, err := u.repo.CheckTableAvailability(request.TableID, request.ReserveDate)
+		if err != nil {
+			return nil, err
+		}
+		if !isAvailable {
+			return nil, errors.New("table is not available for the selected date")
+		}
+		tableNumber = table.TableNumber
 	}
 
 	reservation := &entity.Reservation{
 		CustomerID:   customerID,
-		TableID:      &request.TableID,
-		Table:        table,
-		TableNumber:  table.TableNumber,
 		GuestCount:   request.GuestCount,
 		ReserveDate:  request.ReserveDate,
 		Status:       entity.ReservationStatusPending,
 		SpecialNotes: request.SpecialNotes,
+	}
+
+	// Only set TableID, Table, and TableNumber if TableID is provided
+	if request.TableID != 0 {
+		reservation.TableID = &request.TableID
+		reservation.Table = table
+		reservation.TableNumber = tableNumber
 	}
 
 	if err := u.repo.Create(reservation); err != nil {

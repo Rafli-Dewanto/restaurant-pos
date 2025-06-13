@@ -15,7 +15,7 @@ type ReservationQueryParams struct {
 }
 
 type CreateReservationRequest struct {
-	TableID      uint      `json:"table_id" validate:"required"`
+	TableID      uint      `json:"table_id"`
 	GuestCount   int       `json:"guest_count" validate:"required,min=1"`
 	ReserveDate  time.Time `json:"reserve_date" validate:"required,future"`
 	SpecialNotes string    `json:"special_notes"`
