@@ -9,6 +9,7 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"strconv"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
@@ -74,8 +75,13 @@ func (c *PaymentControllerImpl) GetTransactionStatus(ctx *fiber.Ctx) error {
 	}
 
 	rawSignature := notif.OrderID + notif.StatusCode + notif.GrossAmount + c.midtransServerKey
-	// strip ORDER- from order id
-	notif.OrderID = notif.OrderID[6:]
+	parts := strings.Split(notif.OrderID, "-")
+	if len(parts) >= 2 {
+		notif.OrderID = parts[1]
+	} else {
+		c.logger.Errorf("Invalid orderID: %s", notif.OrderID)
+		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid orderID")
+	}
 
 	hash := sha512.Sum512([]byte(rawSignature))
 	computedSignature := hex.EncodeToString(hash[:])

@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/google/uuid"
 	"github.com/midtrans/midtrans-go"
 	"github.com/sirupsen/logrus"
 )
@@ -57,7 +58,7 @@ func (uc *paymentUseCase) CreatePaymentURL(order *entity.Order) (*model.PaymentR
 	var req model.CreatePaymentRequest
 
 	req.TransactionDetails = midtrans.TransactionDetails{
-		OrderID:  "ORDER-" + strconv.Itoa(int(order.ID)),
+		OrderID:  "ORDER-" + strconv.Itoa(int(order.ID)) + "-" + uuid.New().String(),
 		GrossAmt: int64(order.TotalPrice),
 	}
 
