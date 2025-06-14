@@ -90,7 +90,7 @@ func (c *CustomerController) UpdateProfile(ctx *fiber.Ctx) error {
 		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid customer ID")
 	}
 
-	var request model.CreateCustomerRequest
+	var request model.UpdateUserRequest
 	if err := ctx.BodyParser(&request); err != nil {
 		c.logger.Error("Failed to parse body: ", err)
 		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid request body")
@@ -168,7 +168,7 @@ func (c *CustomerController) UpdateEmployee(ctx *fiber.Ctx) error {
 	// get header role
 	role := ctx.Get("x-app-role")
 
-	var request model.UpdateEmployeeRequest
+	var request model.UpdateUserRequest
 	if err := ctx.BodyParser(&request); err != nil {
 		c.logger.Error("Failed to parse body: ", err)
 		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid request body")

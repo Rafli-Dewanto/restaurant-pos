@@ -17,10 +17,10 @@ type CustomerUseCase interface {
 	Register(request *model.CreateCustomerRequest, role string) (*entity.Customer, error)
 	Login(request *model.LoginRequest) (*string, error)
 	GetCustomerByID(id int64) (*entity.Customer, error)
-	UpdateCustomer(id int64, request *model.CreateCustomerRequest) error
+	UpdateCustomer(id int64, request *model.UpdateUserRequest) error
 	GetEmployees() ([]entity.Customer, error)
 	GetEmployeeByID(id int64) (*entity.Customer, error)
-	UpdateEmployee(id int64, request *model.UpdateEmployeeRequest, role string) error
+	UpdateEmployee(id int64, request *model.UpdateUserRequest, role string) error
 	DeleteEmployee(id int64) error
 }
 
@@ -111,26 +111,16 @@ func (uc *customerUseCase) GetCustomerByID(id int64) (*entity.Customer, error) {
 	return customer, nil
 }
 
-func (uc *customerUseCase) UpdateCustomer(id int64, request *model.CreateCustomerRequest) error {
+func (uc *customerUseCase) UpdateCustomer(id int64, request *model.UpdateUserRequest) error {
 	customer, err := uc.repo.GetByID(id)
 	if err != nil {
 		return err
 	}
 
-	// Update fields
 	customer.Name = request.Name
 	customer.Address = request.Address
+	customer.Email = request.Email
 	customer.UpdatedAt = time.Now()
-
-	// Update password if provided
-	if request.Password != "" {
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
-		if err != nil {
-			uc.logger.Errorf("Error hashing password: %v", err)
-			return err
-		}
-		customer.Password = string(hashedPassword)
-	}
 
 	if err := uc.repo.Update(customer); err != nil {
 		uc.logger.Errorf("Error updating customer: %v", err)
@@ -161,7 +151,7 @@ func (uc *customerUseCase) GetEmployeeByID(id int64) (*entity.Customer, error) {
 	return employee, nil
 }
 
-func (uc *customerUseCase) UpdateEmployee(id int64, request *model.UpdateEmployeeRequest, role string) error {
+func (uc *customerUseCase) UpdateEmployee(id int64, request *model.UpdateUserRequest, role string) error {
 	employee, err := uc.repo.GetEmployeeByID(id)
 	if err != nil {
 		return err

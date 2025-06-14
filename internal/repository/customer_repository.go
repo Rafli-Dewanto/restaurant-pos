@@ -19,7 +19,7 @@ type CustomerRepository interface {
 	Delete(id int64) error
 	GetEmployees() ([]entity.Customer, error)
 	GetEmployeeByID(id int64) (*entity.Customer, error)
-	UpdateEmployee(id int64, request *model.UpdateEmployeeRequest, role string) error
+	UpdateEmployee(id int64, request *model.UpdateUserRequest, role string) error
 	DeleteEmployee(id int64) error
 }
 
@@ -62,7 +62,7 @@ func (r *customerRepository) GetEmployeeByID(id int64) (*entity.Customer, error)
 	return &customer, nil
 }
 
-func (r *customerRepository) UpdateEmployee(id int64, request *model.UpdateEmployeeRequest, role string) error {
+func (r *customerRepository) UpdateEmployee(id int64, request *model.UpdateUserRequest, role string) error {
 	customer, err := r.GetEmployeeByID(id)
 	if err != nil {
 		return err
@@ -71,11 +71,11 @@ func (r *customerRepository) UpdateEmployee(id int64, request *model.UpdateEmplo
 	customer.Address = request.Address
 	customer.UpdatedAt = time.Now()
 	customer.Email = request.Email
-	
+
 	// update role if provided
 	if role != "" {
 		customer.Role = role
-	
+
 	}
 	if err := r.db.Save(customer).Error; err != nil {
 		r.logger.Errorf("Error updating employee: %v", err)
