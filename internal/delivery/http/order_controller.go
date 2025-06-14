@@ -67,6 +67,13 @@ func (c *OrderController) CreateOrder(ctx *fiber.Ctx) error {
 		return utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to create payment URL")
 	}
 
+	// FIXME force update order status due to midtrans webhook delay
+	orderIDStr := strconv.Itoa(int(order.ID))
+	if err := c.orderUseCase.UpdateOrderStatus(orderIDStr, string(entity.OrderStatusPaid)); err != nil {
+		c.logger.Error("Failed to update order status: ", err)
+		return utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to update order status")
+	}
+
 	return utils.WriteResponse(ctx, fiber.StatusCreated, paymentURL, "Order created successfully", nil)
 }
 

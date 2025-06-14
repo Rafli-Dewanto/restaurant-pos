@@ -78,6 +78,9 @@ func (uc *paymentUseCase) CreatePaymentURL(order *entity.Order) (*model.PaymentR
 		httpReq.Header.Set(key, value)
 	}
 
+	// optional: additional notification URLs
+	// httpReq.Header.Set("X-Append-Notification", "https://5a48-2a09-bac5-3a09-25d7-00-3c5-35.ngrok-free.app/payment/notification/")
+
 	client := &http.Client{}
 	resp, err := client.Do(httpReq)
 	if err != nil {
@@ -106,9 +109,10 @@ func (uc *paymentUseCase) CreatePaymentURL(order *entity.Order) (*model.PaymentR
 
 	// insert payment to db
 	payment := &entity.Payment{
-		OrderID:      order.ID,
-		Amount:       order.TotalPrice,
-		Status:       constants.PaymentStatusPending,
+		OrderID: order.ID,
+		Amount:  order.TotalPrice,
+		// FIXME workaround for midtrans webhook delay or error, force update to success
+		Status:       constants.PaymentStatusSuccess,
 		PaymentToken: paymentResponse.Token,
 		PaymentURL:   paymentResponse.RedirectURL,
 	}

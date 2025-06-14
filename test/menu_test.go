@@ -23,31 +23,31 @@ import (
 	"gorm.io/gorm"
 )
 
-type CakeHandlerTestSuite struct {
+type MenuHandlerTestSuite struct {
 	suite.Suite
 	app     *fiber.App
 	db      *gorm.DB
-	handler *controller.CakeController
-	useCase usecase.CakeUseCase
-	repo    repository.CakeRepository
+	handler *controller.MenuController
+	useCase usecase.MenuUseCase
+	repo    repository.MenuRepository
 	logger  *logrus.Logger
 	token   string
 }
 
-func (suite *CakeHandlerTestSuite) SetupTest() {
+func (suite *MenuHandlerTestSuite) SetupTest() {
 	cfg := configs.LoadConfig()
 
 	db := database.ConnectPostgres(cfg)
 
 	// Run migrations
-	err := db.AutoMigrate(&entity.Cake{})
+	err := db.AutoMigrate(&entity.Menu{})
 	assert.NoError(suite.T(), err)
 
 	suite.db = db
 	suite.logger = utils.NewLogger()
-	suite.repo = repository.NewCakeRepository(db, suite.logger)
-	suite.useCase = usecase.NewCakeUseCase(suite.repo, suite.logger)
-	suite.handler = controller.NewCakeController(suite.useCase, suite.logger)
+	suite.repo = repository.NewMenuRepository(db, suite.logger)
+	suite.useCase = usecase.NewMenuUseCase(suite.repo, suite.logger)
+	suite.handler = controller.NewMenuController(suite.useCase, suite.logger)
 
 	// Initialize Fiber app
 	suite.app = fiber.New()
@@ -58,25 +58,25 @@ func (suite *CakeHandlerTestSuite) SetupTest() {
 	suite.token = token
 
 	// Setup routes
-	suite.app.Post("/cakes", suite.handler.CreateCake)
-	suite.app.Get("/cakes/:id", suite.handler.GetCakeByID)
-	suite.app.Get("/cakes", suite.handler.GetAllCakes)
-	suite.app.Put("/cakes/:id", suite.handler.UpdateCake)
-	suite.app.Delete("/cakes/:id", suite.handler.DeleteCake)
+	suite.app.Post("/menus", suite.handler.CreateMenu)
+	suite.app.Get("/menus/:id", suite.handler.GetMenuByID)
+	suite.app.Get("/menus", suite.handler.GetAllMenus)
+	suite.app.Put("/menus/:id", suite.handler.UpdateMenu)
+	suite.app.Delete("/menus/:id", suite.handler.DeleteMenu)
 }
 
 func TestSanity(t *testing.T) {
 	t.Log("Sanity test runs")
 }
 
-func TestCakeHandlerSuite(t *testing.T) {
-	suite.Run(t, new(CakeHandlerTestSuite))
+func TestMenuHandlerSuite(t *testing.T) {
+	suite.Run(t, new(MenuHandlerTestSuite))
 }
 
-func (suite *CakeHandlerTestSuite) TestCreate() {
-	suite.T().Run("Test successful cake creation", func(t *testing.T) {
-		request := model.CreateUpdateCakeRequest{
-			Title:       "Test Cake",
+func (suite *MenuHandlerTestSuite) TestCreate() {
+	suite.T().Run("Test successful menu creation", func(t *testing.T) {
+		request := model.CreateUpdateMenuRequest{
+			Title:       "Test Menu",
 			Description: "Test Description",
 			Price:       90000,
 			Category:    "birthday_cake",
@@ -85,7 +85,7 @@ func (suite *CakeHandlerTestSuite) TestCreate() {
 		}
 
 		jsonValue, _ := json.Marshal(request)
-		req := httptest.NewRequest("POST", "/cakes", bytes.NewBuffer(jsonValue))
+		req := httptest.NewRequest("POST", "/menus", bytes.NewBuffer(jsonValue))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+suite.token)
 
@@ -97,20 +97,20 @@ func (suite *CakeHandlerTestSuite) TestCreate() {
 		var response utils.Response
 		_ = json.Unmarshal(body, &response)
 
-		jsonCake, _ := json.Marshal(response.Data)
-		var cake entity.Cake
-		_ = json.Unmarshal(jsonCake, &cake)
+		jsonMenu, _ := json.Marshal(response.Data)
+		var menu entity.Menu
+		_ = json.Unmarshal(jsonMenu, &menu)
 
-		assert.NotZero(suite.T(), cake.ID)
-		assert.Equal(suite.T(), request.Title, cake.Title)
+		assert.NotZero(suite.T(), menu.ID)
+		assert.Equal(suite.T(), request.Title, menu.Title)
 
 		assert.NoError(suite.T(), err)
-		assert.NotZero(suite.T(), cake.ID)
-		assert.Equal(suite.T(), request.Title, cake.Title)
+		assert.NotZero(suite.T(), menu.ID)
+		assert.Equal(suite.T(), request.Title, menu.Title)
 	})
 
 	suite.T().Run("Test invalid request body", func(t *testing.T) {
-		req := httptest.NewRequest("POST", "/cakes", bytes.NewBuffer([]byte(`{invalid json}`)))
+		req := httptest.NewRequest("POST", "/menus", bytes.NewBuffer([]byte(`{invalid json}`)))
 		req.Header.Set("Content-Type", "application/json")
 		resp, err := suite.app.Test(req)
 		assert.NoError(suite.T(), err)
@@ -118,9 +118,9 @@ func (suite *CakeHandlerTestSuite) TestCreate() {
 	})
 }
 
-func (suite *CakeHandlerTestSuite) TestGetByID() {
-	suite.T().Run("Test successful cake retrieval", func(t *testing.T) {
-		cake := &entity.Cake{
+func (suite *MenuHandlerTestSuite) TestGetByID() {
+	suite.T().Run("Test successful menu retrieval", func(t *testing.T) {
+		menu := &entity.Menu{
 			Title:       "Test Cake",
 			Description: "Test Description",
 			Rating:      4.5,
@@ -129,9 +129,9 @@ func (suite *CakeHandlerTestSuite) TestGetByID() {
 			Image:       "http://example.com/test.jpg",
 		}
 
-		// POST: create cake
-		jsonValue, _ := json.Marshal(cake)
-		req := httptest.NewRequest("POST", "/cakes", bytes.NewBuffer(jsonValue))
+		// POST: create menu
+		jsonValue, _ := json.Marshal(menu)
+		req := httptest.NewRequest("POST", "/menus", bytes.NewBuffer(jsonValue))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+suite.token)
 
@@ -141,13 +141,12 @@ func (suite *CakeHandlerTestSuite) TestGetByID() {
 		var respCreate utils.Response
 		_ = json.Unmarshal(body, &respCreate)
 
-		// convert respCreate.Data into model.CakeModel
 		dataBytes, _ := json.Marshal(respCreate.Data)
-		var createdCake model.CakeModel
-		_ = json.Unmarshal(dataBytes, &createdCake)
+		var createdMenu model.MenuModel
+		_ = json.Unmarshal(dataBytes, &createdMenu)
 
-		// GET: retrieve the cake
-		req = httptest.NewRequest("GET", "/cakes/"+strconv.Itoa(int(createdCake.ID)), nil)
+		// GET: retrieve the menu
+		req = httptest.NewRequest("GET", "/menus/"+strconv.Itoa(int(createdMenu.ID)), nil)
 		resp, err := suite.app.Test(req)
 
 		assert.NoError(t, err)
@@ -158,43 +157,43 @@ func (suite *CakeHandlerTestSuite) TestGetByID() {
 		_ = json.Unmarshal(body, &getResp)
 
 		dataBytes, _ = json.Marshal(getResp.Data)
-		var fetchedCake model.CakeModel
-		_ = json.Unmarshal(dataBytes, &fetchedCake)
+		var fetchedMenu model.MenuModel
+		_ = json.Unmarshal(dataBytes, &fetchedMenu)
 
-		assert.Equal(t, createdCake.Title, fetchedCake.Title)
-		assert.Equal(t, createdCake.Description, fetchedCake.Description)
-		assert.Equal(t, createdCake.Rating, fetchedCake.Rating)
-		assert.Equal(t, createdCake.Category, fetchedCake.Category)
-		assert.Equal(t, createdCake.ImageURL, fetchedCake.ImageURL)
+		assert.Equal(t, createdMenu.Title, fetchedMenu.Title)
+		assert.Equal(t, createdMenu.Description, fetchedMenu.Description)
+		assert.Equal(t, createdMenu.Rating, fetchedMenu.Rating)
+		assert.Equal(t, createdMenu.Category, fetchedMenu.Category)
+		assert.Equal(t, createdMenu.ImageURL, fetchedMenu.ImageURL)
 	})
 
-	suite.T().Run("Test cake not found", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/cakes/9999", nil)
+	suite.T().Run("Test menu not found", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/menus/9999", nil)
 		resp, err := suite.app.Test(req)
 		assert.NoError(suite.T(), err)
 		assert.Equal(suite.T(), fiber.StatusNotFound, resp.StatusCode)
 	})
 }
 
-func (suite *CakeHandlerTestSuite) TestGetAll() {
-	// Test getting all cakes
+func (suite *MenuHandlerTestSuite) TestGetAll() {
+	// Test getting all menus
 	perPage := 10
-	req := httptest.NewRequest("GET", "/cakes", nil)
+	req := httptest.NewRequest("GET", "/menus", nil)
 	resp, err := suite.app.Test(req)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), fiber.StatusOK, resp.StatusCode)
 
 	body, _ := io.ReadAll(resp.Body)
-	var response model.PaginationResponse[[]entity.Cake]
+	var response model.PaginationResponse[[]entity.Menu]
 	err = json.Unmarshal(body, &response)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), perPage, len(response.Data))
 }
 
-func (suite *CakeHandlerTestSuite) TestUpdate() {
-	// Create a test cake first
-	suite.T().Run("Test successful cake update", func(t *testing.T) {
-		cake := &model.CreateUpdateCakeRequest{
+func (suite *MenuHandlerTestSuite) TestUpdate() {
+	// Create a test menu first
+	suite.T().Run("Test successful menu update", func(t *testing.T) {
+		menu := &model.CreateUpdateMenuRequest{
 			Title:       "Test Cake",
 			Description: "Test Description",
 			Rating:      4.5,
@@ -203,9 +202,9 @@ func (suite *CakeHandlerTestSuite) TestUpdate() {
 			ImageURL:    "http://example.com/test.jpg",
 		}
 
-		// POST: create cake
-		jsonValue, _ := json.Marshal(cake)
-		req := httptest.NewRequest("POST", "/cakes", bytes.NewBuffer(jsonValue))
+		// POST: create menu
+		jsonValue, _ := json.Marshal(menu)
+		req := httptest.NewRequest("POST", "/menus", bytes.NewBuffer(jsonValue))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+suite.token)
 
@@ -215,31 +214,30 @@ func (suite *CakeHandlerTestSuite) TestUpdate() {
 		var respCreate utils.Response
 		_ = json.Unmarshal(body, &respCreate)
 
-		// convert respCreate.Data into model.CakeModel
 		dataBytes, _ := json.Marshal(respCreate.Data)
-		var createdCake model.CakeModel
-		_ = json.Unmarshal(dataBytes, &createdCake)
+		var createdMenu model.MenuModel
+		_ = json.Unmarshal(dataBytes, &createdMenu)
 
-		// Update the cake
-		updatedCake := createdCake
-		updatedCake.Title = "Updated Cake"
-		updatedCake.Rating = 4.5
-		updatedCake.ImageURL = "http://example.com/updated.jpg"
-		updatedCake.Price = 100
-		updatedCake.Category = "test"
-		updatedCake.Description = "Updated Description"
+		// Update the menu
+		updatedMenu := createdMenu
+		updatedMenu.Title = "Updated Cake"
+		updatedMenu.Rating = 4.5
+		updatedMenu.ImageURL = "http://example.com/updated.jpg"
+		updatedMenu.Price = 100
+		updatedMenu.Category = "test"
+		updatedMenu.Description = "Updated Description"
 
-		testUpdatedCake := model.CreateUpdateCakeRequest{
-			Title:       updatedCake.Title,
-			Description: updatedCake.Description,
-			Rating:      updatedCake.Rating,
-			ImageURL:    updatedCake.ImageURL,
-			Price:       updatedCake.Price,
-			Category:    updatedCake.Category,
+		testUpdatedMenu := model.CreateUpdateMenuRequest{
+			Title:       updatedMenu.Title,
+			Description: updatedMenu.Description,
+			Rating:      updatedMenu.Rating,
+			ImageURL:    updatedMenu.ImageURL,
+			Price:       updatedMenu.Price,
+			Category:    updatedMenu.Category,
 		}
 
-		jsonValue, _ = json.Marshal(testUpdatedCake)
-		req = httptest.NewRequest("PUT", "/cakes/"+strconv.Itoa(int(createdCake.ID)), bytes.NewBuffer(jsonValue))
+		jsonValue, _ = json.Marshal(testUpdatedMenu)
+		req = httptest.NewRequest("PUT", "/menus/"+strconv.Itoa(int(createdMenu.ID)), bytes.NewBuffer(jsonValue))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+suite.token)
 
@@ -252,19 +250,19 @@ func (suite *CakeHandlerTestSuite) TestUpdate() {
 		_ = json.Unmarshal(body, &response)
 
 		dataBytes, _ = json.Marshal(response.Data)
-		var updated model.CakeModel
+		var updated model.MenuModel
 		_ = json.Unmarshal(dataBytes, &updated)
 
-		assert.Equal(suite.T(), "Updated Cake", updated.Title)
+		assert.Equal(suite.T(), "Updated Menu", updated.Title)
 
 		assert.NoError(suite.T(), err)
-		assert.Equal(suite.T(), "Updated Cake", updated.Title)
+		assert.Equal(suite.T(), "Updated Menu", updated.Title)
 		assert.Equal(suite.T(), 4.5, updated.Rating)
 	})
 
-	// Test updating non-existent cake - should return 404
-	suite.T().Run("Update non-existent cake", func(t *testing.T) {
-		cake := &model.CreateUpdateCakeRequest{
+	// Test updating non-existent menu - should return 404
+	suite.T().Run("Update non-existent menu", func(t *testing.T) {
+		menu := &model.CreateUpdateMenuRequest{
 			Title:       "Test Cake",
 			Description: "Test Description",
 			Price:       90000,
@@ -272,8 +270,8 @@ func (suite *CakeHandlerTestSuite) TestUpdate() {
 			Rating:      4.5,
 			ImageURL:    "http://example.com/test.jpg",
 		}
-		jsonValue, _ := json.Marshal(cake)
-		req := httptest.NewRequest("PUT", "/cakes/9999999", bytes.NewBuffer(jsonValue))
+		jsonValue, _ := json.Marshal(menu)
+		req := httptest.NewRequest("PUT", "/menus/9999999", bytes.NewBuffer(jsonValue))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+suite.token)
 		resp, err := suite.app.Test(req)
@@ -282,9 +280,9 @@ func (suite *CakeHandlerTestSuite) TestUpdate() {
 	})
 }
 
-func (suite *CakeHandlerTestSuite) TestDelete() {
-	// Create a test cake first
-	cake := &model.CreateUpdateCakeRequest{
+func (suite *MenuHandlerTestSuite) TestDelete() {
+	// Create a test menu first
+	menu := &model.CreateUpdateMenuRequest{
 		Title:       "Test Cake",
 		Description: "Test Description",
 		Price:       90000,
@@ -292,8 +290,8 @@ func (suite *CakeHandlerTestSuite) TestDelete() {
 		Rating:      4.5,
 		ImageURL:    "http://example.com/test.jpg",
 	}
-	jsonValue, _ := json.Marshal(cake)
-	req := httptest.NewRequest("POST", "/cakes", bytes.NewBuffer(jsonValue))
+	jsonValue, _ := json.Marshal(menu)
+	req := httptest.NewRequest("POST", "/menus", bytes.NewBuffer(jsonValue))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+suite.token)
 	resp, _ := suite.app.Test(req)
@@ -303,17 +301,17 @@ func (suite *CakeHandlerTestSuite) TestDelete() {
 	json.Unmarshal(body, &res)
 
 	jsonBody, _ := json.Marshal(res.Data)
-	var result model.CakeModel
+	var result model.MenuModel
 	_ = json.Unmarshal(jsonBody, &result)
 
-	// Delete the cake
-	req = httptest.NewRequest("DELETE", "/cakes/"+strconv.Itoa(int(result.ID)), nil)
+	// Delete the menu
+	req = httptest.NewRequest("DELETE", "/menus/"+strconv.Itoa(int(result.ID)), nil)
 	resp, _ = suite.app.Test(req)
 	req.Header.Set("Authorization", "Bearer "+suite.token)
 	assert.Equal(suite.T(), fiber.StatusOK, resp.StatusCode)
 
-	// Verify cake is deleted
-	req = httptest.NewRequest("GET", "/cakes/"+strconv.Itoa(int(result.ID)), nil)
+	// Verify menu is deleted
+	req = httptest.NewRequest("GET", "/menus/"+strconv.Itoa(int(result.ID)), nil)
 	resp, _ = suite.app.Test(req)
 	assert.Equal(suite.T(), fiber.StatusNotFound, resp.StatusCode)
 }

@@ -5,11 +5,12 @@ import (
 	"time"
 )
 
-type Cake struct {
+type Menu struct {
 	ID          int64        `gorm:"column:id;primaryKey"`
 	Title       string       `gorm:"column:title"`
 	Description string       `gorm:"column:description"`
 	Price       float64      `gorm:"column:price"`
+	Quantity    int64        `gorm:"column:quantity"`
 	Category    string       `gorm:"column:category"`
 	Rating      float64      `gorm:"column:rating"`
 	Image       string       `gorm:"column:image"`
@@ -18,6 +19,6 @@ type Cake struct {
 	DeletedAt   sql.NullTime `gorm:"column:deleted_at"`
 }
 
-func (a *Cake) TableName() string {
-	return "cakes"
+func (a *Menu) TableName() string {
+	return "menus"
 }

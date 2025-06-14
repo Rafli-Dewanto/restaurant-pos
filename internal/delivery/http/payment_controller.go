@@ -68,7 +68,6 @@ func (c *PaymentControllerImpl) GetPaymentURL(ctx *fiber.Ctx) error {
 }
 
 func (c *PaymentControllerImpl) GetTransactionStatus(ctx *fiber.Ctx) error {
-	c.logger.Trace("UpdateOrderStatus called")
 	var notif model.MidtransNotification
 	if err := ctx.BodyParser(&notif); err != nil {
 		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, "Invalid request body")

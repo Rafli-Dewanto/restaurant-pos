@@ -8,7 +8,7 @@ import (
 
 type Seeder struct {
 	customerSeeder  *CustomerSeeder
-	cakeSeeder      *CakeSeeder
+	menuSeeder      *MenuSeeder
 	inventorySeeder *InventorySeeder
 	tableSeeder     *TableSeeder
 	logger          *logrus.Logger
@@ -16,14 +16,14 @@ type Seeder struct {
 
 func NewSeeder(
 	customerRepo repository.CustomerRepository,
-	cakeRepo repository.CakeRepository,
+	menuRepo repository.MenuRepository,
 	logger *logrus.Logger,
 	inventorySeeder repository.InventoryRepository,
 	tableSeeder repository.TableRepository,
 ) *Seeder {
 	return &Seeder{
 		customerSeeder:  NewCustomerSeeder(customerRepo, logger),
-		cakeSeeder:      NewCakeSeeder(cakeRepo, logger),
+		menuSeeder:      NewMenuSeeder(menuRepo, logger),
 		logger:          logger,
 		inventorySeeder: NewInventorySeeder(inventorySeeder, logger),
 		tableSeeder:     NewTableSeeder(tableSeeder, logger),
@@ -66,9 +66,9 @@ func (s *Seeder) SeedAll() error {
 		return err
 	}
 
-	// Seed cakes
-	if err := s.cakeSeeder.SeedCakes(); err != nil {
-		s.logger.Errorf("Error seeding cakes: %v", err)
+	// Seed menus
+	if err := s.menuSeeder.SeedMenus(); err != nil {
+		s.logger.Errorf("Error seeding menus: %v", err)
 		return err
 	}
 

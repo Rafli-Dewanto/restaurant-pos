@@ -11,67 +11,67 @@ import (
 )
 
 type WishListUseCase interface {
-	CreateWishList(customerID, cakeID int64) error
-	GetWishList(customerID int64, params *model.PaginationQuery) ([]model.CakeModel, *model.PaginatedMeta, error)
-	DeleteWishList(customerID, cakeID int64) error
+	CreateWishList(customerID, menuID int64) error
+	GetWishList(customerID int64, params *model.PaginationQuery) ([]model.MenuModel, *model.PaginatedMeta, error)
+	DeleteWishList(customerID, menuID int64) error
 }
 
 type wishListUseCase struct {
 	wishListRepo repository.WishListRepository
-	cakeRepo     repository.CakeRepository
+	menuRepo     repository.MenuRepository
 	logger       *logrus.Logger
 	validate     *validator.Validate
 }
 
 func NewWishListUseCase(
 	wishListRepo repository.WishListRepository,
-	cakeRepo repository.CakeRepository,
+	menuRepo repository.MenuRepository,
 	logger *logrus.Logger,
 ) WishListUseCase {
 	return &wishListUseCase{
 		wishListRepo: wishListRepo,
-		cakeRepo:     cakeRepo,
+		menuRepo:     menuRepo,
 		logger:       logger,
 		validate:     validator.New(),
 	}
 }
 
-func (uc *wishListUseCase) CreateWishList(customerID, cakeID int64) error {
+func (uc *wishListUseCase) CreateWishList(customerID, menuID int64) error {
 	wishlist := &entity.WishList{
 		CustomerID: customerID,
-		CakeID:     cakeID,
+		MenuID:     menuID,
 	}
-	// if the cake is already in the wishlist, return an error
-	_, err := uc.wishListRepo.GetByCustomerIDAndCakeID(customerID, cakeID)
+	// if the menu is already in the wishlist, return an error
+	_, err := uc.wishListRepo.GetByCustomerIDAndMenuID(customerID, menuID)
 	if err == nil {
-		return constants.ErrCakeAlreadyInWishlist
+		return constants.ErrMenuAlreadyInWishlist
 	}
 
 	return uc.wishListRepo.Create(wishlist)
 }
 
-func (u *wishListUseCase) GetWishList(customerID int64, params *model.PaginationQuery) ([]model.CakeModel, *model.PaginatedMeta, error) {
-	cakes, meta, err := u.wishListRepo.GetByCustomerID(customerID, params)
+func (u *wishListUseCase) GetWishList(customerID int64, params *model.PaginationQuery) ([]model.MenuModel, *model.PaginatedMeta, error) {
+	menus, meta, err := u.wishListRepo.GetByCustomerID(customerID, params)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	var cakeResponses []model.CakeModel
-	for _, cake := range cakes {
-		cakeResponses = append(cakeResponses, model.CakeModel{
-			ID:          cake.ID,
-			Title:       cake.Title,
-			Description: cake.Description,
-			Price:       cake.Price,
-			ImageURL:    cake.Image,
-			Rating:      cake.Rating,
-			Category:    cake.Category,
+	var menuResponses []model.MenuModel
+	for _, m := range menus {
+		menuResponses = append(menuResponses, model.MenuModel{
+			ID:          m.ID,
+			Title:       m.Title,
+			Description: m.Description,
+			Price:       m.Price,
+			ImageURL:    m.Image,
+			Rating:      m.Rating,
+			Category:    m.Category,
 		})
 	}
 
-	return cakeResponses, meta, nil
+	return menuResponses, meta, nil
 }
 
-func (uc *wishListUseCase) DeleteWishList(customerID, cakeID int64) error {
-	return uc.wishListRepo.Delete(customerID, cakeID)
+func (uc *wishListUseCase) DeleteWishList(customerID, menuID int64) error {
+	return uc.wishListRepo.Delete(customerID, menuID)
 }

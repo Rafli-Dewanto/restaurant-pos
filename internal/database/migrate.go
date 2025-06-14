@@ -10,7 +10,7 @@ import (
 func RunMigrations(db *gorm.DB) error {
 	log.Println("🔄 Running database migrations...")
 	err := db.AutoMigrate(
-		&entity.Cake{},
+		&entity.Menu{},
 		&entity.Customer{},
 		&entity.Order{},
 		&entity.OrderItem{},

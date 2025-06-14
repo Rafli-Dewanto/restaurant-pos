@@ -24,7 +24,7 @@ type OrderUseCase interface {
 
 type orderUseCaseImpl struct {
 	orderRepo    repository.OrderRepository
-	cakeRepo     repository.CakeRepository
+	menuRepo     repository.MenuRepository
 	customerRepo repository.CustomerRepository
 	logger       *logrus.Logger
 	env          string
@@ -32,14 +32,14 @@ type orderUseCaseImpl struct {
 
 func NewOrderUseCase(
 	orderRepo repository.OrderRepository,
-	cakeRepo repository.CakeRepository,
+	menuRepo repository.MenuRepository,
 	customerRepo repository.CustomerRepository,
 	logger *logrus.Logger,
 	env string,
 ) OrderUseCase {
 	return &orderUseCaseImpl{
 		orderRepo:    orderRepo,
-		cakeRepo:     cakeRepo,
+		menuRepo:     menuRepo,
 		customerRepo: customerRepo,
 		logger:       logger,
 		env:          env,
@@ -55,7 +55,7 @@ func (uc *orderUseCaseImpl) GetPendingOrder(customerID int64, orderID int64) (*m
 	if err != nil {
 		return nil, err
 	}
-	response := model.OrderToResponse(&order)
+	response := model.ToOrderResponse(&order)
 	return response, nil
 }
 
@@ -70,14 +70,14 @@ func (uc *orderUseCaseImpl) CreateOrder(customerID int64, request *model.CreateO
 	var totalPrice float64
 
 	for _, item := range request.Items {
-		// Validate cake exists
-		_, err := uc.cakeRepo.GetByID(item.CakeID)
+		// Validate menu exists
+		_, err := uc.menuRepo.GetByID(item.MenuID)
 		if err != nil {
-			return nil, errors.New("cake not found")
+			return nil, errors.New("menu not found")
 		}
 
 		orderItem := entity.OrderItem{
-			CakeID:   item.CakeID,
+			MenuID:   item.MenuID,
 			Quantity: item.Quantity,
 			Price:    item.Price,
 		}
@@ -111,7 +111,7 @@ func (uc *orderUseCaseImpl) GetOrderByID(id int64) (*model.OrderResponse, error)
 		return nil, err
 	}
 
-	return model.OrderToResponse(order), nil
+	return model.ToOrderResponse(order), nil
 }
 
 func (uc *orderUseCaseImpl) GetCustomerOrders(customerID int64) ([]model.OrderResponse, error) {
@@ -122,7 +122,7 @@ func (uc *orderUseCaseImpl) GetCustomerOrders(customerID int64) ([]model.OrderRe
 
 	responses := make([]model.OrderResponse, len(orders))
 	for i, order := range orders {
-		responses[i] = *model.OrderToResponse(&order)
+		responses[i] = *model.ToOrderResponse(&order)
 	}
 
 	return responses, nil
@@ -176,7 +176,7 @@ func (uc *orderUseCaseImpl) GetAllOrders(params *model.PaginationQuery) (*[]mode
 
 	responses := make([]model.OrderResponse, len(orders))
 	for i, order := range orders {
-		responses[i] = *model.OrderToResponse(&order)
+		responses[i] = *model.ToOrderResponse(&order)
 	}
 
 	return &responses, meta, nil

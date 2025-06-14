@@ -12,7 +12,7 @@ type CartRepository interface {
 	Create(cart *entity.Cart) error
 	GetByID(id int64) (*entity.Cart, error)
 	GetByCustomerID(customerID int64, params *model.PaginationQuery) (*model.PaginationResponse[[]model.UserCartResponse], error)
-	GetByCustomerIDAndCakeID(customerID int64, cakeID int64) (*entity.Cart, error)
+	GetByCustomerIDAndMenuID(customerID int64, menuID int64) (*entity.Cart, error)
 	Update(cart *entity.Cart) error
 	Delete(cartID int64) error
 	RemoveItem(customerID int64, cartID int64) error
@@ -54,9 +54,9 @@ func (r *cartRepository) GetByCustomerID(customerID int64, params *model.Paginat
 	}
 
 	query := r.db.Model(&entity.Cart{}).
-						Select("carts.id, cakes.title as cake_name, cakes.image as cake_image, carts.customer_id, carts.cake_id, carts.quantity, carts.price, carts.subtotal, carts.created_at, carts.updated_at").
-						Joins("JOIN cakes ON cakes.id = carts.cake_id").
-						Where("carts.customer_id = ?", customerID)
+		Select("carts.id, menus.title as menu_name, menus.image as menu_image, carts.customer_id, carts.menu_id, carts.quantity, carts.price, carts.subtotal, carts.created_at, carts.updated_at").
+		Joins("JOIN menus ON menus.id = carts.menu_id").
+		Where("carts.customer_id = ?", customerID)
 
 	query.Count(&total)
 
@@ -81,9 +81,9 @@ func (r *cartRepository) GetByCustomerID(customerID int64, params *model.Paginat
 	}, nil
 }
 
-func (r *cartRepository) GetByCustomerIDAndCakeID(customerID int64, cakeID int64) (*entity.Cart, error) {
+func (r *cartRepository) GetByCustomerIDAndMenuID(customerID int64, menuID int64) (*entity.Cart, error) {
 	var cart entity.Cart
-	if err := r.db.Where("customer_id = ? AND cake_id = ?", customerID, cakeID).First(&cart).Error; err != nil {
+	if err := r.db.Where("customer_id = ? AND menu_id = ?", customerID, menuID).First(&cart).Error; err != nil {
 		return nil, err
 	}
 	return &cart, nil

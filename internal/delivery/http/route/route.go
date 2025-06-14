@@ -12,7 +12,7 @@ import (
 
 type RouteConfig struct {
 	App                   *fiber.App
-	CakeController        *http.CakeController
+	MenuController        *http.MenuController
 	CustomerController    *http.CustomerController
 	CartController        *http.CartController
 	OrderController       *http.OrderController
@@ -33,7 +33,7 @@ func (c *RouteConfig) SetupRoute() {
 	c.App.Use(cors.New(cors.Config{
 		AllowOrigins: "*",
 		AllowMethods: "GET,POST,PATCH,PUT,DELETE",
-		AllowHeaders: "Origin, Content-Type, Accept, Authorization, X-App-Role",
+		AllowHeaders: "Origin, Content-Type, Accept, Authorization, X-App-Role, User-Agent",
 	}))
 	c.App.Use(middleware.LogMiddleware(c.Log))
 
@@ -41,10 +41,10 @@ func (c *RouteConfig) SetupRoute() {
 	c.App.Post("/register", c.CustomerController.Register)
 	c.App.Post("/login", c.CustomerController.Login)
 	// Midtrans notification webhook
-	c.App.Post("/payment/notification", c.PaymentController.GetTransactionStatus)
-	// cakes
-	c.App.Get("/cakes", c.CakeController.GetAllCakes)
-	c.App.Get("/cakes/:id", c.CakeController.GetCakeByID)
+	c.App.Post("/payment/notification/", c.PaymentController.GetTransactionStatus)
+	// menus
+	c.App.Get("/menus", c.MenuController.GetAllMenus)
+	c.App.Get("/menus/:id", c.MenuController.GetMenuByID)
 
 	// Protected routes
 	protectedRoutes := c.App.Group("/", middleware.AuthMiddleware(c.JWTSecret))
@@ -61,11 +61,11 @@ func (c *RouteConfig) SetupRoute() {
 	employeeRoutes.Put("/:id", middleware.RoleMiddleware(constants.RoleAdmin), c.CustomerController.UpdateEmployee)
 	employeeRoutes.Delete("/:id", middleware.RoleMiddleware(constants.RoleAdmin), c.CustomerController.DeleteEmployee)
 
-	// Cake routes
-	cakes := protectedRoutes.Group("/cakes")
-	cakes.Post("/", middleware.RoleMiddleware(constants.RoleAdmin, constants.RoleCashier, constants.RoleKitchen, constants.RoleWaitress), c.CakeController.CreateCake)
-	cakes.Put("/:id", middleware.RoleMiddleware(constants.RoleAdmin, constants.RoleCashier, constants.RoleKitchen, constants.RoleWaitress), c.CakeController.UpdateCake)
-	cakes.Delete("/:id", middleware.RoleMiddleware(constants.RoleAdmin, constants.RoleCashier, constants.RoleKitchen, constants.RoleWaitress), c.CakeController.DeleteCake)
+	// Menu routes
+	menus := protectedRoutes.Group("/menus")
+	menus.Post("/", middleware.RoleMiddleware(constants.RoleAdmin, constants.RoleCashier, constants.RoleKitchen, constants.RoleWaitress), c.MenuController.CreateMenu)
+	menus.Put("/:id", middleware.RoleMiddleware(constants.RoleAdmin, constants.RoleCashier, constants.RoleKitchen, constants.RoleWaitress), c.MenuController.UpdateMenu)
+	menus.Delete("/:id", middleware.RoleMiddleware(constants.RoleAdmin, constants.RoleCashier, constants.RoleKitchen, constants.RoleWaitress), c.MenuController.DeleteMenu)
 
 	// Cart routes
 	carts := protectedRoutes.Group("/carts")
@@ -90,8 +90,8 @@ func (c *RouteConfig) SetupRoute() {
 	// Wishlist routes
 	wishlist := protectedRoutes.Group("/wishlists")
 	wishlist.Get("/", c.WishlistController.GetWishListByCustomerID)
-	wishlist.Post("/:cakeId", c.WishlistController.CreateWishList)
-	wishlist.Delete("/:cakeId", c.WishlistController.DeleteWishList)
+	wishlist.Post("/:menuId", c.WishlistController.CreateWishList)
+	wishlist.Delete("/:menuId", c.WishlistController.DeleteWishList)
 
 	// Reservation routes
 	reservation := protectedRoutes.Group("/reservations")
