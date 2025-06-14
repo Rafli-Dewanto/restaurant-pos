@@ -57,13 +57,22 @@ type MidtransNotification struct {
 	StatusMessage     string `json:"status_message"`
 	StatusCode        string `json:"status_code"`
 	SignatureKey      string `json:"signature_key"`
-	SettlementTime    string `json:"settlement_time"`
 	PaymentType       string `json:"payment_type"`
 	OrderID           string `json:"order_id"`
-	MerchantID        string `json:"merchant_id"`
-	GrossAmount       string `json:"gross_amount"`
-	FraudStatus       string `json:"fraud_status"`
-	Currency          string `json:"currency"`
+	Metadata          struct {
+		OmsChannelType string `json:"oms_channel_type"`
+	} `json:"metadata"`
+	MerchantID             string `json:"merchant_id"`
+	MaskedCard             string `json:"masked_card"`
+	GrossAmount            string `json:"gross_amount"`
+	FraudStatus            string `json:"fraud_status"`
+	ExpiryTime             string `json:"expiry_time"`
+	Currency               string `json:"currency"`
+	ChannelResponseMessage string `json:"channel_response_message"`
+	ChannelResponseCode    string `json:"channel_response_code"`
+	CardType               string `json:"card_type"`
+	Bank                   string `json:"bank"`
+	ApprovalCode           string `json:"approval_code"`
 }
 
 func ToPaymentEntity(paymentModel *PaymentModel) *entity.Payment {

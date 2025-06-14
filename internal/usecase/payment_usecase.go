@@ -109,9 +109,10 @@ func (uc *paymentUseCase) CreatePaymentURL(order *entity.Order) (*model.PaymentR
 
 	// insert payment to db
 	payment := &entity.Payment{
-		OrderID:      order.ID,
-		Amount:       order.TotalPrice,
-		Status:       constants.PaymentStatusPending,
+		OrderID: order.ID,
+		Amount:  order.TotalPrice,
+		// FIXME workaround for midtrans webhook delay or error, force update to success
+		Status:       constants.PaymentStatusSuccess,
 		PaymentToken: paymentResponse.Token,
 		PaymentURL:   paymentResponse.RedirectURL,
 	}
