@@ -20,19 +20,19 @@ type CartUseCase interface {
 
 type cartUseCase struct {
 	cartRepo repository.CartRepository
-	cakeRepo repository.CakeRepository
+	menuRepo repository.MenuRepository
 	logger   *logrus.Logger
 	validate *validator.Validate
 }
 
 func NewCartUseCase(
 	cartRepo repository.CartRepository,
-	cakeRepo repository.CakeRepository,
+	menuRepo repository.MenuRepository,
 	logger *logrus.Logger,
 ) CartUseCase {
 	return &cartUseCase{
 		cartRepo: cartRepo,
-		cakeRepo: cakeRepo,
+		menuRepo: menuRepo,
 		logger:   logger,
 		validate: validator.New(),
 	}
@@ -44,22 +44,22 @@ func (uc *cartUseCase) CreateCart(customerID int64, req *model.AddCart) error {
 		return err
 	}
 
-	cake, err := uc.cakeRepo.GetByID(req.CakeID)
+	menu, err := uc.menuRepo.GetByID(req.MenuID)
 	if err != nil {
-		uc.logger.Errorf("Error getting cake with ID %d: %v", req.CakeID, err)
+		uc.logger.Errorf("Error getting menu with ID %d: %v", req.MenuID, err)
 		return err
 	}
 
-	// check if customer already have the same cake added, if so update the quantity
-	cart, err := uc.cartRepo.GetByCustomerIDAndCakeID(customerID, req.CakeID)
+	// check if customer already have the same menu added, if so update the quantity
+	cart, err := uc.cartRepo.GetByCustomerIDAndMenuID(customerID, req.MenuID)
 	// if not, create a new cart
 	if err != nil {
 		cartModel := &model.CartModel{
 			CustomerID: customerID,
-			CakeID:     req.CakeID,
+			MenuID:     req.MenuID,
 			Quantity:   req.Quantity,
-			Price:      cake.Price,
-			Subtotal:   cake.Price * float64(req.Quantity),
+			Price:      menu.Price,
+			Subtotal:   menu.Price * float64(req.Quantity),
 			CreatedAt:  time.Now(),
 			UpdatedAt:  time.Now(),
 		}
@@ -75,12 +75,12 @@ func (uc *cartUseCase) CreateCart(customerID int64, req *model.AddCart) error {
 	}
 	if cart != nil {
 		cart.Quantity += req.Quantity
-		cart.Subtotal = cake.Price * float64(cart.Quantity)
+		cart.Subtotal = menu.Price * float64(cart.Quantity)
 		if err := uc.cartRepo.Update(cart); err != nil {
-			uc.logger.Errorf("Error updating cart with customer ID %d and cake ID %d: %v", customerID, req.CakeID, err)
+			uc.logger.Errorf("Error updating cart with customer ID %d and menu ID %d: %v", customerID, req.MenuID, err)
 			return err
 		}
-		uc.logger.Infof("Successfully updated cart with customer ID %d and cake ID %d", customerID, req.CakeID)
+		uc.logger.Infof("Successfully updated cart with customer ID %d and menu ID %d", customerID, req.MenuID)
 		return nil
 	}
 	return nil

@@ -1,9 +1,9 @@
 package model
 
 type WishListResponse struct {
-	Cakes []CakeModel `json:"cakes"`
+	Menus []MenuModel `json:"menus"`
 }
 
 type AddToWishListRequest struct {
-	CakeID int64 `json:"cake_id" validate:"required"`
+	MenuID int64 `json:"menu_id" validate:"required"`
 }

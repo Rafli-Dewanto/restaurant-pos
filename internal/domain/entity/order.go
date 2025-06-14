@@ -42,8 +42,8 @@ type Order struct {
 type OrderItem struct {
 	ID        int64        `gorm:"column:id;primaryKey;autoIncrement"`
 	OrderID   int64        `gorm:"column:order_id"`
-	CakeID    int64        `gorm:"column:cake_id"`
-	Cake      Cake         `gorm:"foreignKey:CakeID"`
+	MenuID    int64        `gorm:"column:menu_id"`
+	Menu      Menu         `gorm:"foreignKey:MenuID"`
 	Quantity  int64        `gorm:"column:quantity"`
 	Price     float64      `gorm:"column:price"`
 	CreatedAt time.Time    `gorm:"column:created_at"`

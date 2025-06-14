@@ -6,7 +6,7 @@ import (
 )
 
 type OrderItemRequest struct {
-	CakeID   int64   `json:"cake_id" validate:"required"`
+	MenuID   int64   `json:"menu_id" validate:"required"`
 	Title    string  `json:"title" validate:"required"`
 	Quantity int64   `json:"quantity" validate:"required,min=1"`
 	Price    float64 `json:"price" validate:"required,min=0"`
@@ -22,7 +22,7 @@ type CreateOrderRequest struct {
 
 type OrderItemResponse struct {
 	ID       int64     `json:"id"`
-	Cake     CakeModel `json:"cake"`
+	Menu     MenuModel `json:"menu"`
 	Quantity int64     `json:"quantity"`
 	Price    float64   `json:"price"`
 }
@@ -43,12 +43,12 @@ type UpdateOrderStatusRequest struct {
 	Status string `json:"status" validate:"required,oneof=pending paid preparing delivered cancelled"`
 }
 
-func OrderToResponse(order *entity.Order) *OrderResponse {
+func ToOrderResponse(order *entity.Order) *OrderResponse {
 	itemResponses := make([]OrderItemResponse, len(order.Items))
 	for i, item := range order.Items {
 		itemResponses[i] = OrderItemResponse{
 			ID:       item.ID,
-			Cake:     *CakeToResponse(&item.Cake),
+			Menu:     *ToMenuResponse(&item.Menu),
 			Quantity: item.Quantity,
 			Price:    item.Price,
 		}
@@ -76,7 +76,7 @@ func ToOrderEntity(order *OrderResponse) *entity.Order {
 	var item entity.OrderItem
 	for _, itemResponse := range order.Items {
 		item = entity.OrderItem{
-			CakeID:   itemResponse.Cake.ID,
+			MenuID:   itemResponse.Menu.ID,
 			Quantity: itemResponse.Quantity,
 			Price:    itemResponse.Price,
 		}

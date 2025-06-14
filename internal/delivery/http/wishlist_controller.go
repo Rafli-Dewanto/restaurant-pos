@@ -29,15 +29,15 @@ func NewWishListController(
 func (h *WishListController) CreateWishList(ctx *fiber.Ctx) error {
 	h.logger.Trace("Creating wishlist")
 	customerID := ctx.Locals(constants.ClaimsKeyID).(int64)
-	cakeID, err := strconv.ParseInt(ctx.Params("cakeId"), 10, 64)
+	menuID, err := strconv.ParseInt(ctx.Params("menuId"), 10, 64)
 	if err != nil {
-		h.logger.Errorf("Error converting cake ID: %v", err)
-		return utils.WriteErrorResponse(ctx, http.StatusBadRequest, "Invalid cake ID")
+		h.logger.Errorf("Error converting menu ID: %v", err)
+		return utils.WriteErrorResponse(ctx, http.StatusBadRequest, "Invalid menu ID")
 	}
 
-	err = h.wishListUseCase.CreateWishList(customerID, cakeID)
+	err = h.wishListUseCase.CreateWishList(customerID, menuID)
 	if err != nil {
-		if err == constants.ErrCakeAlreadyInWishlist {
+		if err == constants.ErrMenuAlreadyInWishlist {
 			h.logger.Warnf("Wishlist already exists: %v", err)
 			return utils.WriteErrorResponse(ctx, http.StatusBadRequest, "Wishlist already exists")
 		}
@@ -66,13 +66,13 @@ func (h *WishListController) GetWishListByCustomerID(ctx *fiber.Ctx) error {
 func (c *WishListController) DeleteWishList(ctx *fiber.Ctx) error {
 	c.logger.Trace("Deleting wishlist")
 	customerID := ctx.Locals(constants.ClaimsKeyID).(int64)
-	cakeID, err := strconv.ParseInt(ctx.Params("cakeId"), 10, 64)
+	menuID, err := strconv.ParseInt(ctx.Params("menuId"), 10, 64)
 	if err != nil {
-		c.logger.Errorf("Error converting cake ID: %v", err)
-		return utils.WriteErrorResponse(ctx, http.StatusBadRequest, "Invalid cake ID")
+		c.logger.Errorf("Error converting menu ID: %v", err)
+		return utils.WriteErrorResponse(ctx, http.StatusBadRequest, "Invalid menu ID")
 	}
 
-	err = c.wishListUseCase.DeleteWishList(customerID, cakeID)
+	err = c.wishListUseCase.DeleteWishList(customerID, menuID)
 	if err != nil {
 		c.logger.Errorf("Error deleting wishlist: %v", err)
 		return utils.WriteErrorResponse(ctx, http.StatusInternalServerError, "Failed to delete wishlist")

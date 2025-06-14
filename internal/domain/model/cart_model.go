@@ -9,7 +9,7 @@ import (
 type CartModel struct {
 	ID         int64     `json:"id" validate:"required"`
 	CustomerID int64     `json:"customer_id"`
-	CakeID     int64     `json:"cake_id"`
+	MenuID     int64     `json:"menu_id"`
 	Quantity   int64     `json:"quantity"`
 	Price      float64   `json:"price"`
 	Subtotal   float64   `json:"subtotal"`
@@ -18,7 +18,7 @@ type CartModel struct {
 }
 
 type AddCart struct {
-	CakeID   int64 `json:"cake_id" validate:"required"`
+	MenuID   int64 `json:"menu_id" validate:"required"`
 	Quantity int64 `json:"quantity" validate:"required,min=1"`
 }
 
@@ -26,7 +26,7 @@ func ToCartEntity(m *CartModel) *entity.Cart {
 	return &entity.Cart{
 		ID:         m.ID,
 		CustomerID: m.CustomerID,
-		CakeID:     m.CakeID,
+		MenuID:     m.MenuID,
 		Quantity:   m.Quantity,
 		Price:      m.Price,
 		Subtotal:   m.Subtotal,
@@ -40,7 +40,7 @@ func ToCartModel(e *entity.Cart) *CartModel {
 	return &CartModel{
 		ID:         e.ID,
 		CustomerID: e.CustomerID,
-		CakeID:     e.CakeID,
+		MenuID:     e.MenuID,
 		Quantity:   e.Quantity,
 		Price:      e.Price,
 		Subtotal:   e.Subtotal,

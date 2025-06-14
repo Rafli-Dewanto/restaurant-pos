@@ -51,7 +51,7 @@ func (r *orderRepository) UpdateFoodStatus(orderID int64, foodStatus entity.Food
 
 func (r *orderRepository) GetPendingPaymentByOrderID(customerID, orderID int64) (entity.Order, error) {
 	var order entity.Order
-	if err := r.db.Preload("Items.Cake").Preload("Customer").Where("customer_id = ? AND status = ? AND id = ?", customerID, entity.OrderStatusPending, orderID).First(&order).Error; err != nil {
+	if err := r.db.Preload("Items.Menu").Preload("Customer").Where("customer_id = ? AND status = ? AND id = ?", customerID, entity.OrderStatusPending, orderID).First(&order).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return entity.Order{}, errors.New("order not found")
 		}
@@ -63,7 +63,7 @@ func (r *orderRepository) GetPendingPaymentByOrderID(customerID, orderID int64) 
 
 func (r *orderRepository) FindByDateRange(startDate, endDate string) ([]entity.Order, error) {
 	var orders []entity.Order
-	if err := r.db.Preload("Items.Cake").Preload("Customer").Where("created_at BETWEEN ? AND ?", startDate, endDate).Find(&orders).Error; err != nil {
+	if err := r.db.Preload("Items.Menu").Preload("Customer").Where("created_at BETWEEN ? AND ?", startDate, endDate).Find(&orders).Error; err != nil {
 		r.logger.Errorf("Error getting orders by date range: %v", err)
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (r *orderRepository) GetAll(params *model.PaginationQuery) ([]entity.Order,
 
 	meta = utils.CreatePaginationMeta(params.Page, params.Limit, total)
 
-	if err := r.db.Preload("Items.Cake").
+	if err := r.db.Preload("Items.Menu").
 		Preload("Customer").
 		Limit(int(params.Limit)).
 		Offset(int((params.Page - 1) * params.Limit)).
@@ -118,7 +118,7 @@ func (r *orderRepository) Create(order *entity.Order) error {
 
 func (r *orderRepository) GetByID(id int64) (*entity.Order, error) {
 	var order entity.Order
-	if err := r.db.Preload("Items.Cake").Preload("Customer").First(&order, id).Error; err != nil {
+	if err := r.db.Preload("Items.Menu").Preload("Customer").First(&order, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("order not found")
 		}
@@ -130,7 +130,7 @@ func (r *orderRepository) GetByID(id int64) (*entity.Order, error) {
 
 func (r *orderRepository) GetByCustomerID(customerID int64) ([]entity.Order, error) {
 	var orders []entity.Order
-	if err := r.db.Preload("Customer").Preload("Items.Cake").Where("customer_id = ?", customerID).Find(&orders).Error; err != nil {
+	if err := r.db.Preload("Customer").Preload("Items.Menu").Where("customer_id = ?", customerID).Find(&orders).Error; err != nil {
 		r.logger.Errorf("Error getting orders by customer ID: %v", err)
 		return nil, err
 	}
@@ -189,7 +189,7 @@ func (r *orderRepository) UpdateStatus(id int64, status entity.OrderStatus) erro
 func (r *orderRepository) GetPendingOrder() (int64, error) {
 	var order entity.Order
 	if err := r.db.
-		Preload("Items.Cake").
+		Preload("Items.Menu").
 		Preload("Customer").
 		Where("status = ?", entity.OrderStatusPending).
 		Order("created_at DESC").

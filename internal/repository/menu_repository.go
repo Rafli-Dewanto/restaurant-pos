@@ -11,28 +11,28 @@ import (
 	"gorm.io/gorm"
 )
 
-type CakeRepository interface {
-	GetAll(params *model.CakeQueryParams) (*model.PaginationResponse[[]entity.Cake], error)
-	GetByID(id int64) (*entity.Cake, error)
-	Create(cake *entity.Cake) error
-	UpdateCake(cake *entity.Cake) error
+type MenuRepository interface {
+	GetAll(params *model.MenuQueryParams) (*model.PaginationResponse[[]entity.Menu], error)
+	GetByID(id int64) (*entity.Menu, error)
+	Create(menu *entity.Menu) error
+	UpdateMenu(menu *entity.Menu) error
 	SoftDelete(id int64) error
 }
 
-type cakeRepository struct {
+type menuRepository struct {
 	db  *gorm.DB
 	log *logrus.Logger
 }
 
-func NewCakeRepository(db *gorm.DB, log *logrus.Logger) CakeRepository {
-	return &cakeRepository{db: db, log: log}
+func NewMenuRepository(db *gorm.DB, log *logrus.Logger) MenuRepository {
+	return &menuRepository{db: db, log: log}
 }
 
-func (c *cakeRepository) GetAll(params *model.CakeQueryParams) (*model.PaginationResponse[[]entity.Cake], error) {
-	var cakes []entity.Cake
+func (c *menuRepository) GetAll(params *model.MenuQueryParams) (*model.PaginationResponse[[]entity.Menu], error) {
+	var menus []entity.Menu
 	var total int64
 
-	query := c.db.Model(&entity.Cake{}).Where("deleted_at IS NULL")
+	query := c.db.Model(&entity.Menu{}).Where("deleted_at IS NULL")
 
 	if params.Title != "" {
 		query = query.Where("LOWER(title) LIKE LOWER(?)", "%"+params.Title+"%")
@@ -66,7 +66,7 @@ func (c *cakeRepository) GetAll(params *model.CakeQueryParams) (*model.Paginatio
 
 	// Apply pagination and ordering
 	offset := (params.Page - 1) * params.PageSize
-	err := query.Order("rating DESC, title ASC").Offset(int(offset)).Limit(int(params.PageSize)).Find(&cakes).Error
+	err := query.Order("rating DESC, title ASC").Offset(int(offset)).Limit(int(params.PageSize)).Find(&menus).Error
 	if err != nil {
 		return nil, err
 	}
@@ -76,8 +76,8 @@ func (c *cakeRepository) GetAll(params *model.CakeQueryParams) (*model.Paginatio
 		totalPages++
 	}
 
-	return &model.PaginationResponse[[]entity.Cake]{
-		Data:       cakes,
+	return &model.PaginationResponse[[]entity.Menu]{
+		Data:       menus,
 		Total:      total,
 		Page:       params.Page,
 		PageSize:   params.PageSize,
@@ -85,30 +85,33 @@ func (c *cakeRepository) GetAll(params *model.CakeQueryParams) (*model.Paginatio
 	}, nil
 }
 
-func (c *cakeRepository) GetByID(id int64) (*entity.Cake, error) {
-	var cake entity.Cake
-	err := c.db.Where("deleted_at IS NULL").First(&cake, id).Error
+func (c *menuRepository) GetByID(id int64) (*entity.Menu, error) {
+	var menu entity.Menu
+	err := c.db.Where("deleted_at IS NULL").First(&menu, id).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, constants.ErrNotFound
 	}
 	if err != nil {
 		return nil, err
 	}
-	return &cake, nil
+	return &menu, nil
 }
 
-func (c *cakeRepository) Create(cake *entity.Cake) error {
-	return c.db.Create(cake).Error
+func (c *menuRepository) Create(menu *entity.Menu) error {
+	return c.db.Create(menu).Error
 }
 
-func (c *cakeRepository) UpdateCake(cake *entity.Cake) error {
-	result := c.db.Model(&entity.Cake{}).
-		Where("id = ?", cake.ID).
+func (c *menuRepository) UpdateMenu(menu *entity.Menu) error {
+	result := c.db.Model(&entity.Menu{}).
+		Where("id = ?", menu.ID).
 		Updates(map[string]interface{}{
-			"title":       cake.Title,
-			"description": cake.Description,
-			"rating":      cake.Rating,
-			"image":       cake.Image,
+			"title":       menu.Title,
+			"description": menu.Description,
+			"rating":      menu.Rating,
+			"image":       menu.Image,
+			"quantity":    menu.Quantity,
+			"price":       menu.Price,
+			"category":    menu.Category,
 			"updated_at":  time.Now(),
 		})
 
@@ -123,8 +126,8 @@ func (c *cakeRepository) UpdateCake(cake *entity.Cake) error {
 	return nil
 }
 
-func (c *cakeRepository) SoftDelete(id int64) error {
-	result := c.db.Model(&entity.Cake{}).
+func (c *menuRepository) SoftDelete(id int64) error {
+	result := c.db.Model(&entity.Menu{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
 			"deleted_at": time.Now(),
@@ -135,7 +138,7 @@ func (c *cakeRepository) SoftDelete(id int64) error {
 	}
 
 	if result.RowsAffected == 0 {
-		return errors.New("no rows updated, cake not found")
+		return errors.New("no rows updated, menu not found")
 	}
 
 	return nil

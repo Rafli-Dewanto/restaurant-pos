@@ -22,5 +22,5 @@ var (
 	ErrInvalidCartItemID          = errors.New("invalid cart item ID")
 	ErrNotFound                   = errors.New("not found")
 	ErrInvalidInterfaceConversion = errors.New("invalid data type for interface conversion")
-	ErrCakeAlreadyInWishlist      = errors.New("cake already in wishlist")
+	ErrMenuAlreadyInWishlist      = errors.New("menu already in wishlist")
 )
