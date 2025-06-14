@@ -104,3 +104,24 @@ func (c *CartController) ClearCart(ctx *fiber.Ctx) error {
 
 	return utils.WriteResponse(ctx, fiber.StatusOK, nil, "Cart cleared successfully", nil)
 }
+
+func (c *CartController) BulkDeleteCart(ctx *fiber.Ctx) error {
+	customerID := ctx.Locals(constants.ClaimsKeyID).(int64)
+
+	var req struct {
+		CartIDs []int64 `json:"cart_ids"`
+	}
+	if err := ctx.BodyParser(&req); err != nil {
+		c.logger.Errorf("❌ Failed to parse request body: %v", err)
+		return utils.WriteErrorResponse(ctx, fiber.StatusBadRequest, err.Error())
+	}
+
+	c.logger.Info("Cart IDs to delete: ", req.CartIDs)
+	err := c.cartUseCase.BulkDeleteCart(customerID, req.CartIDs)
+	if err != nil {
+		c.logger.Errorf("❌ Failed to bulk delete carts: %v", err)
+		return utils.WriteErrorResponse(ctx, fiber.StatusInternalServerError, err.Error())
+	}
+
+	return utils.WriteResponse(ctx, fiber.StatusOK, nil, "Carts deleted successfully", nil)
+}

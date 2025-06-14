@@ -16,6 +16,7 @@ type CartUseCase interface {
 	GetCartByCustomerID(customerID int64, params *model.PaginationQuery) ([]model.UserCartResponse, *model.PaginatedMeta, error)
 	RemoveCart(customerID int64, cartID int64) error
 	ClearCart(cartID int64) error
+	BulkDeleteCart(customerID int64, cartIDs []int64) error
 }
 
 type cartUseCase struct {
@@ -135,5 +136,15 @@ func (uc *cartUseCase) ClearCart(customerID int64) error {
 	}
 
 	uc.logger.Infof("Successfully cleared cart for customer %d", customerID)
+	return nil
+}
+
+func (uc *cartUseCase) BulkDeleteCart(customerID int64, cartIDs []int64) error {
+	if err := uc.cartRepo.BulkDelete(customerID, cartIDs); err != nil {
+		uc.logger.Errorf("Error deleting carts for customer %d: %v", customerID, err)
+		return err
+	}
+
+	uc.logger.Infof("Successfully deleted carts for customer %d", customerID)
 	return nil
 }

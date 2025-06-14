@@ -17,6 +17,7 @@ type CartRepository interface {
 	Delete(cartID int64) error
 	RemoveItem(customerID int64, cartID int64) error
 	ClearCustomerCart(customerID int64) error
+	BulkDelete(customerID int64, cartIDs []int64) error
 }
 
 type cartRepository struct {
@@ -140,6 +141,19 @@ func (r *cartRepository) RemoveItem(customerID int64, cartID int64) error {
 
 func (r *cartRepository) ClearCustomerCart(customerID int64) error {
 	result := r.db.Where("customer_id = ?", customerID).Delete(&entity.Cart{})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
+func (r *cartRepository) BulkDelete(customerID int64, cartIDs []int64) error {
+	// log query
+	r.logger.Infof("Deleting carts for customer ID %d and cart IDs %v", customerID, cartIDs)
+	result := r.db.Where("customer_id = ? AND id IN (?)", customerID, cartIDs).Delete(&entity.Cart{})
 	if result.Error != nil {
 		return result.Error
 	}
