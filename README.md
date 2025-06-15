@@ -1,75 +1,75 @@
-# Cake Store API
+# CakeStore Backend
 
-This is a Cake Store API built with Go using Fiber as the web framework and GORM as the ORM. The application provides functionality for managing cakes, customers, orders, and payments. It uses **MySQL (via Docker) as the primary database** and **SQLite for unit testing**.
+A backend service for CakeStore, built with Go, Fiber, and GORM.  
+Supports customer registration, authentication, reservations, orders, and payment integration (Midtrans).
 
 ## Features
 
-- User authentication and authorization (JWT)
-- Customer registration and profile management
-- Create, read, update, and delete cakes
-- Order management system
-- Payment integration with Midtrans
-- Uses MySQL as the database (via Docker container)
-- Unit testing
+- Customer registration, login, and profile management
+- JWT-based authentication
+- Reservation system:
+  - Create, update, delete, and view reservations
+  - Reservation can be made with or without a table (`table_id` is optional; relation to "tables" is only created if provided)
+- Order and payment management
+  - Midtrans integration for payment processing
+  - Payment status and notification handling
+- Admin endpoints for managing customers and reservations
 
-## Prerequisites
+## Project Structure
 
-- [Go](https://go.dev/doc/install) (v1.22+)
-- [Docker](https://www.docker.com/get-started)
-
-## Setup & Installation
-
-### 1. Clone the repository
-
-```sh
-git clone https://github.com/Rafli-Dewanto/lsp-programmer.git cakestore-be
-cd cakestore-be
+```
+internal/
+  config/         # Configuration loading
+  constants/      # Project-wide constants
+  database/       # Database connection and migration
+  delivery/
+    http/         # HTTP handlers/controllers
+  domain/
+    entity/       # GORM models/entities
+    model/        # Request/response models (including Midtrans)
+  repository/     # Data access layer
+  usecase/        # Business logic
+test/             # Test suites
 ```
 
-### 2. Create a `.env` file
+## Reservation Logic
 
-```sh
-touch .env.example .env
+- When creating a reservation, if `table_id` is provided in the request payload, the reservation will be linked to the specified table and table availability will be checked.
+- If `table_id` is omitted or zero, the reservation will not be linked to any table.
+
+## Payment Integration
+
+- Uses Midtrans for payment processing.
+- Payment models and notification structs are up-to-date with Midtrans API.
+- Handles payment status updates and notifications.
+
+## Running the Project
+
+1. **Clone the repository**
+2. **Configure environment variables** (see `.env.example`)
+3. **Run database migrations** (auto-migrated on startup)
+4. **Start the server**
+   ```bash
+   go run main.go
+   ```
+
+## Running Tests
+
+```bash
+go test ./test/...
 ```
 
-### 3. Run with Docker
+## API Documentation
 
-```sh
-docker compose up -d --build
-```
+- See [docs/](docs/) or use the included Postman collection.
 
-### 4. Install dependencies
+## License
 
-```sh
-go mod tidy
-```
-
-### 5. Start the application
-
-```sh
-go run main.go
-```
-
-The API will be available at `http://localhost:8080`.
-
-## API Endpoints
-
-### Public Routes
-
-| Method | Endpoint                | Description              |
-| ------ | ----------------------- | ------------------------ |
-| POST   | `/register`             | Register a new customer  |
-| POST   | `/login`                | Customer login           |
-| POST   | `/payment/notification` | Midtrans payment webhook |
-
-### Protected Routes (Requires JWT Authentication)
-
-#### Customer Routes
-
-| Method | Endpoint         | Description                  |
+MIT
+| Method | Endpoint | Description |
 | ------ | ---------------- | ---------------------------- |
-| GET    | `/customers/me`  | Get current customer profile |
-| PUT    | `/customers/:id` | Update customer profile      |
+| GET | `/customers/me` | Get current customer profile |
+| PUT | `/customers/:id` | Update customer profile |
 
 #### Cake Routes
 
