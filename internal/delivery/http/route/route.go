@@ -5,6 +5,7 @@ import (
 	http "cakestore/internal/delivery/http"
 	"cakestore/internal/middleware"
 
+	"github.com/gofiber/contrib/swagger"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/sirupsen/logrus"
@@ -36,6 +37,14 @@ func (c *RouteConfig) SetupRoute() {
 		AllowHeaders: "Origin, Content-Type, Accept, Authorization, X-App-Role, User-Agent",
 	}))
 	c.App.Use(middleware.LogMiddleware(c.Log))
+	c.App.Static("/docs", "./docs")
+	cfg := swagger.Config{
+		FilePath: "./docs/swagger.json",
+		Path:     "docs",
+		Title:    "Swagger API Docs",
+		BasePath: "/api/v1/",
+	}
+	c.App.Use(swagger.New(cfg))
 
 	// Public routes
 	c.App.Post("/register", c.CustomerController.Register)
