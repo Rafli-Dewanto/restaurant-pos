@@ -1,34 +1,88 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "Cake Store",
+    "title": "Cake Store API",
     "version": "1.0.0",
-    "description": ""
+    "description": "API documentation for the Cake Store application, managing menus, orders, customers, employees, reservations, inventories, tables, and payments."
   },
   "servers": [
     {
-      "url": "localhost"
+      "url": "localhost",
+      "description": "Local development server"
     },
     {
-      "url": "127.0.0.1"
+      "url": "127.0.0.1",
+      "description": "Local development server"
     },
     {
-      "url": "cakeville.dewanto.dev"
+      "url": "cakeville.dewanto.dev",
+      "description": "Production server"
     },
     {
-      "url": "68d9-2a09-bac5-3a09-25d7-00-3c5-35.ngrok-free.app"
+      "url": "68d9-2a09-bac5-3a09-25d7-00-3c5-35.ngrok-free.app",
+      "description": "Ngrok tunnel for local development"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Menus",
+      "description": "Operations related to cake menus."
+    },
+    {
+      "name": "Customers",
+      "description": "Operations related to customer accounts."
+    },
+    {
+      "name": "Orders",
+      "description": "Operations related to customer orders."
+    },
+    {
+      "name": "Carts",
+      "description": "Operations related to customer shopping carts."
+    },
+    {
+      "name": "Wishlists",
+      "description": "Operations related to customer wishlists."
+    },
+    {
+      "name": "Employees",
+      "description": "Operations related to employee management."
+    },
+    {
+      "name": "Reservations",
+      "description": "Operations related to table reservations."
+    },
+    {
+      "name": "Inventories",
+      "description": "Operations related to inventory management."
+    },
+    {
+      "name": "Tables",
+      "description": "Operations related to restaurant tables."
+    },
+    {
+      "name": "Payments",
+      "description": "Operations related to payment processing."
+    },
+    {
+      "name": "Health Check",
+      "description": "API health check endpoint."
     }
   ],
   "paths": {
     "/menus": {
-      "parameters": [],
       "get": {
-        "summary": "Menus",
+        "tags": [
+          "Menus"
+        ],
+        "summary": "Get all menus",
+        "description": "Retrieves a list of all available cake menus, with optional filtering by title and category, and pagination.",
         "parameters": [
           {
             "name": "title",
             "in": "query",
             "required": false,
+            "description": "Filter menus by title (case-insensitive partial match).",
             "example": "red",
             "schema": {
               "type": "string"
@@ -38,15 +92,18 @@
             "name": "page",
             "in": "query",
             "required": false,
-            "example": "20",
+            "description": "Page number for pagination.",
+            "example": 1,
             "schema": {
-              "type": "integer"
+              "type": "integer",
+              "minimum": 1
             }
           },
           {
             "name": "category",
             "in": "query",
             "required": false,
+            "description": "Filter menus by category.",
             "example": "wedding_cake",
             "schema": {
               "type": "string"
@@ -56,18 +113,22 @@
             "name": "limit",
             "in": "query",
             "required": false,
-            "example": "4",
+            "description": "Number of items per page for pagination.",
+            "example": 10,
             "schema": {
-              "type": "integer"
+              "type": "integer",
+              "minimum": 1
             }
           }
         ],
         "responses": {
           "200": {
+            "description": "Successfully retrieved menus.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Sat, 14 Jun 2025 08:11:19 GMT"
               },
@@ -84,69 +145,10 @@
                 "example": "502"
               }
             },
-            "description": "Menus filter",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "integer"
-                          },
-                          "title": {
-                            "type": "string"
-                          },
-                          "description": {
-                            "type": "string"
-                          },
-                          "price": {
-                            "type": "integer"
-                          },
-                          "category": {
-                            "type": "string"
-                          },
-                          "rating": {
-                            "type": "number"
-                          },
-                          "image": {
-                            "type": "string",
-                            "format": "uri"
-                          }
-                        }
-                      }
-                    },
-                    "meta": {
-                      "type": "object",
-                      "properties": {
-                        "current_page": {
-                          "type": "integer"
-                        },
-                        "total": {
-                          "type": "integer"
-                        },
-                        "per_page": {
-                          "type": "integer"
-                        },
-                        "last_page": {
-                          "type": "integer"
-                        },
-                        "has_next_page": {
-                          "type": "boolean"
-                        },
-                        "has_prev_page": {
-                          "type": "boolean"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/MenusResponse"
                 }
               }
             }
@@ -154,14 +156,29 @@
         }
       },
       "post": {
-        "summary": "Menus",
-        "parameters": [],
+        "tags": [
+          "Menus"
+        ],
+        "summary": "Create a new menu item",
+        "description": "Adds a new cake menu item to the store.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMenuRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
+            "description": "Menu item successfully created.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Sat, 14 Jun 2025 08:14:35 GMT"
               },
@@ -178,94 +195,47 @@
                 "example": "226"
               }
             },
-            "description": "Success create",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "integer"
-                        },
-                        "title": {
-                          "type": "string"
-                        },
-                        "description": {
-                          "type": "string"
-                        },
-                        "price": {
-                          "type": "integer"
-                        },
-                        "category": {
-                          "type": "string"
-                        },
-                        "rating": {
-                          "type": "integer"
-                        },
-                        "image": {
-                          "type": "string",
-                          "format": "uri"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/SingleMenuResponse"
                 }
               }
             }
-          }
-        },
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "title": {
-                    "type": "string"
-                  },
-                  "description": {
-                    "type": "string"
-                  },
-                  "price": {
-                    "type": "integer"
-                  },
-                  "quantity": {
-                    "type": "integer"
-                  },
-                  "category": {
-                    "type": "string"
-                  },
-                  "rating": {
-                    "type": "integer"
-                  },
-                  "image": {
-                    "type": "string",
-                    "format": "uri"
-                  }
-                }
-              }
-            }
+          },
+          "400": {
+            "description": "Invalid input data."
           }
         }
       }
     },
-    "/menus/1": {
-      "parameters": [],
+    "/menus/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "ID of the menu item to retrieve, update, or delete.",
+          "schema": {
+            "type": "integer"
+          },
+          "example": 1
+        }
+      ],
       "get": {
-        "summary": "Menu By ID",
-        "parameters": [],
+        "tags": [
+          "Menus"
+        ],
+        "summary": "Get menu by ID",
+        "description": "Retrieves a single cake menu item by its unique ID.",
         "responses": {
           "200": {
+            "description": "Menu item successfully retrieved.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Sat, 14 Jun 2025 08:13:23 GMT"
               },
@@ -282,105 +252,43 @@
                 "example": "409"
               }
             },
-            "description": "Menu By ID",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "integer"
-                        },
-                        "title": {
-                          "type": "string"
-                        },
-                        "description": {
-                          "type": "string"
-                        },
-                        "price": {
-                          "type": "integer"
-                        },
-                        "category": {
-                          "type": "string"
-                        },
-                        "rating": {
-                          "type": "number"
-                        },
-                        "image": {
-                          "type": "string",
-                          "format": "uri"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/SingleMenuResponse"
                 }
               }
             }
+          },
+          "404": {
+            "description": "Menu item not found."
           }
         }
-      }
-    },
-    "/menus/5": {
-      "parameters": [],
-      "delete": {
-        "summary": "Menu",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "headers": {
-              "Date": {
-                "schema": {
-                  "type": "string"
-                },
-                "example": "Thu, 17 Apr 2025 23:14:52 GMT"
-              },
-              "Content-Type": {
-                "schema": {
-                  "type": "string"
-                },
-                "example": "application/json"
-              },
-              "Content-Length": {
-                "schema": {
-                  "type": "integer"
-                },
-                "example": "21"
-              }
-            },
-            "description": "Menu",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/menus/6": {
-      "parameters": [],
+      },
       "put": {
-        "summary": "Menu",
-        "parameters": [],
+        "tags": [
+          "Menus"
+        ],
+        "summary": "Update a menu item by ID",
+        "description": "Updates an existing cake menu item by its unique ID.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMenuRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
+            "description": "Menu item successfully updated.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Sat, 14 Jun 2025 08:27:25 GMT"
               },
@@ -397,126 +305,118 @@
                 "example": "212"
               }
             },
-            "description": "Update success",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "integer"
-                        },
-                        "title": {
-                          "type": "string"
-                        },
-                        "description": {
-                          "type": "string"
-                        },
-                        "price": {
-                          "type": "integer"
-                        },
-                        "category": {
-                          "type": "string"
-                        },
-                        "rating": {
-                          "type": "integer"
-                        },
-                        "image": {
-                          "type": "string",
-                          "format": "uri"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/SingleMenuResponse"
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid input data."
+          },
+          "404": {
+            "description": "Menu item not found."
           }
-        },
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "title": {
-                    "type": "string"
-                  },
-                  "description": {
-                    "type": "string"
-                  },
-                  "price": {
-                    "type": "integer"
-                  },
-                  "quantity": {
-                    "type": "integer"
-                  },
-                  "category": {
-                    "type": "string"
-                  },
-                  "rating": {
-                    "type": "integer"
-                  },
-                  "image": {
-                    "type": "string",
-                    "format": "uri"
-                  }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Menus"
+        ],
+        "summary": "Delete a menu item by ID",
+        "description": "Deletes a cake menu item by its unique ID.",
+        "responses": {
+          "200": {
+            "description": "Menu item successfully deleted.",
+            "headers": {
+              "Date": {
+                "schema": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "example": "Thu, 17 Apr 2025 23:14:52 GMT"
+              },
+              "Content-Type": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "application/json"
+              },
+              "Content-Length": {
+                "schema": {
+                  "type": "integer"
+                },
+                "example": "21"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
+          },
+          "404": {
+            "description": "Menu item not found."
           }
         }
       }
     },
     "/register": {
-      "parameters": [],
       "post": {
-        "summary": "Register",
-        "parameters": [],
-        "responses": {},
+        "tags": [
+          "Customers"
+        ],
+        "summary": "Register a new customer",
+        "description": "Registers a new customer account with name, email, password, and address.",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "email": {
-                    "type": "string",
-                    "format": "email"
-                  },
-                  "password": {
-                    "type": "string"
-                  },
-                  "address": {
-                    "type": "string"
-                  }
-                }
+                "$ref": "#/components/schemas/RegisterCustomerRequest"
               }
             }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Customer registered successfully."
+          },
+          "400": {
+            "description": "Invalid input or email already registered."
           }
         }
       }
     },
     "/login": {
-      "parameters": [],
       "post": {
-        "summary": "Login customer",
-        "parameters": [],
+        "tags": [
+          "Customers"
+        ],
+        "summary": "Log in a customer",
+        "description": "Authenticates a customer and returns an authentication token upon successful login.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginCustomerRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
+            "description": "Customer logged in successfully.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Thu, 12 Jun 2025 08:10:36 GMT"
               },
@@ -533,7 +433,6 @@
                 "example": "225"
               }
             },
-            "description": "Login Customer",
             "content": {
               "application/json": {
                 "schema": {
@@ -543,45 +442,35 @@
                       "type": "string"
                     },
                     "data": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Authentication token."
                     }
                   }
                 }
               }
             }
-          }
-        },
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "format": "email"
-                  },
-                  "password": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
+          },
+          "401": {
+            "description": "Invalid credentials."
           }
         }
       }
     },
     "/customers/me": {
-      "parameters": [],
       "get": {
-        "summary": "Me",
-        "parameters": [],
+        "tags": [
+          "Customers"
+        ],
+        "summary": "Get current customer's profile",
+        "description": "Retrieves the profile information of the currently authenticated customer.",
         "responses": {
           "200": {
+            "description": "Customer profile successfully retrieved.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Sat, 14 Jun 2025 14:47:13 GMT"
               },
@@ -598,83 +487,35 @@
                 "example": "127"
               }
             },
-            "description": "Me",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "integer"
-                        },
-                        "name": {
-                          "type": "string"
-                        },
-                        "email": {
-                          "type": "string",
-                          "format": "email"
-                        },
-                        "address": {
-                          "type": "string"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/CustomerProfileResponse"
                 }
               }
             }
-          }
-        },
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "items": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "cake_id": {
-                          "type": "integer"
-                        },
-                        "quantity": {
-                          "type": "integer"
-                        },
-                        "price": {
-                          "type": "integer"
-                        }
-                      }
-                    }
-                  },
-                  "address": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
           }
         }
       }
     },
     "/authorize": {
-      "parameters": [],
       "get": {
-        "summary": "Authorize",
-        "parameters": [],
+        "tags": [
+          "Customers"
+        ],
+        "summary": "Authorize customer",
+        "description": "Checks if the provided authentication token is valid.",
         "responses": {
           "200": {
+            "description": "Authorization successful.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Thu, 12 Jun 2025 08:19:30 GMT"
               },
@@ -691,34 +532,57 @@
                 "example": "37"
               }
             },
-            "description": "Authorize",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
           }
         }
       }
     },
-    "/customers/5": {
-      "parameters": [],
+    "/customers/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "ID of the customer to update.",
+          "schema": {
+            "type": "integer"
+          },
+          "example": 5
+        }
+      ],
       "put": {
-        "summary": "customer",
-        "parameters": [],
+        "tags": [
+          "Customers"
+        ],
+        "summary": "Update customer profile by ID",
+        "description": "Updates the profile information of a customer by their unique ID.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCustomerRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
+            "description": "Customer profile successfully updated.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Sat, 14 Jun 2025 14:49:39 GMT"
               },
@@ -735,55 +599,51 @@
                 "example": "42"
               }
             },
-            "description": "success update",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
-          }
-        },
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "email": {
-                    "type": "string",
-                    "format": "email"
-                  },
-                  "address": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
+          },
+          "400": {
+            "description": "Invalid input data."
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
+          },
+          "404": {
+            "description": "Customer not found."
           }
         }
       }
     },
     "/orders": {
-      "parameters": [],
       "post": {
-        "summary": "Order",
-        "parameters": [],
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Create a new order",
+        "description": "Creates a new order with a list of menu items and a delivery address.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrderRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
+            "description": "Order successfully created.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Sat, 14 Jun 2025 08:34:38 GMT"
               },
@@ -800,77 +660,36 @@
                 "example": "203"
               }
             },
-            "description": "Order",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "token": {
-                          "type": "string"
-                        },
-                        "redirect_url": {
-                          "type": "string",
-                          "format": "uri"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/CreateOrderResponse"
                 }
               }
             }
-          }
-        },
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "items": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "menu_id": {
-                          "type": "integer"
-                        },
-                        "title": {
-                          "type": "string"
-                        },
-                        "quantity": {
-                          "type": "integer"
-                        },
-                        "price": {
-                          "type": "integer"
-                        }
-                      }
-                    }
-                  },
-                  "delivery_address": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
+          },
+          "400": {
+            "description": "Invalid input data."
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
           }
         }
       },
       "get": {
-        "summary": "Orders",
-        "parameters": [],
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Get all orders (Admin/Employee)",
+        "description": "Retrieves a list of all orders. This endpoint is typically for internal use (admin/employees).",
         "responses": {
           "200": {
+            "description": "Successfully retrieved orders.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Fri, 13 Jun 2025 10:09:52 GMT"
               },
@@ -887,127 +706,50 @@
                 "example": "2023"
               }
             },
-            "description": "Orders",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "integer"
-                          },
-                          "customer": {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "integer"
-                              },
-                              "name": {
-                                "type": "string"
-                              },
-                              "email": {
-                                "type": "string",
-                                "format": "email"
-                              },
-                              "address": {
-                                "type": "string"
-                              }
-                            }
-                          },
-                          "status": {
-                            "type": "string"
-                          },
-                          "total_price": {
-                            "type": "integer"
-                          },
-                          "delivery_address": {
-                            "type": "string"
-                          },
-                          "food_status": {
-                            "type": "string"
-                          },
-                          "items": {
-                            "type": "array",
-                            "items": {
-                              "type": "object",
-                              "properties": {
-                                "id": {
-                                  "type": "integer"
-                                },
-                                "cake": {
-                                  "type": "object",
-                                  "properties": {
-                                    "id": {
-                                      "type": "integer"
-                                    },
-                                    "title": {
-                                      "type": "string"
-                                    },
-                                    "description": {
-                                      "type": "string"
-                                    },
-                                    "price": {
-                                      "type": "integer"
-                                    },
-                                    "category": {
-                                      "type": "string"
-                                    },
-                                    "rating": {
-                                      "type": "number"
-                                    },
-                                    "image": {
-                                      "type": "string",
-                                      "format": "uri"
-                                    }
-                                  }
-                                },
-                                "quantity": {
-                                  "type": "integer"
-                                },
-                                "price": {
-                                  "type": "integer"
-                                }
-                              }
-                            }
-                          },
-                          "created_at": {
-                            "type": "string",
-                            "format": "date-time"
-                          },
-                          "updated_at": {
-                            "type": "string",
-                            "format": "date-time"
-                          }
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/OrdersResponse"
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
+          },
+          "403": {
+            "description": "Forbidden: User does not have the necessary permissions."
           }
         }
       }
     },
-    "/orders/28": {
-      "parameters": [],
+    "/orders/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "ID of the order to retrieve.",
+          "schema": {
+            "type": "integer"
+          },
+          "example": 28
+        }
+      ],
       "get": {
-        "summary": "Order",
-        "parameters": [],
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Get order by ID",
+        "description": "Retrieves a single order by its unique ID.",
         "responses": {
           "200": {
+            "description": "Order successfully retrieved.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Fri, 13 Jun 2025 10:12:41 GMT"
               },
@@ -1024,134 +766,51 @@
                 "example": "743"
               }
             },
-            "description": "get by id",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "integer"
-                        },
-                        "customer": {
-                          "type": "object",
-                          "properties": {
-                            "id": {
-                              "type": "integer"
-                            },
-                            "name": {
-                              "type": "string"
-                            },
-                            "email": {
-                              "type": "string",
-                              "format": "email"
-                            },
-                            "address": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "status": {
-                          "type": "string"
-                        },
-                        "total_price": {
-                          "type": "integer"
-                        },
-                        "delivery_address": {
-                          "type": "string"
-                        },
-                        "food_status": {
-                          "type": "string"
-                        },
-                        "items": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "integer"
-                              },
-                              "cake": {
-                                "type": "object",
-                                "properties": {
-                                  "id": {
-                                    "type": "integer"
-                                  },
-                                  "title": {
-                                    "type": "string"
-                                  },
-                                  "description": {
-                                    "type": "string"
-                                  },
-                                  "price": {
-                                    "type": "integer"
-                                  },
-                                  "category": {
-                                    "type": "string"
-                                  },
-                                  "rating": {
-                                    "type": "number"
-                                  },
-                                  "image": {
-                                    "type": "string",
-                                    "format": "uri"
-                                  }
-                                }
-                              },
-                              "quantity": {
-                                "type": "integer"
-                              },
-                              "price": {
-                                "type": "integer"
-                              }
-                            }
-                          }
-                        },
-                        "created_at": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "updated_at": {
-                          "type": "string",
-                          "format": "date-time"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/SingleOrderResponse"
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
+          },
+          "404": {
+            "description": "Order not found."
           }
         }
       }
     },
     "/orders/customers": {
-      "parameters": [],
       "get": {
-        "summary": "Get All Orders",
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Get all orders for the current customer",
+        "description": "Retrieves a list of all orders made by the currently authenticated customer.",
         "parameters": [
           {
             "name": "page",
             "in": "query",
             "required": false,
-            "example": "1",
+            "description": "Page number for pagination.",
+            "example": 1,
             "schema": {
-              "type": "integer"
+              "type": "integer",
+              "minimum": 1
             }
           }
         ],
         "responses": {
           "200": {
+            "description": "Successfully retrieved customer orders.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Mon, 21 Apr 2025 14:00:50 GMT"
               },
@@ -1168,107 +827,57 @@
                 "example": "4574"
               }
             },
-            "description": "Get All Orders",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "integer"
-                          },
-                          "customer": {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "integer"
-                              },
-                              "name": {
-                                "type": "string"
-                              },
-                              "email": {
-                                "type": "string",
-                                "format": "email"
-                              },
-                              "address": {
-                                "type": "string"
-                              }
-                            }
-                          },
-                          "status": {
-                            "type": "string"
-                          },
-                          "total_price": {
-                            "type": "integer"
-                          },
-                          "delivery_address": {
-                            "type": "string"
-                          },
-                          "items": {
-                            "type": "array",
-                            "items": {}
-                          },
-                          "created_at": {
-                            "type": "string",
-                            "format": "date-time"
-                          },
-                          "updated_at": {
-                            "type": "string",
-                            "format": "date-time"
-                          }
-                        }
-                      }
-                    },
-                    "meta": {
-                      "type": "object",
-                      "properties": {
-                        "current_page": {
-                          "type": "integer"
-                        },
-                        "total": {
-                          "type": "integer"
-                        },
-                        "per_page": {
-                          "type": "integer"
-                        },
-                        "last_page": {
-                          "type": "integer"
-                        },
-                        "has_next_page": {
-                          "type": "boolean"
-                        },
-                        "has_prev_page": {
-                          "type": "boolean"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/CustomerOrdersResponse"
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
           }
         }
       }
     },
-    "/orders/16/food-status": {
-      "parameters": [],
+    "/orders/{id}/food-status": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "ID of the order to update food status.",
+          "schema": {
+            "type": "integer"
+          },
+          "example": 16
+        }
+      ],
       "patch": {
-        "summary": "Food Status",
-        "parameters": [],
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Update food status of an order",
+        "description": "Updates the food preparation status of a specific order. This endpoint is typically for kitchen staff.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFoodStatusRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
+            "description": "Food status updated successfully.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Fri, 13 Jun 2025 10:31:15 GMT"
               },
@@ -1285,48 +894,54 @@
                 "example": "46"
               }
             },
-            "description": "update food order",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
-          }
-        },
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "food_status": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
+          },
+          "400": {
+            "description": "Invalid input data or status transition."
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
+          },
+          "403": {
+            "description": "Forbidden: User does not have the necessary permissions (e.g., not kitchen staff)."
+          },
+          "404": {
+            "description": "Order not found."
           }
         }
       }
     },
     "/carts": {
-      "parameters": [],
       "post": {
-        "summary": "Add Cart",
-        "parameters": [],
+        "tags": [
+          "Carts"
+        ],
+        "summary": "Add item to cart",
+        "description": "Adds a specified quantity of a menu item to the current customer's shopping cart.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddCartItemRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
+            "description": "Item successfully added to cart.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Sat, 14 Jun 2025 08:33:04 GMT"
               },
@@ -1343,51 +958,50 @@
                 "example": "39"
               }
             },
-            "description": "Add Cart",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
-          }
-        },
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "menu_id": {
-                    "type": "integer"
-                  },
-                  "quantity": {
-                    "type": "integer"
-                  }
-                }
-              }
-            }
+          },
+          "400": {
+            "description": "Invalid input data or menu item not found."
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
           }
         }
       }
     },
-    "/carts/1": {
-      "parameters": [],
+    "/carts/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "ID of the cart item to remove.",
+          "schema": {
+            "type": "integer"
+          },
+          "example": 1
+        }
+      ],
       "delete": {
-        "summary": "Remove Cart",
-        "parameters": [],
+        "tags": [
+          "Carts"
+        ],
+        "summary": "Remove item from cart",
+        "description": "Removes a specific item from the current customer's shopping cart.",
         "responses": {
           "200": {
+            "description": "Item successfully removed from cart.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Fri, 25 Apr 2025 16:45:29 GMT"
               },
@@ -1404,34 +1018,38 @@
                 "example": "39"
               }
             },
-            "description": "Remove Cart",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
+          },
+          "404": {
+            "description": "Cart item not found or does not belong to the current customer."
           }
         }
       }
     },
     "/carts/customer": {
-      "parameters": [],
       "get": {
-        "summary": "Get Customer Carts",
-        "parameters": [],
+        "tags": [
+          "Carts"
+        ],
+        "summary": "Get customer's cart",
+        "description": "Retrieves all items currently in the authenticated customer's shopping cart.",
         "responses": {
           "200": {
+            "description": "Successfully retrieved customer's cart.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Sat, 14 Jun 2025 08:38:05 GMT"
               },
@@ -1448,98 +1066,35 @@
                 "example": "585"
               }
             },
-            "description": "Get Customer Carts",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "integer"
-                          },
-                          "customer_id": {
-                            "type": "integer"
-                          },
-                          "name": {
-                            "type": "string"
-                          },
-                          "menu_id": {
-                            "type": "integer"
-                          },
-                          "image": {
-                            "type": "string",
-                            "format": "uri"
-                          },
-                          "quantity": {
-                            "type": "integer"
-                          },
-                          "price": {
-                            "type": "integer"
-                          },
-                          "subtotal": {
-                            "type": "integer"
-                          },
-                          "created_at": {
-                            "type": "string",
-                            "format": "date-time"
-                          },
-                          "updated_at": {
-                            "type": "string",
-                            "format": "date-time"
-                          }
-                        }
-                      }
-                    },
-                    "meta": {
-                      "type": "object",
-                      "properties": {
-                        "current_page": {
-                          "type": "integer"
-                        },
-                        "total": {
-                          "type": "integer"
-                        },
-                        "per_page": {
-                          "type": "integer"
-                        },
-                        "last_page": {
-                          "type": "integer"
-                        },
-                        "has_next_page": {
-                          "type": "boolean"
-                        },
-                        "has_prev_page": {
-                          "type": "boolean"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/CustomerCartsResponse"
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
           }
         }
       }
     },
     "/wishlists": {
-      "parameters": [],
       "get": {
-        "summary": "get cust wishlists",
-        "parameters": [],
+        "tags": [
+          "Wishlists"
+        ],
+        "summary": "Get customer's wishlists",
+        "description": "Retrieves all menu items in the authenticated customer's wishlist.",
         "responses": {
           "200": {
+            "description": "Successfully retrieved customer's wishlists.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Fri, 25 Apr 2025 15:03:20 GMT"
               },
@@ -1556,87 +1111,47 @@
                 "example": "913"
               }
             },
-            "description": "success",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "integer"
-                          },
-                          "title": {
-                            "type": "string"
-                          },
-                          "description": {
-                            "type": "string"
-                          },
-                          "price": {
-                            "type": "integer"
-                          },
-                          "category": {
-                            "type": "string"
-                          },
-                          "rating": {
-                            "type": "number"
-                          },
-                          "image": {
-                            "type": "string",
-                            "format": "uri"
-                          }
-                        }
-                      }
-                    },
-                    "meta": {
-                      "type": "object",
-                      "properties": {
-                        "current_page": {
-                          "type": "integer"
-                        },
-                        "total": {
-                          "type": "integer"
-                        },
-                        "per_page": {
-                          "type": "integer"
-                        },
-                        "last_page": {
-                          "type": "integer"
-                        },
-                        "has_next_page": {
-                          "type": "boolean"
-                        },
-                        "has_prev_page": {
-                          "type": "boolean"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/WishlistsResponse"
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
           }
         }
       }
     },
-    "/wishlists/3": {
-      "parameters": [],
+    "/wishlists/{menu_id}": {
+      "parameters": [
+        {
+          "name": "menu_id",
+          "in": "path",
+          "required": true,
+          "description": "ID of the menu item to add to or remove from wishlist.",
+          "schema": {
+            "type": "integer"
+          },
+          "example": 3
+        }
+      ],
       "post": {
-        "summary": "add wishlist",
-        "parameters": [],
+        "tags": [
+          "Wishlists"
+        ],
+        "summary": "Add item to wishlist",
+        "description": "Adds a menu item to the current customer's wishlist.",
         "responses": {
           "201": {
+            "description": "Item successfully added to wishlist.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Sat, 14 Jun 2025 08:39:21 GMT"
               },
@@ -1653,196 +1168,59 @@
                 "example": "43"
               }
             },
-            "description": "success",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
           },
           "400": {
-            "headers": {
-              "Date": {
-                "schema": {
-                  "type": "string"
-                },
-                "example": "Fri, 25 Apr 2025 15:03:23 GMT"
-              },
-              "Content-Type": {
-                "schema": {
-                  "type": "string"
-                },
-                "example": "application/json"
-              },
-              "Content-Length": {
-                "schema": {
-                  "type": "integer"
-                },
-                "example": "37"
-              }
-            },
-            "description": "wishlist already exists",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/wishlists/2": {
-      "parameters": [],
-      "delete": {
-        "summary": "Delete",
-        "parameters": [],
-        "responses": {}
-      }
-    },
-    "/employees/3": {
-      "parameters": [],
-      "put": {
-        "summary": "Update",
-        "parameters": [
-          {
-            "name": "x-app-role",
-            "in": "header",
-            "required": false,
-            "example": "kitchen_staff",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "headers": {
-              "Date": {
-                "schema": {
-                  "type": "string"
-                },
-                "example": "Wed, 11 Jun 2025 07:03:42 GMT"
-              },
-              "Content-Type": {
-                "schema": {
-                  "type": "string"
-                },
-                "example": "application/json"
-              },
-              "Content-Length": {
-                "schema": {
-                  "type": "integer"
-                },
-                "example": "289"
-              }
-            },
-            "description": "Create employee",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "email": {
-                    "type": "string",
-                    "format": "email"
-                  },
-                  "address": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
+            "description": "Wishlist item already exists or invalid menu ID."
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
+          },
+          "404": {
+            "description": "Menu item not found."
           }
         }
       },
       "delete": {
-        "summary": "Employee",
-        "parameters": [],
+        "tags": [
+          "Wishlists"
+        ],
+        "summary": "Remove item from wishlist",
+        "description": "Removes a specific menu item from the current customer's wishlist.",
         "responses": {
           "200": {
-            "headers": {
-              "Date": {
-                "schema": {
-                  "type": "string"
-                },
-                "example": "Wed, 11 Jun 2025 08:04:09 GMT"
-              },
-              "Content-Type": {
-                "schema": {
-                  "type": "string"
-                },
-                "example": "application/json"
-              },
-              "Content-Length": {
-                "schema": {
-                  "type": "integer"
-                },
-                "example": "43"
-              }
-            },
-            "description": "Delete employee",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
+            "description": "Item successfully removed from wishlist."
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
+          },
+          "404": {
+            "description": "Wishlist item not found or does not belong to the current customer."
           }
         }
       }
     },
     "/employees": {
-      "parameters": [],
       "get": {
-        "summary": "Employees",
-        "parameters": [],
+        "tags": [
+          "Employees"
+        ],
+        "summary": "Get all employees",
+        "description": "Retrieves a list of all employee accounts.",
         "responses": {
           "200": {
+            "description": "Successfully retrieved employees.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Wed, 11 Jun 2025 07:36:53 GMT"
               },
@@ -1859,55 +1237,50 @@
                 "example": "199"
               }
             },
-            "description": "get all",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "integer"
-                          },
-                          "name": {
-                            "type": "string"
-                          },
-                          "email": {
-                            "type": "string",
-                            "format": "email"
-                          },
-                          "address": {
-                            "type": "string"
-                          }
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/EmployeesResponse"
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
+          },
+          "403": {
+            "description": "Forbidden: User does not have the necessary permissions."
           }
         }
       }
     },
-    "/employees/1": {
-      "parameters": [],
+    "/employees/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "ID of the employee to retrieve, update, or delete.",
+          "schema": {
+            "type": "integer"
+          },
+          "example": 3
+        }
+      ],
       "get": {
-        "summary": "Employee",
-        "parameters": [],
+        "tags": [
+          "Employees"
+        ],
+        "summary": "Get employee by ID",
+        "description": "Retrieves a single employee account by their unique ID.",
         "responses": {
           "200": {
+            "description": "Employee successfully retrieved.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Wed, 11 Jun 2025 07:49:09 GMT"
               },
@@ -1924,52 +1297,164 @@
                 "example": "120"
               }
             },
-            "description": "get by id",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "integer"
-                        },
-                        "name": {
-                          "type": "string"
-                        },
-                        "email": {
-                          "type": "string",
-                          "format": "email"
-                        },
-                        "address": {
-                          "type": "string"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/SingleEmployeeResponse"
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
+          },
+          "403": {
+            "description": "Forbidden: User does not have the necessary permissions."
+          },
+          "404": {
+            "description": "Employee not found."
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Employees"
+        ],
+        "summary": "Update an employee by ID",
+        "description": "Updates an existing employee account by their unique ID.",
+        "parameters": [
+          {
+            "name": "x-app-role",
+            "in": "header",
+            "required": false,
+            "description": "Role of the application accessing the API (e.g., 'kitchen_staff').",
+            "example": "kitchen_staff",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEmployeeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Employee successfully updated.",
+            "headers": {
+              "Date": {
+                "schema": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "example": "Wed, 11 Jun 2025 07:03:42 GMT"
+              },
+              "Content-Type": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "application/json"
+              },
+              "Content-Length": {
+                "schema": {
+                  "type": "integer"
+                },
+                "example": "289"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data."
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
+          },
+          "403": {
+            "description": "Forbidden: User does not have the necessary permissions."
+          },
+          "404": {
+            "description": "Employee not found."
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Employees"
+        ],
+        "summary": "Delete an employee by ID",
+        "description": "Deletes an employee account by their unique ID.",
+        "responses": {
+          "200": {
+            "description": "Employee successfully deleted.",
+            "headers": {
+              "Date": {
+                "schema": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "example": "Wed, 11 Jun 2025 08:04:09 GMT"
+              },
+              "Content-Type": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "application/json"
+              },
+              "Content-Length": {
+                "schema": {
+                  "type": "integer"
+                },
+                "example": "43"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
+          },
+          "403": {
+            "description": "Forbidden: User does not have the necessary permissions."
+          },
+          "404": {
+            "description": "Employee not found."
           }
         }
       }
     },
     "/reservations": {
-      "parameters": [],
       "get": {
-        "summary": "reservations - customer",
-        "parameters": [],
+        "tags": [
+          "Reservations"
+        ],
+        "summary": "Get customer's reservations",
+        "description": "Retrieves a list of all reservations made by the currently authenticated customer.",
         "responses": {
           "200": {
+            "description": "Successfully retrieved customer reservations.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Thu, 12 Jun 2025 14:06:37 GMT"
               },
@@ -1986,119 +1471,43 @@
                 "example": "812"
               }
             },
-            "description": "reservations - customer",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "integer"
-                          },
-                          "customer_id": {
-                            "type": "integer"
-                          },
-                          "customer": {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "integer"
-                              },
-                              "name": {
-                                "type": "string"
-                              },
-                              "email": {
-                                "type": "string",
-                                "format": "email"
-                              },
-                              "address": {
-                                "type": "string"
-                              }
-                            }
-                          },
-                          "table_number": {
-                            "type": "integer"
-                          },
-                          "guest_count": {
-                            "type": "integer"
-                          },
-                          "reserve_date": {
-                            "type": "string",
-                            "format": "date-time"
-                          },
-                          "status": {
-                            "type": "string"
-                          },
-                          "special_notes": {
-                            "type": "string"
-                          },
-                          "created_at": {
-                            "type": "string",
-                            "format": "date-time"
-                          },
-                          "updated_at": {
-                            "type": "string",
-                            "format": "date-time"
-                          }
-                        }
-                      }
-                    },
-                    "meta": {
-                      "type": "object",
-                      "properties": {
-                        "current_page": {
-                          "type": "integer"
-                        },
-                        "total": {
-                          "type": "integer"
-                        },
-                        "per_page": {
-                          "type": "integer"
-                        },
-                        "last_page": {
-                          "type": "integer"
-                        },
-                        "has_next_page": {
-                          "type": "boolean"
-                        },
-                        "has_prev_page": {
-                          "type": "boolean"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/ReservationsResponse"
                 }
               }
             }
-          }
-        },
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object"
-              }
-            }
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
           }
         }
       },
       "post": {
-        "summary": "Create",
-        "parameters": [],
+        "tags": [
+          "Reservations"
+        ],
+        "summary": "Create a new reservation",
+        "description": "Creates a new table reservation for the current customer.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReservationRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
+            "description": "Reservation successfully created.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Thu, 12 Jun 2025 08:13:14 GMT"
               },
@@ -2115,108 +1524,38 @@
                 "example": "376"
               }
             },
-            "description": "create reservation",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "integer"
-                        },
-                        "customer_id": {
-                          "type": "integer"
-                        },
-                        "customer": {
-                          "type": "object",
-                          "properties": {
-                            "id": {
-                              "type": "integer"
-                            },
-                            "name": {
-                              "type": "string"
-                            },
-                            "email": {
-                              "type": "string",
-                              "format": "email"
-                            },
-                            "address": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "table_number": {
-                          "type": "integer"
-                        },
-                        "guest_count": {
-                          "type": "integer"
-                        },
-                        "reserve_date": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "status": {
-                          "type": "string"
-                        },
-                        "special_notes": {
-                          "type": "string"
-                        },
-                        "created_at": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "updated_at": {
-                          "type": "string",
-                          "format": "date-time"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/SingleReservationResponse"
                 }
               }
             }
-          }
-        },
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "guest_count": {
-                    "type": "integer"
-                  },
-                  "reserve_date": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "special_notes": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
+          },
+          "400": {
+            "description": "Invalid input data or no available tables for the requested date/guest count."
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
           }
         }
       }
     },
     "/reservations/admin": {
-      "parameters": [],
       "get": {
-        "summary": "reservations - admin",
-        "parameters": [],
+        "tags": [
+          "Reservations"
+        ],
+        "summary": "Get all reservations (Admin)",
+        "description": "Retrieves a list of all reservations in the system. This endpoint is for administrators.",
         "responses": {
           "200": {
+            "description": "Successfully retrieved all reservations.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Thu, 12 Jun 2025 14:00:54 GMT"
               },
@@ -2233,113 +1572,50 @@
                 "example": "812"
               }
             },
-            "description": "reservations - admin",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "integer"
-                          },
-                          "customer_id": {
-                            "type": "integer"
-                          },
-                          "customer": {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "integer"
-                              },
-                              "name": {
-                                "type": "string"
-                              },
-                              "email": {
-                                "type": "string",
-                                "format": "email"
-                              },
-                              "address": {
-                                "type": "string"
-                              }
-                            }
-                          },
-                          "table_number": {
-                            "type": "integer"
-                          },
-                          "guest_count": {
-                            "type": "integer"
-                          },
-                          "reserve_date": {
-                            "type": "string",
-                            "format": "date-time"
-                          },
-                          "status": {
-                            "type": "string"
-                          },
-                          "special_notes": {
-                            "type": "string"
-                          },
-                          "created_at": {
-                            "type": "string",
-                            "format": "date-time"
-                          },
-                          "updated_at": {
-                            "type": "string",
-                            "format": "date-time"
-                          }
-                        }
-                      }
-                    },
-                    "meta": {
-                      "type": "object",
-                      "properties": {
-                        "current_page": {
-                          "type": "integer"
-                        },
-                        "total": {
-                          "type": "integer"
-                        },
-                        "per_page": {
-                          "type": "integer"
-                        },
-                        "last_page": {
-                          "type": "integer"
-                        },
-                        "has_next_page": {
-                          "type": "boolean"
-                        },
-                        "has_prev_page": {
-                          "type": "boolean"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/ReservationsResponse"
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
+          },
+          "403": {
+            "description": "Forbidden: User does not have the necessary permissions (e.g., not an admin)."
           }
         }
       }
     },
-    "/reservations/1": {
-      "parameters": [],
+    "/reservations/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "ID of the reservation to retrieve, update, or delete.",
+          "schema": {
+            "type": "integer"
+          },
+          "example": 1
+        }
+      ],
       "get": {
-        "summary": "reservation",
-        "parameters": [],
+        "tags": [
+          "Reservations"
+        ],
+        "summary": "Get reservation by ID",
+        "description": "Retrieves a single reservation by its unique ID.",
         "responses": {
           "200": {
+            "description": "Reservation successfully retrieved.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Thu, 12 Jun 2025 08:28:11 GMT"
               },
@@ -2356,128 +1632,49 @@
                 "example": "378"
               }
             },
-            "description": "reservation",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "integer"
-                        },
-                        "customer_id": {
-                          "type": "integer"
-                        },
-                        "customer": {
-                          "type": "object",
-                          "properties": {
-                            "id": {
-                              "type": "integer"
-                            },
-                            "name": {
-                              "type": "string"
-                            },
-                            "email": {
-                              "type": "string",
-                              "format": "email"
-                            },
-                            "address": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "table_number": {
-                          "type": "integer"
-                        },
-                        "guest_count": {
-                          "type": "integer"
-                        },
-                        "reserve_date": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "status": {
-                          "type": "string"
-                        },
-                        "special_notes": {
-                          "type": "string"
-                        },
-                        "created_at": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "updated_at": {
-                          "type": "string",
-                          "format": "date-time"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/SingleReservationResponse"
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
+          },
+          "403": {
+            "description": "Forbidden: User does not have the necessary permissions."
+          },
+          "404": {
+            "description": "Reservation not found."
           }
         }
       },
-      "delete": {
-        "summary": "reservation",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "headers": {
-              "Date": {
-                "schema": {
-                  "type": "string"
-                },
-                "example": "Thu, 12 Jun 2025 08:32:47 GMT"
-              },
-              "Content-Type": {
-                "schema": {
-                  "type": "string"
-                },
-                "example": "application/json"
-              },
-              "Content-Length": {
-                "schema": {
-                  "type": "integer"
-                },
-                "example": "46"
-              }
-            },
-            "description": "delete",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
+      "put": {
+        "tags": [
+          "Reservations"
+        ],
+        "summary": "Update a reservation by ID",
+        "description": "Updates an existing reservation by its unique ID. This can be used by customers to update their own reservations or by admin to change status.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateReservationRequest"
               }
             }
           }
-        }
-      }
-    },
-    "/reservations/4": {
-      "parameters": [],
-      "put": {
-        "summary": "reservation",
-        "parameters": [],
+        },
         "responses": {
           "200": {
+            "description": "Reservation successfully updated.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Thu, 12 Jun 2025 08:31:33 GMT"
               },
@@ -2494,111 +1691,93 @@
                 "example": "376"
               }
             },
-            "description": "update",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "integer"
-                        },
-                        "customer_id": {
-                          "type": "integer"
-                        },
-                        "customer": {
-                          "type": "object",
-                          "properties": {
-                            "id": {
-                              "type": "integer"
-                            },
-                            "name": {
-                              "type": "string"
-                            },
-                            "email": {
-                              "type": "string",
-                              "format": "email"
-                            },
-                            "address": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "table_number": {
-                          "type": "integer"
-                        },
-                        "guest_count": {
-                          "type": "integer"
-                        },
-                        "reserve_date": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "status": {
-                          "type": "string"
-                        },
-                        "special_notes": {
-                          "type": "string"
-                        },
-                        "created_at": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "updated_at": {
-                          "type": "string",
-                          "format": "date-time"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/SingleReservationResponse"
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid input data or table not available for the updated details."
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
+          },
+          "403": {
+            "description": "Forbidden: User does not have the necessary permissions to update this reservation."
+          },
+          "404": {
+            "description": "Reservation not found."
           }
-        },
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "status": {
-                    "type": "string"
-                  },
-                  "guest_count": {
-                    "type": "integer"
-                  },
-                  "reserve_date": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "special_notes": {
-                    "type": "string"
-                  }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Reservations"
+        ],
+        "summary": "Delete a reservation by ID",
+        "description": "Deletes a reservation by its unique ID. This can be used by customers to cancel their own reservations or by admin.",
+        "responses": {
+          "200": {
+            "description": "Reservation successfully deleted.",
+            "headers": {
+              "Date": {
+                "schema": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "example": "Thu, 12 Jun 2025 08:32:47 GMT"
+              },
+              "Content-Type": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "application/json"
+              },
+              "Content-Length": {
+                "schema": {
+                  "type": "integer"
+                },
+                "example": "46"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
+          },
+          "403": {
+            "description": "Forbidden: User does not have the necessary permissions to delete this reservation."
+          },
+          "404": {
+            "description": "Reservation not found."
           }
         }
       }
     },
     "/inventories": {
-      "parameters": [],
       "get": {
-        "summary": "inventories",
-        "parameters": [],
+        "tags": [
+          "Inventories"
+        ],
+        "summary": "Get all inventories",
+        "description": "Retrieves a list of all inventory items.",
         "responses": {
           "200": {
+            "description": "Successfully retrieved inventories.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Thu, 12 Jun 2025 07:00:56 GMT"
               },
@@ -2615,95 +1794,46 @@
                 "example": "2328"
               }
             },
-            "description": "Get Inventories",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "integer"
-                          },
-                          "name": {
-                            "type": "string"
-                          },
-                          "quantity": {
-                            "type": "integer"
-                          },
-                          "unit": {
-                            "type": "string"
-                          },
-                          "minimum_stock": {
-                            "type": "integer"
-                          },
-                          "reorder_point": {
-                            "type": "integer"
-                          },
-                          "unit_price": {
-                            "type": "number"
-                          },
-                          "last_restock_date": {
-                            "type": "string",
-                            "format": "date-time"
-                          },
-                          "created_at": {
-                            "type": "string",
-                            "format": "date-time"
-                          },
-                          "updated_at": {
-                            "type": "string",
-                            "format": "date-time"
-                          }
-                        }
-                      }
-                    },
-                    "meta": {
-                      "type": "object",
-                      "properties": {
-                        "current_page": {
-                          "type": "integer"
-                        },
-                        "total": {
-                          "type": "integer"
-                        },
-                        "per_page": {
-                          "type": "integer"
-                        },
-                        "last_page": {
-                          "type": "integer"
-                        },
-                        "has_next_page": {
-                          "type": "boolean"
-                        },
-                        "has_prev_page": {
-                          "type": "boolean"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/InventoriesResponse"
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
+          },
+          "403": {
+            "description": "Forbidden: User does not have the necessary permissions."
           }
         }
       },
       "post": {
-        "summary": "Inventory",
-        "parameters": [],
+        "tags": [
+          "Inventories"
+        ],
+        "summary": "Create a new inventory item",
+        "description": "Adds a new inventory item to the system.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInventoryRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
+            "description": "Inventory item successfully created.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Thu, 12 Jun 2025 07:26:19 GMT"
               },
@@ -2720,101 +1850,53 @@
                 "example": "327"
               }
             },
-            "description": "Create Inventory",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "integer"
-                        },
-                        "name": {
-                          "type": "string"
-                        },
-                        "quantity": {
-                          "type": "integer"
-                        },
-                        "unit": {
-                          "type": "string"
-                        },
-                        "minimum_stock": {
-                          "type": "integer"
-                        },
-                        "reorder_point": {
-                          "type": "integer"
-                        },
-                        "unit_price": {
-                          "type": "integer"
-                        },
-                        "last_restock_date": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "created_at": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "updated_at": {
-                          "type": "string",
-                          "format": "date-time"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/SingleInventoryResponse"
                 }
               }
             }
-          }
-        },
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "quantity": {
-                    "type": "integer"
-                  },
-                  "unit": {
-                    "type": "string"
-                  },
-                  "minimum_stock": {
-                    "type": "integer"
-                  },
-                  "reorder_point": {
-                    "type": "integer"
-                  },
-                  "unit_price": {
-                    "type": "integer"
-                  }
-                }
-              }
-            }
+          },
+          "400": {
+            "description": "Invalid input data."
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
+          },
+          "403": {
+            "description": "Forbidden: User does not have the necessary permissions."
           }
         }
       }
     },
-    "/inventories/by-id/8": {
-      "parameters": [],
+    "/inventories/by-id/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "ID of the inventory item to retrieve.",
+          "schema": {
+            "type": "integer"
+          },
+          "example": 8
+        }
+      ],
       "get": {
-        "summary": "inventory",
-        "parameters": [],
+        "tags": [
+          "Inventories"
+        ],
+        "summary": "Get inventory item by ID",
+        "description": "Retrieves a single inventory item by its unique ID.",
         "responses": {
           "200": {
+            "description": "Inventory item successfully retrieved.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Thu, 12 Jun 2025 08:02:25 GMT"
               },
@@ -2831,113 +1913,63 @@
                 "example": "318"
               }
             },
-            "description": "get by id",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "integer"
-                        },
-                        "name": {
-                          "type": "string"
-                        },
-                        "quantity": {
-                          "type": "integer"
-                        },
-                        "unit": {
-                          "type": "string"
-                        },
-                        "minimum_stock": {
-                          "type": "integer"
-                        },
-                        "reorder_point": {
-                          "type": "integer"
-                        },
-                        "unit_price": {
-                          "type": "number"
-                        },
-                        "last_restock_date": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "created_at": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "updated_at": {
-                          "type": "string",
-                          "format": "date-time"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/SingleInventoryResponse"
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
+          },
+          "403": {
+            "description": "Forbidden: User does not have the necessary permissions."
+          },
+          "404": {
+            "description": "Inventory item not found."
           }
         }
       }
     },
-    "/inventories/9": {
-      "parameters": [],
-      "delete": {
-        "summary": "inventory",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "headers": {
-              "Date": {
-                "schema": {
-                  "type": "string"
-                },
-                "example": "Thu, 12 Jun 2025 07:37:25 GMT"
-              },
-              "Content-Type": {
-                "schema": {
-                  "type": "string"
-                },
-                "example": "application/json"
-              },
-              "Content-Length": {
-                "schema": {
-                  "type": "integer"
-                },
-                "example": "45"
-              }
-            },
-            "description": "delete inventory",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
+    "/inventories/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "ID of the inventory item to update or delete.",
+          "schema": {
+            "type": "integer"
+          },
+          "example": 9
+        }
+      ],
+      "put": {
+        "tags": [
+          "Inventories"
+        ],
+        "summary": "Update an inventory item by ID",
+        "description": "Updates an existing inventory item by its unique ID.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInventoryRequest"
               }
             }
           }
-        }
-      },
-      "put": {
-        "summary": "Update",
-        "parameters": [],
+        },
         "responses": {
           "200": {
+            "description": "Inventory item successfully updated.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Thu, 12 Jun 2025 07:27:54 GMT"
               },
@@ -2954,101 +1986,93 @@
                 "example": "334"
               }
             },
-            "description": "Inventory Update",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "integer"
-                        },
-                        "name": {
-                          "type": "string"
-                        },
-                        "quantity": {
-                          "type": "integer"
-                        },
-                        "unit": {
-                          "type": "string"
-                        },
-                        "minimum_stock": {
-                          "type": "integer"
-                        },
-                        "reorder_point": {
-                          "type": "integer"
-                        },
-                        "unit_price": {
-                          "type": "integer"
-                        },
-                        "last_restock_date": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "created_at": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "updated_at": {
-                          "type": "string",
-                          "format": "date-time"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/SingleInventoryResponse"
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid input data."
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
+          },
+          "403": {
+            "description": "Forbidden: User does not have the necessary permissions."
+          },
+          "404": {
+            "description": "Inventory item not found."
           }
-        },
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "quantity": {
-                    "type": "integer"
-                  },
-                  "unit": {
-                    "type": "string"
-                  },
-                  "minimum_stock": {
-                    "type": "integer"
-                  },
-                  "reorder_point": {
-                    "type": "integer"
-                  },
-                  "unit_price": {
-                    "type": "integer"
-                  }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Inventories"
+        ],
+        "summary": "Delete an inventory item by ID",
+        "description": "Deletes an inventory item by its unique ID.",
+        "responses": {
+          "200": {
+            "description": "Inventory item successfully deleted.",
+            "headers": {
+              "Date": {
+                "schema": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "example": "Thu, 12 Jun 2025 07:37:25 GMT"
+              },
+              "Content-Type": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "application/json"
+              },
+              "Content-Length": {
+                "schema": {
+                  "type": "integer"
+                },
+                "example": "45"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
+          },
+          "403": {
+            "description": "Forbidden: User does not have the necessary permissions."
+          },
+          "404": {
+            "description": "Inventory item not found."
           }
         }
       }
     },
     "/inventories/low-stock": {
-      "parameters": [],
       "get": {
-        "summary": "Get Low Stock",
-        "parameters": [],
+        "tags": [
+          "Inventories"
+        ],
+        "summary": "Get low stock inventory items",
+        "description": "Retrieves a list of inventory items that are below their reorder point.",
         "responses": {
           "200": {
+            "description": "Successfully retrieved low stock items.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Thu, 12 Jun 2025 08:02:46 GMT"
               },
@@ -3065,7 +2089,6 @@
                 "example": "68"
               }
             },
-            "description": "low stock",
             "content": {
               "application/json": {
                 "schema": {
@@ -3076,27 +2099,39 @@
                     },
                     "data": {
                       "type": "array",
-                      "items": {}
+                      "items": {
+                        "$ref": "#/components/schemas/InventoryItem"
+                      }
                     }
                   }
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
+          },
+          "403": {
+            "description": "Forbidden: User does not have the necessary permissions."
           }
         }
       }
     },
     "/tables": {
-      "parameters": [],
       "get": {
-        "summary": "Tables",
-        "parameters": [],
+        "tags": [
+          "Tables"
+        ],
+        "summary": "Get all tables",
+        "description": "Retrieves a list of all restaurant tables.",
         "responses": {
           "200": {
+            "description": "Successfully retrieved tables.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Thu, 12 Jun 2025 12:15:57 GMT"
               },
@@ -3113,82 +2148,46 @@
                 "example": "3286"
               }
             },
-            "description": "get all tables",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "integer"
-                          },
-                          "table_number": {
-                            "type": "integer"
-                          },
-                          "capacity": {
-                            "type": "integer"
-                          },
-                          "is_available": {
-                            "type": "boolean"
-                          },
-                          "created_at": {
-                            "type": "string",
-                            "format": "date-time"
-                          },
-                          "updated_at": {
-                            "type": "string",
-                            "format": "date-time"
-                          }
-                        }
-                      }
-                    },
-                    "meta": {
-                      "type": "object",
-                      "properties": {
-                        "current_page": {
-                          "type": "integer"
-                        },
-                        "total": {
-                          "type": "integer"
-                        },
-                        "per_page": {
-                          "type": "integer"
-                        },
-                        "last_page": {
-                          "type": "integer"
-                        },
-                        "has_next_page": {
-                          "type": "boolean"
-                        },
-                        "has_prev_page": {
-                          "type": "boolean"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/TablesResponse"
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
+          },
+          "403": {
+            "description": "Forbidden: User does not have the necessary permissions."
           }
         }
       },
       "post": {
-        "summary": "Table",
-        "parameters": [],
+        "tags": [
+          "Tables"
+        ],
+        "summary": "Create a new table",
+        "description": "Adds a new table to the restaurant.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTableRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
+            "description": "Table successfully created.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Thu, 12 Jun 2025 12:24:37 GMT"
               },
@@ -3205,76 +2204,53 @@
                 "example": "204"
               }
             },
-            "description": "create table",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "integer"
-                        },
-                        "table_number": {
-                          "type": "integer"
-                        },
-                        "capacity": {
-                          "type": "integer"
-                        },
-                        "is_available": {
-                          "type": "boolean"
-                        },
-                        "created_at": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "updated_at": {
-                          "type": "string",
-                          "format": "date-time"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/SingleTableResponse"
                 }
               }
             }
-          }
-        },
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "table_number": {
-                    "type": "integer"
-                  },
-                  "capacity": {
-                    "type": "integer"
-                  }
-                }
-              }
-            }
+          },
+          "400": {
+            "description": "Invalid input data or table number already exists."
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
+          },
+          "403": {
+            "description": "Forbidden: User does not have the necessary permissions."
           }
         }
       }
     },
-    "/tables/1": {
-      "parameters": [],
+    "/tables/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "ID of the table to retrieve, update, or delete.",
+          "schema": {
+            "type": "integer"
+          },
+          "example": 1
+        }
+      ],
       "get": {
-        "summary": "Table",
-        "parameters": [],
+        "tags": [
+          "Tables"
+        ],
+        "summary": "Get table by ID",
+        "description": "Retrieves a single table by its unique ID.",
         "responses": {
           "200": {
+            "description": "Table successfully retrieved.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Thu, 12 Jun 2025 12:16:39 GMT"
               },
@@ -3291,103 +2267,49 @@
                 "example": "204"
               }
             },
-            "description": "get single table",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "integer"
-                        },
-                        "table_number": {
-                          "type": "integer"
-                        },
-                        "capacity": {
-                          "type": "integer"
-                        },
-                        "is_available": {
-                          "type": "boolean"
-                        },
-                        "created_at": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "updated_at": {
-                          "type": "string",
-                          "format": "date-time"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/SingleTableResponse"
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
+          },
+          "403": {
+            "description": "Forbidden: User does not have the necessary permissions."
+          },
+          "404": {
+            "description": "Table not found."
           }
         }
-      }
-    },
-    "/tables/6": {
-      "parameters": [],
-      "delete": {
-        "summary": "Table",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "headers": {
-              "Date": {
-                "schema": {
-                  "type": "string"
-                },
-                "example": "Thu, 12 Jun 2025 12:33:17 GMT"
-              },
-              "Content-Type": {
-                "schema": {
-                  "type": "string"
-                },
-                "example": "application/json"
-              },
-              "Content-Length": {
-                "schema": {
-                  "type": "integer"
-                },
-                "example": "40"
-              }
-            },
-            "description": "delete table",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/tables/5": {
-      "parameters": [],
+      },
       "put": {
-        "summary": "Table",
-        "parameters": [],
+        "tags": [
+          "Tables"
+        ],
+        "summary": "Update a table by ID",
+        "description": "Updates an existing table's information by its unique ID.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTableRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
+            "description": "Table successfully updated.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Thu, 12 Jun 2025 12:28:43 GMT"
               },
@@ -3404,68 +2326,115 @@
                 "example": "203"
               }
             },
-            "description": "update table",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "integer"
-                        },
-                        "table_number": {
-                          "type": "integer"
-                        },
-                        "capacity": {
-                          "type": "integer"
-                        },
-                        "is_available": {
-                          "type": "boolean"
-                        },
-                        "created_at": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "updated_at": {
-                          "type": "string",
-                          "format": "date-time"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/SingleTableResponse"
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid input data or table number conflict."
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
+          },
+          "403": {
+            "description": "Forbidden: User does not have the necessary permissions."
+          },
+          "404": {
+            "description": "Table not found."
           }
-        },
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object"
+        }
+      },
+      "delete": {
+        "tags": [
+          "Tables"
+        ],
+        "summary": "Delete a table by ID",
+        "description": "Deletes a table by its unique ID.",
+        "responses": {
+          "200": {
+            "description": "Table successfully deleted.",
+            "headers": {
+              "Date": {
+                "schema": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "example": "Thu, 12 Jun 2025 12:33:17 GMT"
+              },
+              "Content-Type": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "application/json"
+              },
+              "Content-Length": {
+                "schema": {
+                  "type": "integer"
+                },
+                "example": "40"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
+          },
+          "403": {
+            "description": "Forbidden: User does not have the necessary permissions."
+          },
+          "404": {
+            "description": "Table not found."
           }
         }
       }
     },
-    "/tables/6/availability": {
-      "parameters": [],
+    "/tables/{id}/availability": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "ID of the table to update availability.",
+          "schema": {
+            "type": "integer"
+          },
+          "example": 6
+        }
+      ],
       "patch": {
-        "summary": "Table",
-        "parameters": [],
+        "tags": [
+          "Tables"
+        ],
+        "summary": "Update table availability",
+        "description": "Updates the availability status of a table.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTableAvailabilityRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
+            "description": "Table availability successfully updated.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Thu, 12 Jun 2025 12:31:24 GMT"
               },
@@ -3482,48 +2451,56 @@
                 "example": "53"
               }
             },
-            "description": "Update availability",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
-          }
-        },
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "is_available": {
-                    "type": "boolean"
-                  }
-                }
-              }
-            }
+          },
+          "400": {
+            "description": "Invalid input data."
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
+          },
+          "403": {
+            "description": "Forbidden: User does not have the necessary permissions."
+          },
+          "404": {
+            "description": "Table not found."
           }
         }
       }
     },
-    "/payments/10": {
-      "parameters": [],
+    "/payments/{order_id}": {
+      "parameters": [
+        {
+          "name": "order_id",
+          "in": "path",
+          "required": true,
+          "description": "ID of the order to get payment URL for.",
+          "schema": {
+            "type": "integer"
+          },
+          "example": 10
+        }
+      ],
       "get": {
-        "summary": "PaymentURL",
-        "parameters": [],
+        "tags": [
+          "Payments"
+        ],
+        "summary": "Get payment URL for an order",
+        "description": "Retrieves the payment redirect URL for a pending order.",
         "responses": {
           "200": {
+            "description": "Payment URL successfully retrieved.",
             "headers": {
               "Date": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date-time"
                 },
                 "example": "Thu, 12 Jun 2025 23:49:38 GMT"
               },
@@ -3540,7 +2517,6 @@
                 "example": "136"
               }
             },
-            "description": "get pending payment",
             "content": {
               "application/json": {
                 "schema": {
@@ -3551,113 +2527,1411 @@
                     },
                     "data": {
                       "type": "string",
-                      "format": "uri"
+                      "format": "uri",
+                      "description": "The URL to redirect for payment."
                     }
                   }
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized: Authentication token missing or invalid."
+          },
+          "404": {
+            "description": "Order not found or payment already processed."
           }
         }
       }
     },
     "/health": {
-      "parameters": [],
       "get": {
-        "summary": "health",
-        "parameters": [],
-        "responses": {}
+        "tags": [
+          "Health Check"
+        ],
+        "summary": "Health check",
+        "description": "Checks the health and availability of the API.",
+        "responses": {
+          "200": {
+            "description": "API is healthy and running."
+          }
+        }
       }
     },
     "/payment/notification/": {
-      "parameters": [],
       "post": {
-        "summary": "webhook",
-        "parameters": [],
-        "responses": {},
+        "tags": [
+          "Payments"
+        ],
+        "summary": "Payment webhook endpoint",
+        "description": "Endpoint for receiving payment notifications from the payment gateway.",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "transaction_time": {
-                    "type": "string",
-                    "format": "style"
-                  },
-                  "transaction_status": {
-                    "type": "string"
-                  },
-                  "transaction_id": {
-                    "type": "string"
-                  },
-                  "status_message": {
-                    "type": "string"
-                  },
-                  "status_code": {
-                    "type": "string",
-                    "format": "color"
-                  },
-                  "signature_key": {
-                    "type": "string"
-                  },
-                  "payment_type": {
-                    "type": "string"
-                  },
-                  "order_id": {
-                    "type": "string"
-                  },
-                  "metadata": {
-                    "type": "object",
-                    "properties": {
-                      "oms_channel_type": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "merchant_id": {
-                    "type": "string"
-                  },
-                  "masked_card": {
-                    "type": "string"
-                  },
-                  "gross_amount": {
-                    "type": "string",
-                    "format": "utc-millisec"
-                  },
-                  "fraud_status": {
-                    "type": "string"
-                  },
-                  "expiry_time": {
-                    "type": "string",
-                    "format": "style"
-                  },
-                  "currency": {
-                    "type": "string"
-                  },
-                  "channel_response_message": {
-                    "type": "string"
-                  },
-                  "channel_response_code": {
-                    "type": "string",
-                    "format": "utc-millisec"
-                  },
-                  "card_type": {
-                    "type": "string"
-                  },
-                  "bank": {
-                    "type": "string"
-                  },
-                  "approval_code": {
-                    "type": "string",
-                    "format": "utc-millisec"
-                  }
-                }
+                "$ref": "#/components/schemas/PaymentNotificationWebhook"
               }
             }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Payment notification successfully processed."
+          },
+          "400": {
+            "description": "Invalid webhook payload or signature."
           }
         }
       }
     }
-  }
+  },
+  "components": {
+    "schemas": {
+      "MessageResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "A descriptive message about the operation's outcome."
+          }
+        },
+        "example": {
+          "message": "Operation successful."
+        }
+      },
+      "MenuItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Unique identifier for the menu item."
+          },
+          "title": {
+            "type": "string",
+            "description": "Title of the cake."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the cake."
+          },
+          "price": {
+            "type": "integer",
+            "description": "Price of the cake."
+          },
+          "category": {
+            "type": "string",
+            "description": "Category of the cake (e.g., 'wedding_cake', 'birthday_cake')."
+          },
+          "rating": {
+            "type": "number",
+            "format": "float",
+            "description": "Rating of the cake.",
+            "minimum": 0,
+            "maximum": 5
+          },
+          "image": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL of the cake image."
+          }
+        },
+        "example": {
+          "id": 1,
+          "title": "Red Velvet Cake",
+          "description": "A delicious red velvet cake with cream cheese frosting.",
+          "price": 250000,
+          "category": "birthday_cake",
+          "rating": 4.8,
+          "image": "http://example.com/red_velvet.jpg"
+        }
+      },
+      "MenusResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MenuItem"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      "SingleMenuResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/MenuItem"
+          }
+        }
+      },
+      "CreateMenuRequest": {
+        "type": "object",
+        "required": [
+          "title",
+          "description",
+          "price",
+          "category",
+          "rating",
+          "image"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Title of the new cake."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the new cake."
+          },
+          "price": {
+            "type": "integer",
+            "description": "Price of the new cake."
+          },
+          "category": {
+            "type": "string",
+            "description": "Category of the new cake."
+          },
+          "rating": {
+            "type": "integer",
+            "description": "Rating of the new cake (integer value).",
+            "minimum": 0,
+            "maximum": 5
+          },
+          "image": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL of the new cake image."
+          }
+        },
+        "example": {
+          "title": "Blueberry Cheesecake",
+          "description": "A rich and creamy cheesecake with a blueberry topping.",
+          "price": 180000,
+          "category": "cheesecake",
+          "rating": 5,
+          "image": "http://example.com/blueberry_cheesecake.jpg"
+        }
+      },
+      "UpdateMenuRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Updated title of the cake."
+          },
+          "description": {
+            "type": "string",
+            "description": "Updated description of the cake."
+          },
+          "price": {
+            "type": "integer",
+            "description": "Updated price of the cake."
+          },
+          "category": {
+            "type": "string",
+            "description": "Updated category of the cake."
+          },
+          "rating": {
+            "type": "integer",
+            "description": "Updated rating of the cake (integer value).",
+            "minimum": 0,
+            "maximum": 5
+          },
+          "image": {
+            "type": "string",
+            "format": "uri",
+            "description": "Updated URL of the cake image."
+          }
+        },
+        "example": {
+          "title": "Updated Chocolate Delight",
+          "price": 280000
+        }
+      },
+      "Customer": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Unique identifier for the customer."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the customer."
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Email address of the customer."
+          },
+          "address": {
+            "type": "string",
+            "description": "Delivery address of the customer."
+          }
+        },
+        "example": {
+          "id": 1,
+          "name": "John Doe",
+          "email": "john.doe@example.com",
+          "address": "123 Main St, Anytown"
+        }
+      },
+      "RegisterCustomerRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "email",
+          "password",
+          "address"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the customer."
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Email address for the customer account."
+          },
+          "password": {
+            "type": "string",
+            "description": "Password for the customer account."
+          },
+          "address": {
+            "type": "string",
+            "description": "Customer's primary address."
+          }
+        },
+        "example": {
+          "name": "Jane Smith",
+          "email": "jane.smith@example.com",
+          "password": "securepassword123",
+          "address": "456 Oak Ave, Anytown"
+        }
+      },
+      "LoginCustomerRequest": {
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Email address of the customer."
+          },
+          "password": {
+            "type": "string",
+            "description": "Password of the customer."
+          }
+        },
+        "example": {
+          "email": "john.doe@example.com",
+          "password": "password123"
+        }
+      },
+      "CustomerProfileResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Customer"
+          }
+        }
+      },
+      "UpdateCustomerRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Updated name of the customer."
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Updated email address of the customer."
+          },
+          "address": {
+            "type": "string",
+            "description": "Updated address of the customer."
+          }
+        },
+        "example": {
+          "name": "Johnny Doe",
+          "address": "789 Pine Ln, Othertown"
+        }
+      },
+      "OrderItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Unique identifier for the order item."
+          },
+          "cake": {
+            "$ref": "#/components/schemas/MenuItem"
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "Quantity of the menu item in the order."
+          },
+          "price": {
+            "type": "integer",
+            "description": "Price of the single menu item at the time of order."
+          }
+        },
+        "example": {
+          "id": 1,
+          "cake": {
+            "id": 1,
+            "title": "Red Velvet Cake",
+            "description": "A delicious red velvet cake with cream cheese frosting.",
+            "price": 250000,
+            "category": "birthday_cake",
+            "rating": 4.8,
+            "image": "http://example.com/red_velvet.jpg"
+          },
+          "quantity": 2,
+          "price": 250000
+        }
+      },
+      "Order": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Unique identifier for the order."
+          },
+          "customer": {
+            "$ref": "#/components/schemas/Customer"
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of the order (e.g., 'pending', 'completed', 'cancelled')."
+          },
+          "total_price": {
+            "type": "integer",
+            "description": "Total price of the order."
+          },
+          "delivery_address": {
+            "type": "string",
+            "description": "Delivery address for the order."
+          },
+          "food_status": {
+            "type": "string",
+            "description": "Current food preparation status (e.g., 'preparing', 'ready_for_delivery')."
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderItem"
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the order was created."
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the order was last updated."
+          }
+        },
+        "example": {
+          "id": 28,
+          "customer": {
+            "id": 1,
+            "name": "John Doe",
+            "email": "john.doe@example.com",
+            "address": "123 Main St, Anytown"
+          },
+          "status": "pending",
+          "total_price": 500000,
+          "delivery_address": "123 Main St, Anytown",
+          "food_status": "preparing",
+          "items": [
+            {
+              "id": 1,
+              "cake": {
+                "id": 1,
+                "title": "Red Velvet Cake",
+                "description": "A delicious red velvet cake with cream cheese frosting.",
+                "price": 250000,
+                "category": "birthday_cake",
+                "rating": 4.8,
+                "image": "http://example.com/red_velvet.jpg"
+              },
+              "quantity": 2,
+              "price": 250000
+            }
+          ],
+          "created_at": "2025-06-13T10:12:00Z",
+          "updated_at": "2025-06-13T10:12:41Z"
+        }
+      },
+      "CreateOrderRequest": {
+        "type": "object",
+        "required": [
+          "items",
+          "delivery_address"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "description": "List of menu items to include in the order.",
+            "items": {
+              "type": "object",
+              "required": [
+                "menu_id",
+                "title",
+                "quantity",
+                "price"
+              ],
+              "properties": {
+                "menu_id": {
+                  "type": "integer",
+                  "description": "ID of the menu item."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "Title of the menu item."
+                },
+                "quantity": {
+                  "type": "integer",
+                  "description": "Quantity of the menu item."
+                },
+                "price": {
+                  "type": "integer",
+                  "description": "Price of the menu item."
+                }
+              }
+            }
+          },
+          "delivery_address": {
+            "type": "string",
+            "description": "Delivery address for the order."
+          }
+        },
+        "example": {
+          "items": [
+            {
+              "menu_id": 1,
+              "title": "Red Velvet Cake",
+              "quantity": 1,
+              "price": 250000
+            },
+            {
+              "menu_id": 3,
+              "title": "Chocolate Fudge",
+              "quantity": 2,
+              "price": 150000
+            }
+          ],
+          "delivery_address": "456 Elm Street, Apt 5B"
+        }
+      },
+      "CreateOrderResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "token": {
+                "type": "string",
+                "description": "Payment token."
+              },
+              "redirect_url": {
+                "type": "string",
+                "format": "uri",
+                "description": "URL to redirect for payment."
+              }
+            }
+          }
+        }
+      },
+      "OrdersResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Order"
+            }
+          }
+        }
+      },
+      "SingleOrderResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Order"
+          }
+        }
+      },
+      "CustomerOrdersResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "customer": {
+                  "$ref": "#/components/schemas/Customer"
+                },
+                "status": {
+                  "type": "string"
+                },
+                "total_price": {
+                  "type": "integer"
+                },
+                "delivery_address": {
+                  "type": "string"
+                },
+                "items": {
+                  "type": "array",
+                  "items": {}
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "updated_at": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      "UpdateFoodStatusRequest": {
+        "type": "object",
+        "required": [
+          "food_status"
+        ],
+        "properties": {
+          "food_status": {
+            "type": "string",
+            "description": "The new food preparation status (e.g., 'preparing', 'ready_for_delivery', 'delivered')."
+          }
+        },
+        "example": {
+          "food_status": "ready_for_delivery"
+        }
+      },
+      "CartItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Unique identifier for the cart item."
+          },
+          "customer_id": {
+            "type": "integer",
+            "description": "ID of the customer who owns the cart item."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the menu item in the cart."
+          },
+          "menu_id": {
+            "type": "integer",
+            "description": "ID of the associated menu item."
+          },
+          "image": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL of the menu item image."
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "Quantity of the menu item in the cart."
+          },
+          "price": {
+            "type": "integer",
+            "description": "Unit price of the menu item."
+          },
+          "subtotal": {
+            "type": "integer",
+            "description": "Subtotal for this cart item (quantity * price)."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "example": {
+          "id": 1,
+          "customer_id": 1,
+          "name": "Red Velvet Cake",
+          "menu_id": 1,
+          "image": "http://example.com/red_velvet.jpg",
+          "quantity": 1,
+          "price": 250000,
+          "subtotal": 250000,
+          "created_at": "2025-06-14T08:37:00Z",
+          "updated_at": "2025-06-14T08:38:00Z"
+        }
+      },
+      "AddCartItemRequest": {
+        "type": "object",
+        "required": [
+          "menu_id",
+          "quantity"
+        ],
+        "properties": {
+          "menu_id": {
+            "type": "integer",
+            "description": "ID of the menu item to add to cart."
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "Quantity of the menu item to add."
+          }
+        },
+        "example": {
+          "menu_id": 1,
+          "quantity": 1
+        }
+      },
+      "CustomerCartsResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CartItem"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      "WishlistsResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MenuItem"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      "Employee": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Unique identifier for the employee."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the employee."
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Email address of the employee."
+          },
+          "address": {
+            "type": "string",
+            "description": "Address of the employee."
+          }
+        },
+        "example": {
+          "id": 1,
+          "name": "Alice Wonderland",
+          "email": "alice@cakestore.com",
+          "address": "789 Bakery Lane"
+        }
+      },
+      "EmployeesResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Employee"
+            }
+          }
+        }
+      },
+      "SingleEmployeeResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Employee"
+          }
+        }
+      },
+      "UpdateEmployeeRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Updated name of the employee."
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Updated email of the employee."
+          },
+          "address": {
+            "type": "string",
+            "description": "Updated address of the employee."
+          }
+        },
+        "example": {
+          "name": "Bob The Baker",
+          "address": "100 Sweet Street"
+        }
+      },
+      "Reservation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Unique identifier for the reservation."
+          },
+          "customer_id": {
+            "type": "integer",
+            "description": "ID of the customer who made the reservation."
+          },
+          "customer": {
+            "$ref": "#/components/schemas/Customer"
+          },
+          "table_number": {
+            "type": "integer",
+            "description": "Table number reserved."
+          },
+          "guest_count": {
+            "type": "integer",
+            "description": "Number of guests for the reservation."
+          },
+          "reserve_date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date and time of the reservation."
+          },
+          "status": {
+            "type": "string",
+            "description": "Status of the reservation (e.g., 'pending', 'confirmed', 'cancelled')."
+          },
+          "special_notes": {
+            "type": "string",
+            "description": "Any special notes or requests for the reservation."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "example": {
+          "id": 1,
+          "customer_id": 1,
+          "customer": {
+            "id": 1,
+            "name": "John Doe",
+            "email": "john.doe@example.com",
+            "address": "123 Main St, Anytown"
+          },
+          "table_number": 5,
+          "guest_count": 4,
+          "reserve_date": "2025-06-20T19:00:00Z",
+          "status": "confirmed",
+          "special_notes": "Birthday celebration",
+          "created_at": "2025-06-12T08:13:00Z",
+          "updated_at": "2025-06-12T08:13:14Z"
+        }
+      },
+      "ReservationsResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Reservation"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      "SingleReservationResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Reservation"
+          }
+        }
+      },
+      "CreateReservationRequest": {
+        "type": "object",
+        "required": [
+          "guest_count",
+          "reserve_date"
+        ],
+        "properties": {
+          "guest_count": {
+            "type": "integer",
+            "description": "Number of guests for the reservation."
+          },
+          "reserve_date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date and time of the reservation (ISO 8601 format)."
+          },
+          "special_notes": {
+            "type": "string",
+            "description": "Any special notes or requests for the reservation.",
+            "nullable": true
+          }
+        },
+        "example": {
+          "guest_count": 2,
+          "reserve_date": "2025-07-15T18:30:00Z",
+          "special_notes": "Window seat preferred"
+        }
+      },
+      "UpdateReservationRequest": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Updated status of the reservation (e.g., 'pending', 'confirmed', 'cancelled')."
+          },
+          "guest_count": {
+            "type": "integer",
+            "description": "Updated number of guests for the reservation."
+          },
+          "reserve_date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Updated date and time of the reservation (ISO 8601 format)."
+          },
+          "special_notes": {
+            "type": "string",
+            "description": "Updated special notes or requests for the reservation.",
+            "nullable": true
+          }
+        },
+        "example": {
+          "status": "confirmed",
+          "guest_count": 3
+        }
+      },
+      "InventoryItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Unique identifier for the inventory item."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the inventory item."
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "Current quantity in stock."
+          },
+          "unit": {
+            "type": "string",
+            "description": "Unit of measurement (e.g., 'kg', 'g', 'piece')."
+          },
+          "minimum_stock": {
+            "type": "integer",
+            "description": "Minimum stock level for this item."
+          },
+          "reorder_point": {
+            "type": "integer",
+            "description": "Reorder point for this item (when to reorder)."
+          },
+          "unit_price": {
+            "type": "number",
+            "format": "float",
+            "description": "Price per unit of the inventory item."
+          },
+          "last_restock_date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date of the last restock."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "example": {
+          "id": 1,
+          "name": "Flour",
+          "quantity": 50,
+          "unit": "kg",
+          "minimum_stock": 20,
+          "reorder_point": 30,
+          "unit_price": 15000,
+          "last_restock_date": "2025-06-01T10:00:00Z",
+          "created_at": "2025-05-15T09:00:00Z",
+          "updated_at": "2025-06-01T10:00:00Z"
+        }
+      },
+      "InventoriesResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InventoryItem"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      "SingleInventoryResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/InventoryItem"
+          }
+        }
+      },
+      "CreateInventoryRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "quantity",
+          "unit",
+          "minimum_stock",
+          "reorder_point",
+          "unit_price"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the inventory item."
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "Initial quantity in stock."
+          },
+          "unit": {
+            "type": "string",
+            "description": "Unit of measurement."
+          },
+          "minimum_stock": {
+            "type": "integer",
+            "description": "Minimum stock level for this item."
+          },
+          "reorder_point": {
+            "type": "integer",
+            "description": "Reorder point for this item."
+          },
+          "unit_price": {
+            "type": "integer",
+            "description": "Price per unit of the inventory item."
+          }
+        },
+        "example": {
+          "name": "Sugar",
+          "quantity": 100,
+          "unit": "kg",
+          "minimum_stock": 50,
+          "reorder_point": 60,
+          "unit_price": 10000
+        }
+      },
+      "UpdateInventoryRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Updated name of the inventory item."
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "Updated quantity in stock."
+          },
+          "unit": {
+            "type": "string",
+            "description": "Updated unit of measurement."
+          },
+          "minimum_stock": {
+            "type": "integer",
+            "description": "Updated minimum stock level."
+          },
+          "reorder_point": {
+            "type": "integer",
+            "description": "Updated reorder point."
+          },
+          "unit_price": {
+            "type": "integer",
+            "description": "Updated price per unit."
+          }
+        },
+        "example": {
+          "quantity": 75,
+          "unit_price": 11000
+        }
+      },
+      "Table": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Unique identifier for the table."
+          },
+          "table_number": {
+            "type": "integer",
+            "description": "The unique number assigned to the table."
+          },
+          "capacity": {
+            "type": "integer",
+            "description": "Maximum number of guests the table can accommodate."
+          },
+          "is_available": {
+            "type": "boolean",
+            "description": "Indicates if the table is currently available for reservation/seating."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "example": {
+          "id": 1,
+          "table_number": 1,
+          "capacity": 4,
+          "is_available": true,
+          "created_at": "2025-06-12T12:00:00Z",
+          "updated_at": "2025-06-12T12:15:57Z"
+        }
+      },
+      "TablesResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Table"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      "SingleTableResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Table"
+          }
+        }
+      },
+      "CreateTableRequest": {
+        "type": "object",
+        "required": [
+          "table_number",
+          "capacity"
+        ],
+        "properties": {
+          "table_number": {
+            "type": "integer",
+            "description": "The unique number for the new table."
+          },
+          "capacity": {
+            "type": "integer",
+            "description": "Maximum number of guests the new table can accommodate."
+          }
+        },
+        "example": {
+          "table_number": 7,
+          "capacity": 6
+        }
+      },
+      "UpdateTableRequest": {
+        "type": "object",
+        "properties": {
+          "table_number": {
+            "type": "integer",
+            "description": "Updated unique number for the table."
+          },
+          "capacity": {
+            "type": "integer",
+            "description": "Updated maximum number of guests the table can accommodate."
+          },
+          "is_available": {
+            "type": "boolean",
+            "description": "Updated availability status of the table."
+          }
+        },
+        "example": {
+          "capacity": 5,
+          "is_available": false
+        }
+      },
+      "UpdateTableAvailabilityRequest": {
+        "type": "object",
+        "required": [
+          "is_available"
+        ],
+        "properties": {
+          "is_available": {
+            "type": "boolean",
+            "description": "The new availability status of the table."
+          }
+        },
+        "example": {
+          "is_available": true
+        }
+      },
+      "PaymentNotificationWebhook": {
+        "type": "object",
+        "properties": {
+          "transaction_time": {
+            "type": "string",
+            "description": "Time of the transaction.",
+            "example": "2025-06-12 23:49:00"
+          },
+          "transaction_status": {
+            "type": "string",
+            "description": "Status of the transaction (e.g., 'settlement', 'pending', 'deny', 'expire', 'cancel')."
+          },
+          "transaction_id": {
+            "type": "string",
+            "description": "Unique ID of the transaction from the payment gateway."
+          },
+          "status_message": {
+            "type": "string",
+            "description": "Descriptive message about the transaction status."
+          },
+          "status_code": {
+            "type": "string",
+            "description": "Status code from the payment gateway (e.g., '200', '201', '202')."
+          },
+          "signature_key": {
+            "type": "string",
+            "description": "Signature key for webhook verification."
+          },
+          "payment_type": {
+            "type": "string",
+            "description": "Type of payment used (e.g., 'credit_card', 'gopay')."
+          },
+          "order_id": {
+            "type": "string",
+            "description": "The order ID from your system."
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "oms_channel_type": {
+                "type": "string"
+              }
+            },
+            "description": "Additional metadata from the payment gateway."
+          },
+          "merchant_id": {
+            "type": "string",
+            "description": "Merchant ID associated with the payment."
+          },
+          "masked_card": {
+            "type": "string",
+            "description": "Masked credit card number (if applicable)."
+          },
+          "gross_amount": {
+            "type": "string",
+            "description": "Gross amount of the transaction.",
+            "example": "100000.00"
+          },
+          "fraud_status": {
+            "type": "string",
+            "description": "Fraud status of the transaction (e.g., 'accept', 'deny')."
+          },
+          "expiry_time": {
+            "type": "string",
+            "description": "Expiry time of the payment.",
+            "example": "2025-06-13 23:49:00"
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency of the transaction (e.g., 'IDR')."
+          },
+          "channel_response_message": {
+            "type": "string",
+            "description": "Message from the payment channel."
+          },
+          "channel_response_code": {
+            "type": "string",
+            "description": "Response code from the payment channel."
+          },
+          "card_type": {
+            "type": "string",
+            "description": "Type of card used (if applicable)."
+          },
+          "bank": {
+            "type": "string",
+            "description": "Bank used for the payment (if applicable)."
+          },
+          "approval_code": {
+            "type": "string",
+            "description": "Approval code for the transaction (if applicable)."
+          }
+        },
+        "example": {
+          "transaction_time": "2025-06-12 23:49:00",
+          "transaction_status": "settlement",
+          "transaction_id": "TRANS-12345",
+          "status_message": "Success, transaction is settled",
+          "status_code": "200",
+          "signature_key": "some_signature_key",
+          "payment_type": "credit_card",
+          "order_id": "ORDER-001",
+          "metadata": {
+            "oms_channel_type": "web"
+          },
+          "merchant_id": "MERCHANT-ABC",
+          "masked_card": "481111-xxxx-xxxx-1111",
+          "gross_amount": "100000.00",
+          "fraud_status": "accept",
+          "expiry_time": "2025-06-13 23:49:00",
+          "currency": "IDR",
+          "channel_response_message": "Approved",
+          "channel_response_code": "00",
+          "card_type": "credit",
+          "bank": "bca",
+          "approval_code": "123456"
+        }
+      },
+      "PaginationMeta": {
+        "type": "object",
+        "properties": {
+          "current_page": {
+            "type": "integer",
+            "description": "The current page number."
+          },
+          "total": {
+            "type": "integer",
+            "description": "The total number of items available."
+          },
+          "per_page": {
+            "type": "integer",
+            "description": "The number of items per page."
+          },
+          "last_page": {
+            "type": "integer",
+            "description": "The last page number."
+          },
+          "has_next_page": {
+            "type": "boolean",
+            "description": "Indicates if there is a next page."
+          },
+          "has_prev_page": {
+            "type": "boolean",
+            "description": "Indicates if there is a previous page."
+          }
+        },
+        "example": {
+          "current_page": 1,
+          "total": 100,
+          "per_page": 10,
+          "last_page": 10,
+          "has_next_page": true,
+          "has_prev_page": false
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ]
 }
