@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"cakestore/internal/database"
 	"cakestore/internal/domain/entity"
 	"cakestore/internal/domain/model"
 	"errors"
@@ -68,13 +69,16 @@ func (m *MockTableRepository) Count() (int64, error) {
 func TestTableUseCase_GetByID(t *testing.T) {
 	logger := logrus.New()
 	mockTableRepo := new(MockTableRepository)
-	useCase := NewTableUseCase(mockTableRepo, logger)
+	mockCache := new(database.MockRedisCacheService)
+	useCase := NewTableUseCase(mockTableRepo, logger, mockCache)
 
 	t.Run("success", func(t *testing.T) {
 		expectedTable := &entity.Table{
 			ID: 1,
 		}
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockTableRepo.On("GetByID", uint(1)).Return(expectedTable, nil).Once()
+		mockCache.On("Set", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		table, err := useCase.GetByID(1)
 
@@ -85,6 +89,7 @@ func TestTableUseCase_GetByID(t *testing.T) {
 	})
 
 	t.Run("not found", func(t *testing.T) {
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockTableRepo.On("GetByID", uint(1)).Return(nil, errors.New("not found")).Once()
 
 		table, err := useCase.GetByID(1)
@@ -98,7 +103,8 @@ func TestTableUseCase_GetByID(t *testing.T) {
 func TestTableUseCase_GetAll(t *testing.T) {
 	logger := logrus.New()
 	mockTableRepo := new(MockTableRepository)
-	useCase := NewTableUseCase(mockTableRepo, logger)
+	mockCache := new(database.MockRedisCacheService)
+	useCase := NewTableUseCase(mockTableRepo, logger, mockCache)
 
 	t.Run("success", func(t *testing.T) {
 		expectedResponse := []entity.Table{
@@ -107,7 +113,9 @@ func TestTableUseCase_GetAll(t *testing.T) {
 			},
 		}
 		params := &model.TableQueryParams{}
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockTableRepo.On("GetAll").Return(expectedResponse, nil).Once()
+		mockCache.On("Set", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		tables, err := useCase.GetAll(params)
 
@@ -119,6 +127,7 @@ func TestTableUseCase_GetAll(t *testing.T) {
 
 	t.Run("error", func(t *testing.T) {
 		params := &model.TableQueryParams{}
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockTableRepo.On("GetAll").Return(nil, errors.New("error")).Once()
 
 		tables, err := useCase.GetAll(params)
@@ -132,7 +141,8 @@ func TestTableUseCase_GetAll(t *testing.T) {
 func TestTableUseCase_GetAvailableTables(t *testing.T) {
 	logger := logrus.New()
 	mockTableRepo := new(MockTableRepository)
-	useCase := NewTableUseCase(mockTableRepo, logger)
+	mockCache := new(database.MockRedisCacheService)
+	useCase := NewTableUseCase(mockTableRepo, logger, mockCache)
 
 	t.Run("success", func(t *testing.T) {
 		expectedResponse := []entity.Table{
@@ -142,7 +152,9 @@ func TestTableUseCase_GetAvailableTables(t *testing.T) {
 		}
 		reserveTime := time.Now()
 		duration := time.Hour
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockTableRepo.On("GetAvailableTables", reserveTime, duration).Return(expectedResponse, nil).Once()
+		mockCache.On("Set", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		tables, err := useCase.GetAvailableTables(reserveTime, duration)
 
@@ -155,6 +167,7 @@ func TestTableUseCase_GetAvailableTables(t *testing.T) {
 	t.Run("error", func(t *testing.T) {
 		reserveTime := time.Now()
 		duration := time.Hour
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockTableRepo.On("GetAvailableTables", reserveTime, duration).Return(nil, errors.New("error")).Once()
 
 		tables, err := useCase.GetAvailableTables(reserveTime, duration)

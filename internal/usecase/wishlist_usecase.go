@@ -2,9 +2,12 @@ package usecase
 
 import (
 	"cakestore/internal/constants"
+	"cakestore/internal/database"
 	"cakestore/internal/domain/entity"
 	"cakestore/internal/domain/model"
 	"cakestore/internal/repository"
+	"context"
+	"fmt"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -22,18 +25,21 @@ type wishListUseCase struct {
 	menuRepo     repository.MenuRepository
 	logger       *logrus.Logger
 	validate     *validator.Validate
+	cache        database.RedisCache
 }
 
 func NewWishListUseCase(
 	wishListRepo repository.WishListRepository,
 	menuRepo repository.MenuRepository,
 	logger *logrus.Logger,
+	cache database.RedisCache,
 ) WishListUseCase {
 	return &wishListUseCase{
 		wishListRepo: wishListRepo,
 		menuRepo:     menuRepo,
 		logger:       logger,
 		validate:     validator.New(),
+		cache:        cache,
 	}
 }
 
@@ -48,7 +54,17 @@ func (uc *wishListUseCase) CreateWishList(customerID, menuID int64) error {
 		return constants.ErrMenuAlreadyInWishlist
 	}
 
-	return uc.wishListRepo.Create(wishlist)
+	if err := uc.wishListRepo.Create(wishlist); err != nil {
+		return err
+	}
+
+	// Invalidate cache
+	cacheKey := fmt.Sprintf("wishlist:%d", customerID)
+	if err := uc.cache.Delete(context.Background(), cacheKey); err != nil {
+		uc.logger.Errorf("Error deleting cache for wishlist of customer ID %d: %v", customerID, err)
+	}
+
+	return nil
 }
 
 func (uc *wishListUseCase) GetWishList(customerID int64, params *model.PaginationQuery) ([]model.MenuModel, *model.PaginatedMeta, error) {
@@ -57,6 +73,18 @@ func (uc *wishListUseCase) GetWishList(customerID int64, params *model.Paginatio
 		uc.logger.Infof("GetWishList took %v", time.Since(start))
 	}()
 
+	// Try to get the wishlist from the cache first
+	cacheKey := fmt.Sprintf("wishlist:%d:page:%d:limit:%d", customerID, params.Page, params.Limit)
+	var cachedData struct {
+		Data []model.MenuModel
+		Meta *model.PaginatedMeta
+	}
+	if err := uc.cache.Get(context.Background(), cacheKey, &cachedData); err == nil {
+		uc.logger.Info("Wishlist fetched from cache")
+		return cachedData.Data, cachedData.Meta, nil
+	}
+
+	// If not in cache, get from the database
 	menus, meta, err := uc.wishListRepo.GetByCustomerID(customerID, params)
 	if err != nil {
 		return nil, nil, err
@@ -75,9 +103,27 @@ func (uc *wishListUseCase) GetWishList(customerID int64, params *model.Paginatio
 		})
 	}
 
+	// Store the wishlist in the cache for future requests
+	if err := uc.cache.Set(context.Background(), cacheKey, struct {
+		Data []model.MenuModel
+		Meta *model.PaginatedMeta
+	}{Data: menuResponses, Meta: meta}, 5*time.Minute); err != nil {
+		uc.logger.Errorf("Error setting cache for wishlist of customer ID %d: %v", customerID, err)
+	}
+
 	return menuResponses, meta, nil
 }
 
 func (uc *wishListUseCase) DeleteWishList(customerID, menuID int64) error {
-	return uc.wishListRepo.Delete(customerID, menuID)
+	if err := uc.wishListRepo.Delete(customerID, menuID); err != nil {
+		return err
+	}
+
+	// Invalidate cache
+	cacheKey := fmt.Sprintf("wishlist:%d", customerID)
+	if err := uc.cache.Delete(context.Background(), cacheKey); err != nil {
+		uc.logger.Errorf("Error deleting cache for wishlist of customer ID %d: %v", customerID, err)
+	}
+
+	return nil
 }

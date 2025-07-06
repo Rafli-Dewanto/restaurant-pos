@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"cakestore/internal/database"
 	"cakestore/internal/domain/entity"
 	"errors"
 	"testing"
@@ -40,7 +41,8 @@ func (m *MockPaymentRepository) GetPendingPayment() (int64, error) {
 func TestPaymentUseCase_GetPaymentByOrderID(t *testing.T) {
 	logger := logrus.New()
 	mockPaymentRepo := new(MockPaymentRepository)
-	useCase := NewPaymentUseCase("http://test.com", mockPaymentRepo, logger, "test")
+	mockCache := new(database.MockRedisCacheService)
+	useCase := NewPaymentUseCase("http://test.com", mockPaymentRepo, logger, "test", mockCache)
 
 	t.Run("success", func(t *testing.T) {
 		expectedPayment := &entity.Payment{
@@ -48,7 +50,9 @@ func TestPaymentUseCase_GetPaymentByOrderID(t *testing.T) {
 			OrderID: 1,
 		}
 		order := &entity.Order{ID: 1}
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockPaymentRepo.On("GetPaymentByOrderID", order.ID).Return(expectedPayment, nil).Once()
+		mockCache.On("Set", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		payment, err := useCase.GetPaymentByOrderID(order)
 
@@ -60,6 +64,7 @@ func TestPaymentUseCase_GetPaymentByOrderID(t *testing.T) {
 
 	t.Run("not found", func(t *testing.T) {
 		order := &entity.Order{ID: 1}
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockPaymentRepo.On("GetPaymentByOrderID", order.ID).Return(nil, errors.New("not found")).Once()
 
 		payment, err := useCase.GetPaymentByOrderID(order)

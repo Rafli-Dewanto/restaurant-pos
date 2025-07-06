@@ -2,8 +2,11 @@ package usecase
 
 import (
 	"cakestore/internal/constants"
+	"cakestore/internal/database"
 	"cakestore/internal/domain/model"
 	"cakestore/internal/repository"
+	"context"
+	"fmt"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -24,18 +27,21 @@ type cartUseCase struct {
 	menuRepo repository.MenuRepository
 	logger   *logrus.Logger
 	validate *validator.Validate
+	cache    database.RedisCache
 }
 
 func NewCartUseCase(
 	cartRepo repository.CartRepository,
 	menuRepo repository.MenuRepository,
 	logger *logrus.Logger,
+	cache database.RedisCache,
 ) CartUseCase {
 	return &cartUseCase{
 		cartRepo: cartRepo,
 		menuRepo: menuRepo,
 		logger:   logger,
 		validate: validator.New(),
+		cache:    cache,
 	}
 }
 
@@ -93,12 +99,28 @@ func (uc *cartUseCase) GetCartByID(id int64) (*model.CartModel, error) {
 		uc.logger.Infof("GetCartByID took %v", time.Since(start))
 	}()
 
-	cart, err := uc.cartRepo.GetByID(id)
+	// Try to get the cart from the cache first
+	cacheKey := fmt.Sprintf("cart:%d", id)
+	var cart model.CartModel
+	if err := uc.cache.Get(context.Background(), cacheKey, &cart); err == nil {
+		uc.logger.Info("Cart fetched from cache")
+		return &cart, nil
+	}
+
+	// If not in cache, get from the database
+	cartEntity, err := uc.cartRepo.GetByID(id)
 	if err != nil {
 		uc.logger.Errorf("Error fetching cart by ID %d: %v", id, err)
 		return nil, err
 	}
-	return model.ToCartModel(cart), nil
+
+	// Store the cart in the cache for future requests
+	cartModel := model.ToCartModel(cartEntity)
+	if err := uc.cache.Set(context.Background(), cacheKey, cartModel, 5*time.Minute); err != nil {
+		uc.logger.Errorf("Error setting cache for cart ID %d: %v", id, err)
+	}
+
+	return cartModel, nil
 }
 
 func (uc *cartUseCase) GetCartByCustomerID(customerID int64, params *model.PaginationQuery) ([]model.UserCartResponse, *model.PaginatedMeta, error) {
@@ -107,13 +129,34 @@ func (uc *cartUseCase) GetCartByCustomerID(customerID int64, params *model.Pagin
 		uc.logger.Infof("GetCartByCustomerID took %v", time.Since(start))
 	}()
 
+	// Try to get the cart from the cache first
+	cacheKey := fmt.Sprintf("cart:customer:%d:page:%d:limit:%d", customerID, params.Page, params.Limit)
+	var cachedData struct {
+		Data []model.UserCartResponse
+		Meta *model.PaginatedMeta
+	}
+	if err := uc.cache.Get(context.Background(), cacheKey, &cachedData); err == nil {
+		uc.logger.Info("Cart by customer ID fetched from cache")
+		return cachedData.Data, cachedData.Meta, nil
+	}
+
+	// If not in cache, get from the database
 	data, err := uc.cartRepo.GetByCustomerID(customerID, params)
 	if err != nil {
 		uc.logger.Errorf("Error fetching carts for customer ID %d: %v", customerID, err)
 		return nil, nil, err
 	}
 
-	return data.Data, model.ToPaginatedMeta(data), nil
+	// Store the cart in the cache for future requests
+	meta := model.ToPaginatedMeta(data)
+	if err := uc.cache.Set(context.Background(), cacheKey, struct {
+		Data []model.UserCartResponse
+		Meta *model.PaginatedMeta
+	}{Data: data.Data, Meta: meta}, 5*time.Minute); err != nil {
+		uc.logger.Errorf("Error setting cache for customer ID %d: %v", customerID, err)
+	}
+
+	return data.Data, meta, nil
 }
 
 func (uc *cartUseCase) RemoveCart(customerID int64, cartID int64) error {
@@ -134,6 +177,16 @@ func (uc *cartUseCase) RemoveCart(customerID int64, cartID int64) error {
 		return err
 	}
 
+	// Invalidate cache
+	cacheKey := fmt.Sprintf("cart:%d", cartID)
+	if err := uc.cache.Delete(context.Background(), cacheKey); err != nil {
+		uc.logger.Errorf("Error deleting cache for cart ID %d: %v", cartID, err)
+	}
+	customerCacheKey := fmt.Sprintf("cart:customer:%d:*", customerID)
+	if err := uc.cache.Delete(context.Background(), customerCacheKey); err != nil {
+		uc.logger.Errorf("Error deleting cache for customer ID %d: %v", customerID, err)
+	}
+
 	uc.logger.Infof("Successfully removed cart item %d for customer %d", cartID, customerID)
 	return nil
 }
@@ -145,6 +198,12 @@ func (uc *cartUseCase) ClearCart(customerID int64) error {
 		return err
 	}
 
+	// Invalidate cache
+	customerCacheKey := fmt.Sprintf("cart:customer:%d:*", customerID)
+	if err := uc.cache.Delete(context.Background(), customerCacheKey); err != nil {
+		uc.logger.Errorf("Error deleting cache for customer ID %d: %v", customerID, err)
+	}
+
 	uc.logger.Infof("Successfully cleared cart for customer %d", customerID)
 	return nil
 }
@@ -153,6 +212,18 @@ func (uc *cartUseCase) BulkDeleteCart(customerID int64, cartIDs []int64) error {
 	if err := uc.cartRepo.BulkDelete(customerID, cartIDs); err != nil {
 		uc.logger.Errorf("Error deleting carts for customer %d: %v", customerID, err)
 		return err
+	}
+
+	// Invalidate cache
+	for _, cartID := range cartIDs {
+		cacheKey := fmt.Sprintf("cart:%d", cartID)
+		if err := uc.cache.Delete(context.Background(), cacheKey); err != nil {
+			uc.logger.Errorf("Error deleting cache for cart ID %d: %v", cartID, err)
+		}
+	}
+	customerCacheKey := fmt.Sprintf("cart:customer:%d:*", customerID)
+	if err := uc.cache.Delete(context.Background(), customerCacheKey); err != nil {
+		uc.logger.Errorf("Error deleting cache for customer ID %d: %v", customerID, err)
 	}
 
 	uc.logger.Infof("Successfully deleted carts for customer %d", customerID)

@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"cakestore/internal/database"
 	"cakestore/internal/domain/entity"
 	"cakestore/internal/domain/model"
 	"errors"
@@ -76,7 +77,8 @@ func (m *MockCustomerRepository) Delete(id int64) error {
 func TestCustomerUseCase_GetCustomerByID(t *testing.T) {
 	logger := logrus.New()
 	mockCustomerRepo := new(MockCustomerRepository)
-	useCase := NewCustomerUseCase(mockCustomerRepo, logger, "secret")
+	mockCache := new(database.MockRedisCacheService)
+	useCase := NewCustomerUseCase(mockCustomerRepo, logger, "secret", mockCache)
 
 	t.Run("success", func(t *testing.T) {
 		expectedCustomer := &entity.Customer{
@@ -88,7 +90,9 @@ func TestCustomerUseCase_GetCustomerByID(t *testing.T) {
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		}
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockCustomerRepo.On("GetByID", int64(1)).Return(expectedCustomer, nil).Once()
+		mockCache.On("Set", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		customer, err := useCase.GetCustomerByID(1)
 
@@ -99,6 +103,7 @@ func TestCustomerUseCase_GetCustomerByID(t *testing.T) {
 	})
 
 	t.Run("not found", func(t *testing.T) {
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockCustomerRepo.On("GetByID", int64(1)).Return(nil, errors.New("not found")).Once()
 
 		customer, err := useCase.GetCustomerByID(1)
@@ -112,7 +117,8 @@ func TestCustomerUseCase_GetCustomerByID(t *testing.T) {
 func TestCustomerUseCase_GetEmployees(t *testing.T) {
 	logger := logrus.New()
 	mockCustomerRepo := new(MockCustomerRepository)
-	useCase := NewCustomerUseCase(mockCustomerRepo, logger, "secret")
+	mockCache := new(database.MockRedisCacheService)
+	useCase := NewCustomerUseCase(mockCustomerRepo, logger, "secret", mockCache)
 
 	t.Run("success", func(t *testing.T) {
 		expectedEmployees := []entity.Customer{
@@ -126,7 +132,9 @@ func TestCustomerUseCase_GetEmployees(t *testing.T) {
 				UpdatedAt: time.Now(),
 			},
 		}
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockCustomerRepo.On("GetEmployees").Return(expectedEmployees, nil).Once()
+		mockCache.On("Set", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		employees, err := useCase.GetEmployees()
 
@@ -137,6 +145,7 @@ func TestCustomerUseCase_GetEmployees(t *testing.T) {
 	})
 
 	t.Run("error", func(t *testing.T) {
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockCustomerRepo.On("GetEmployees").Return(nil, errors.New("error")).Once()
 
 		employees, err := useCase.GetEmployees()
@@ -150,7 +159,8 @@ func TestCustomerUseCase_GetEmployees(t *testing.T) {
 func TestCustomerUseCase_GetEmployeeByID(t *testing.T) {
 	logger := logrus.New()
 	mockCustomerRepo := new(MockCustomerRepository)
-	useCase := NewCustomerUseCase(mockCustomerRepo, logger, "secret")
+	mockCache := new(database.MockRedisCacheService)
+	useCase := NewCustomerUseCase(mockCustomerRepo, logger, "secret", mockCache)
 
 	t.Run("success", func(t *testing.T) {
 		expectedEmployee := &entity.Customer{
@@ -162,7 +172,9 @@ func TestCustomerUseCase_GetEmployeeByID(t *testing.T) {
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		}
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockCustomerRepo.On("GetEmployeeByID", int64(1)).Return(expectedEmployee, nil).Once()
+		mockCache.On("Set", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		employee, err := useCase.GetEmployeeByID(1)
 
@@ -173,6 +185,7 @@ func TestCustomerUseCase_GetEmployeeByID(t *testing.T) {
 	})
 
 	t.Run("not found", func(t *testing.T) {
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockCustomerRepo.On("GetEmployeeByID", int64(1)).Return(nil, errors.New("not found")).Once()
 
 		employee, err := useCase.GetEmployeeByID(1)

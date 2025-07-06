@@ -1,10 +1,13 @@
 package usecase
 
 import (
+	"cakestore/internal/database"
 	"cakestore/internal/domain/entity"
 	"cakestore/internal/domain/model"
 	"cakestore/internal/repository"
+	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -23,17 +26,20 @@ type reservationUseCase struct {
 	repo            repository.ReservationRepository
 	tableRepository repository.TableRepository
 	logger          *logrus.Logger
+	cache           database.RedisCache
 }
 
 func NewReservationUseCase(
 	repo repository.ReservationRepository,
 	logger *logrus.Logger,
 	tableRepository repository.TableRepository,
+	cache database.RedisCache,
 ) ReservationUseCase {
 	return &reservationUseCase{
 		repo:            repo,
 		logger:          logger,
 		tableRepository: tableRepository,
+		cache:           cache,
 	}
 }
 
@@ -43,6 +49,15 @@ func (u *reservationUseCase) AdminGetAllCustomerReservations(params *model.Pagin
 		u.logger.Infof("AdminGetAllCustomerReservations took %v", time.Since(start))
 	}()
 
+	// Try to get the reservations from the cache first
+	cacheKey := fmt.Sprintf("reservations:admin:all:page:%d:limit:%d", params.Page, params.Limit)
+	var cachedData model.PaginationResponse[[]model.ReservationResponse]
+	if err := u.cache.Get(context.Background(), cacheKey, &cachedData); err == nil {
+		u.logger.Info("Admin reservations fetched from cache")
+		return &cachedData, nil
+	}
+
+	// If not in cache, get from the database
 	result, err := u.repo.AdminGetAllCustomerReservations(params)
 	if err != nil {
 		return nil, err
@@ -64,13 +79,20 @@ func (u *reservationUseCase) AdminGetAllCustomerReservations(params *model.Pagin
 		}
 	}
 
-	return &model.PaginationResponse[[]model.ReservationResponse]{
+	paginatedResponse := &model.PaginationResponse[[]model.ReservationResponse]{
 		Data:       responses,
 		Total:      result.Total,
 		Page:       result.Page,
 		PageSize:   result.PageSize,
 		TotalPages: result.TotalPages,
-	}, nil
+	}
+
+	// Store the reservations in the cache for future requests
+	if err := u.cache.Set(context.Background(), cacheKey, paginatedResponse, 5*time.Minute); err != nil {
+		u.logger.Errorf("Error setting cache for admin reservations: %v", err)
+	}
+
+	return paginatedResponse, nil
 }
 
 func (u *reservationUseCase) Create(customerID uint, request *model.CreateReservationRequest) (*model.ReservationResponse, error) {
@@ -146,23 +168,38 @@ func (u *reservationUseCase) GetByID(id uint) (*model.ReservationResponse, error
 		u.logger.Infof("GetByID took %v", time.Since(start))
 	}()
 
-	reservation, err := u.repo.GetByID(id)
+	// Try to get the reservation from the cache first
+	cacheKey := fmt.Sprintf("reservation:%d", id)
+	var reservation model.ReservationResponse
+	if err := u.cache.Get(context.Background(), cacheKey, &reservation); err == nil {
+		u.logger.Info("Reservation fetched from cache")
+		return &reservation, nil
+	}
+
+	// If not in cache, get from the database
+	reservationEntity, err := u.repo.GetByID(id)
 	if err != nil {
 		return nil, err
 	}
 
-	return &model.ReservationResponse{
-		ID:           reservation.ID,
-		CustomerID:   reservation.CustomerID,
-		Customer:     *model.ToCustomerResponse(&reservation.Customer),
-		TableNumber:  reservation.TableNumber,
-		GuestCount:   reservation.GuestCount,
-		ReserveDate:  reservation.ReserveDate,
-		Status:       string(reservation.Status),
-		SpecialNotes: reservation.SpecialNotes,
-		CreatedAt:    reservation.CreatedAt,
-		UpdatedAt:    reservation.UpdatedAt,
-	}, nil
+	// Store the reservation in the cache for future requests
+	reservationModel := &model.ReservationResponse{
+		ID:           reservationEntity.ID,
+		CustomerID:   reservationEntity.CustomerID,
+		Customer:     *model.ToCustomerResponse(&reservationEntity.Customer),
+		TableNumber:  reservationEntity.TableNumber,
+		GuestCount:   reservationEntity.GuestCount,
+		ReserveDate:  reservationEntity.ReserveDate,
+		Status:       string(reservationEntity.Status),
+		SpecialNotes: reservationEntity.SpecialNotes,
+		CreatedAt:    reservationEntity.CreatedAt,
+		UpdatedAt:    reservationEntity.UpdatedAt,
+	}
+	if err := u.cache.Set(context.Background(), cacheKey, reservationModel, 5*time.Minute); err != nil {
+		u.logger.Errorf("Error setting cache for reservation ID %d: %v", id, err)
+	}
+
+	return reservationModel, nil
 }
 
 func (u *reservationUseCase) GetAll(params *model.ReservationQueryParams) (*model.PaginationResponse[[]model.ReservationResponse], error) {
@@ -171,6 +208,15 @@ func (u *reservationUseCase) GetAll(params *model.ReservationQueryParams) (*mode
 		u.logger.Infof("GetAll took %v", time.Since(start))
 	}()
 
+	// Try to get the reservations from the cache first
+	cacheKey := fmt.Sprintf("reservations:all:page:%d:limit:%d", params.Page, params.Limit)
+	var cachedData model.PaginationResponse[[]model.ReservationResponse]
+	if err := u.cache.Get(context.Background(), cacheKey, &cachedData); err == nil {
+		u.logger.Info("Reservations fetched from cache")
+		return &cachedData, nil
+	}
+
+	// If not in cache, get from the database
 	result, err := u.repo.GetAll(params)
 	if err != nil {
 		return nil, err
@@ -192,13 +238,20 @@ func (u *reservationUseCase) GetAll(params *model.ReservationQueryParams) (*mode
 		}
 	}
 
-	return &model.PaginationResponse[[]model.ReservationResponse]{
+	paginatedResponse := &model.PaginationResponse[[]model.ReservationResponse]{
 		Data:       responses,
 		Total:      result.Total,
 		Page:       result.Page,
 		PageSize:   result.PageSize,
 		TotalPages: result.TotalPages,
-	}, nil
+	}
+
+	// Store the reservations in the cache for future requests
+	if err := u.cache.Set(context.Background(), cacheKey, paginatedResponse, 5*time.Minute); err != nil {
+		u.logger.Errorf("Error setting cache for all reservations: %v", err)
+	}
+
+	return paginatedResponse, nil
 }
 
 func (u *reservationUseCase) Update(id uint, request *model.UpdateReservationRequest) (*model.ReservationResponse, error) {
@@ -248,6 +301,18 @@ func (u *reservationUseCase) Update(id uint, request *model.UpdateReservationReq
 		return nil, err
 	}
 
+	// Invalidate cache
+	cacheKey := fmt.Sprintf("reservation:%d", id)
+	if err := u.cache.Delete(context.Background(), cacheKey); err != nil {
+		u.logger.Errorf("Error deleting cache for reservation ID %d: %v", id, err)
+	}
+	if err := u.cache.Delete(context.Background(), "reservations:all:*"); err != nil {
+		u.logger.Errorf("Error deleting cache for all reservations: %v", err)
+	}
+	if err := u.cache.Delete(context.Background(), "reservations:admin:all:*"); err != nil {
+		u.logger.Errorf("Error deleting cache for admin reservations: %v", err)
+	}
+
 	updated, err := u.repo.GetByID(id)
 	if err != nil {
 		return nil, err
@@ -268,5 +333,21 @@ func (u *reservationUseCase) Update(id uint, request *model.UpdateReservationReq
 }
 
 func (u *reservationUseCase) Delete(id uint) error {
-	return u.repo.Delete(id)
+	if err := u.repo.Delete(id); err != nil {
+		return err
+	}
+
+	// Invalidate cache
+	cacheKey := fmt.Sprintf("reservation:%d", id)
+	if err := u.cache.Delete(context.Background(), cacheKey); err != nil {
+		u.logger.Errorf("Error deleting cache for reservation ID %d: %v", id, err)
+	}
+	if err := u.cache.Delete(context.Background(), "reservations:all:*"); err != nil {
+		u.logger.Errorf("Error deleting cache for all reservations: %v", err)
+	}
+	if err := u.cache.Delete(context.Background(), "reservations:admin:all:*"); err != nil {
+		u.logger.Errorf("Error deleting cache for admin reservations: %v", err)
+	}
+
+	return nil
 }

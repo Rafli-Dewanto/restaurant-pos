@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"cakestore/internal/database"
 	"cakestore/internal/domain/entity"
 	"cakestore/internal/domain/model"
 	"errors"
@@ -88,13 +89,16 @@ func (m *MockOrderRepository) Update(order *entity.Order) error {
 func TestOrderUseCase_GetOrderByID(t *testing.T) {
 	logger := logrus.New()
 	mockOrderRepo := new(MockOrderRepository)
-	useCase := NewOrderUseCase(mockOrderRepo, nil, nil, logger, "test")
+	mockCache := new(database.MockRedisCacheService)
+	useCase := NewOrderUseCase(mockOrderRepo, nil, nil, logger, "test", mockCache)
 
 	t.Run("success", func(t *testing.T) {
 		expectedOrder := &entity.Order{
 			ID: 1,
 		}
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockOrderRepo.On("GetByID", int64(1)).Return(expectedOrder, nil).Once()
+		mockCache.On("Set", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		order, err := useCase.GetOrderByID(1)
 
@@ -105,6 +109,7 @@ func TestOrderUseCase_GetOrderByID(t *testing.T) {
 	})
 
 	t.Run("not found", func(t *testing.T) {
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockOrderRepo.On("GetByID", int64(1)).Return(nil, errors.New("not found")).Once()
 
 		order, err := useCase.GetOrderByID(1)
@@ -118,13 +123,16 @@ func TestOrderUseCase_GetOrderByID(t *testing.T) {
 func TestOrderUseCase_GetPendingOrder(t *testing.T) {
 	logger := logrus.New()
 	mockOrderRepo := new(MockOrderRepository)
-	useCase := NewOrderUseCase(mockOrderRepo, nil, nil, logger, "test")
+	mockCache := new(database.MockRedisCacheService)
+	useCase := NewOrderUseCase(mockOrderRepo, nil, nil, logger, "test", mockCache)
 
 	t.Run("success", func(t *testing.T) {
 		expectedOrder := entity.Order{
 			ID: 1,
 		}
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockOrderRepo.On("GetPendingPaymentByOrderID", int64(1), int64(1)).Return(expectedOrder, nil).Once()
+		mockCache.On("Set", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		order, err := useCase.GetPendingOrder(1, 1)
 
@@ -135,7 +143,8 @@ func TestOrderUseCase_GetPendingOrder(t *testing.T) {
 	})
 
 	t.Run("not found", func(t *testing.T) {
-		mockOrderRepo.On("GetPendingPaymentByOrderID", int64(1), int64(1)).Return(nil, errors.New("not found")).Once()
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
+		mockOrderRepo.On("GetPendingPaymentByOrderID", int64(1), int64(1)).Return(entity.Order{}, errors.New("not found")).Once()
 
 		order, err := useCase.GetPendingOrder(1, 1)
 
@@ -148,7 +157,8 @@ func TestOrderUseCase_GetPendingOrder(t *testing.T) {
 func TestOrderUseCase_GetAllOrders(t *testing.T) {
 	logger := logrus.New()
 	mockOrderRepo := new(MockOrderRepository)
-	useCase := NewOrderUseCase(mockOrderRepo, nil, nil, logger, "test")
+	mockCache := new(database.MockRedisCacheService)
+	useCase := NewOrderUseCase(mockOrderRepo, nil, nil, logger, "test", mockCache)
 
 	t.Run("success", func(t *testing.T) {
 		expectedResponse := []entity.Order{
@@ -160,7 +170,9 @@ func TestOrderUseCase_GetAllOrders(t *testing.T) {
 			Total: 1,
 		}
 		params := &model.PaginationQuery{Page: 1, Limit: 10}
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockOrderRepo.On("GetAll", params).Return(expectedResponse, meta, nil).Once()
+		mockCache.On("Set", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		orders, resultMeta, err := useCase.GetAllOrders(params)
 
@@ -173,6 +185,7 @@ func TestOrderUseCase_GetAllOrders(t *testing.T) {
 
 	t.Run("error", func(t *testing.T) {
 		params := &model.PaginationQuery{Page: 1, Limit: 10}
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockOrderRepo.On("GetAll", params).Return(nil, nil, errors.New("error")).Once()
 
 		orders, resultMeta, err := useCase.GetAllOrders(params)
@@ -187,7 +200,8 @@ func TestOrderUseCase_GetAllOrders(t *testing.T) {
 func TestOrderUseCase_GetCustomerOrders(t *testing.T) {
 	logger := logrus.New()
 	mockOrderRepo := new(MockOrderRepository)
-	useCase := NewOrderUseCase(mockOrderRepo, nil, nil, logger, "test")
+	mockCache := new(database.MockRedisCacheService)
+	useCase := NewOrderUseCase(mockOrderRepo, nil, nil, logger, "test", mockCache)
 
 	t.Run("success", func(t *testing.T) {
 		expectedResponse := []entity.Order{
@@ -195,7 +209,9 @@ func TestOrderUseCase_GetCustomerOrders(t *testing.T) {
 				ID: 1,
 			},
 		}
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockOrderRepo.On("GetByCustomerID", int64(1)).Return(expectedResponse, nil).Once()
+		mockCache.On("Set", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		orders, err := useCase.GetCustomerOrders(1)
 
@@ -206,6 +222,7 @@ func TestOrderUseCase_GetCustomerOrders(t *testing.T) {
 	})
 
 	t.Run("error", func(t *testing.T) {
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockOrderRepo.On("GetByCustomerID", int64(1)).Return(nil, errors.New("error")).Once()
 
 		orders, err := useCase.GetCustomerOrders(1)

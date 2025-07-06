@@ -11,6 +11,7 @@ import (
 	"cakestore/internal/repository"
 	"cakestore/internal/usecase"
 	"cakestore/utils"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http/httptest"
@@ -41,11 +42,13 @@ func (suite *AuthTestSuite) SetupTest() {
 	// Run migrations
 	err := db.AutoMigrate(&entity.Customer{})
 	assert.NoError(suite.T(), err)
+	ctx := context.Background()
+	redis := database.NewRedisCacheService(ctx, "")
 
 	suite.db = db
 	suite.logger = utils.NewLogger()
 	suite.repo = repository.NewCustomerRepository(db, suite.logger)
-	suite.useCase = usecase.NewCustomerUseCase(suite.repo, suite.logger, cfg.JWT_SECRET)
+	suite.useCase = usecase.NewCustomerUseCase(suite.repo, suite.logger, cfg.JWT_SECRET, redis)
 	suite.handler = controller.NewCustomerController(suite.useCase, suite.logger)
 
 	suite.app = fiber.New()

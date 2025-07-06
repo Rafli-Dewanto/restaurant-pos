@@ -13,6 +13,7 @@ type Config struct {
 	MIDTRANS_ENDPOINT    string
 	SERVER_ENV           string
 	SERVER_PORT          string
+	REDIS_ADDR           string
 }
 
 func LoadConfig() *Config {
@@ -31,5 +32,6 @@ func LoadConfig() *Config {
 		MIDTRANS_ENDPOINT:    viper.GetString("MIDTRANS_ENDPOINT"),
 		SERVER_ENV:           viper.GetString("SERVER_ENV"),
 		SERVER_PORT:          viper.GetString("SERVER_PORT"),
+		REDIS_ADDR:           viper.GetString("REDIS_URL"),
 	}
 }

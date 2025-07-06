@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"cakestore/internal/database"
 	"cakestore/internal/domain/entity"
 	"cakestore/internal/domain/model"
 	"errors"
@@ -67,7 +68,8 @@ func (m *MockInventoryRepository) Count() (int64, error) {
 func TestInventoryUseCase_GetByID(t *testing.T) {
 	logger := logrus.New()
 	mockInventoryRepo := new(MockInventoryRepository)
-	useCase := NewInventoryUseCase(mockInventoryRepo, logger)
+	mockCache := new(database.MockRedisCacheService)
+	useCase := NewInventoryUseCase(mockInventoryRepo, logger, mockCache)
 
 	t.Run("success", func(t *testing.T) {
 		expectedInventory := &entity.Inventory{
@@ -77,7 +79,9 @@ func TestInventoryUseCase_GetByID(t *testing.T) {
 			Unit:         "kg",
 			MinimumStock: 5,
 		}
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockInventoryRepo.On("GetByID", uint(1)).Return(expectedInventory, nil).Once()
+		mockCache.On("Set", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		inventory, err := useCase.GetByID(1)
 
@@ -88,6 +92,7 @@ func TestInventoryUseCase_GetByID(t *testing.T) {
 	})
 
 	t.Run("not found", func(t *testing.T) {
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockInventoryRepo.On("GetByID", uint(1)).Return(nil, errors.New("not found")).Once()
 
 		inventory, err := useCase.GetByID(1)
@@ -101,7 +106,8 @@ func TestInventoryUseCase_GetByID(t *testing.T) {
 func TestInventoryUseCase_GetAll(t *testing.T) {
 	logger := logrus.New()
 	mockInventoryRepo := new(MockInventoryRepository)
-	useCase := NewInventoryUseCase(mockInventoryRepo, logger)
+	mockCache := new(database.MockRedisCacheService)
+	useCase := NewInventoryUseCase(mockInventoryRepo, logger, mockCache)
 
 	t.Run("success", func(t *testing.T) {
 		expectedResponse := &model.PaginationResponse[[]entity.Inventory]{
@@ -118,7 +124,9 @@ func TestInventoryUseCase_GetAll(t *testing.T) {
 			Page:  1,
 		}
 		params := &model.InventoryQueryParams{Page: 1, Limit: 10}
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockInventoryRepo.On("GetAll", params).Return(expectedResponse, nil).Once()
+		mockCache.On("Set", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		inventories, err := useCase.GetAll(params)
 
@@ -130,6 +138,7 @@ func TestInventoryUseCase_GetAll(t *testing.T) {
 
 	t.Run("error", func(t *testing.T) {
 		params := &model.InventoryQueryParams{Page: 1, Limit: 10}
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockInventoryRepo.On("GetAll", params).Return(nil, errors.New("error")).Once()
 
 		inventories, err := useCase.GetAll(params)
@@ -143,7 +152,8 @@ func TestInventoryUseCase_GetAll(t *testing.T) {
 func TestInventoryUseCase_GetLowStockIngredients(t *testing.T) {
 	logger := logrus.New()
 	mockInventoryRepo := new(MockInventoryRepository)
-	useCase := NewInventoryUseCase(mockInventoryRepo, logger)
+	mockCache := new(database.MockRedisCacheService)
+	useCase := NewInventoryUseCase(mockInventoryRepo, logger, mockCache)
 
 	t.Run("success", func(t *testing.T) {
 		expectedIngredients := []entity.Inventory{
@@ -155,7 +165,9 @@ func TestInventoryUseCase_GetLowStockIngredients(t *testing.T) {
 				MinimumStock: 5,
 			},
 		}
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockInventoryRepo.On("GetLowStockIngredients").Return(expectedIngredients, nil).Once()
+		mockCache.On("Set", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		ingredients, err := useCase.GetLowStockIngredients()
 
@@ -166,6 +178,7 @@ func TestInventoryUseCase_GetLowStockIngredients(t *testing.T) {
 	})
 
 	t.Run("error", func(t *testing.T) {
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockInventoryRepo.On("GetLowStockIngredients").Return(nil, errors.New("error")).Once()
 
 		ingredients, err := useCase.GetLowStockIngredients()

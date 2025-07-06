@@ -2,6 +2,7 @@
 package bootstrap
 
 import (
+	"context"
 	configs "cakestore/internal/config"
 	"cakestore/internal/database"
 	controller "cakestore/internal/delivery/http"
@@ -25,6 +26,7 @@ type Application struct {
 	Config *configs.Config
 	DB     *gorm.DB
 	Logger *logrus.Logger
+	Cache  *database.RedisCacheService
 }
 
 type Dependencies struct {
@@ -60,12 +62,16 @@ type Dependencies struct {
 	ReservationController *controller.ReservationController
 	InventoryController   *controller.InventoryController
 	TableController       *controller.TableController
+
+	// Cache
+	Cache *database.RedisCacheService
 }
 
 func NewApplication() *Application {
 	logger := utils.NewLogger()
 	cfg := configs.LoadConfig()
 	db := database.ConnectPostgres(cfg)
+	cache := database.NewRedisCacheService(context.Background(), cfg.REDIS_ADDR)
 
 	// Run migrations
 	if err := database.RunMigrations(db); err != nil {
@@ -79,6 +85,7 @@ func NewApplication() *Application {
 		Config: cfg,
 		DB:     db,
 		Logger: logger,
+		Cache:  cache,
 	}
 }
 
@@ -101,15 +108,15 @@ func (a *Application) initializeRepositories() Dependencies {
 
 func (a *Application) initializeUseCases(deps *Dependencies) {
 	// Initialize use cases
-	deps.MenuUseCase = usecase.NewMenuUseCase(deps.MenuRepository, a.Logger)
-	deps.CustomerUseCase = usecase.NewCustomerUseCase(deps.CustomerRepository, a.Logger, a.Config.JWT_SECRET)
-	deps.CartUseCase = usecase.NewCartUseCase(deps.CartRepository, deps.MenuRepository, a.Logger)
-	deps.OrderUseCase = usecase.NewOrderUseCase(deps.OrderRepository, deps.MenuRepository, deps.CustomerRepository, a.Logger, a.Config.SERVER_ENV)
-	deps.PaymentUseCase = usecase.NewPaymentUseCase(a.Config.MIDTRANS_ENDPOINT, deps.PaymentRepository, a.Logger, a.Config.SERVER_ENV)
-	deps.WishlistUseCase = usecase.NewWishListUseCase(deps.WishlistRepository, deps.MenuRepository, a.Logger)
-	deps.ReservationUseCase = usecase.NewReservationUseCase(deps.ReservationRepository, a.Logger, deps.TableRepository)
-	deps.InventoryUseCase = usecase.NewInventoryUseCase(deps.InventoryRepository, a.Logger)
-	deps.TableUseCase = usecase.NewTableUseCase(deps.TableRepository, a.Logger)
+	deps.MenuUseCase = usecase.NewMenuUseCase(deps.MenuRepository, a.Logger, a.Cache)
+	deps.CustomerUseCase = usecase.NewCustomerUseCase(deps.CustomerRepository, a.Logger, a.Config.JWT_SECRET, a.Cache)
+	deps.CartUseCase = usecase.NewCartUseCase(deps.CartRepository, deps.MenuRepository, a.Logger, a.Cache)
+	deps.OrderUseCase = usecase.NewOrderUseCase(deps.OrderRepository, deps.MenuRepository, deps.CustomerRepository, a.Logger, a.Config.SERVER_ENV, a.Cache)
+	deps.PaymentUseCase = usecase.NewPaymentUseCase(a.Config.MIDTRANS_ENDPOINT, deps.PaymentRepository, a.Logger, a.Config.SERVER_ENV, a.Cache)
+	deps.WishlistUseCase = usecase.NewWishListUseCase(deps.WishlistRepository, deps.MenuRepository, a.Logger, a.Cache)
+	deps.ReservationUseCase = usecase.NewReservationUseCase(deps.ReservationRepository, a.Logger, deps.TableRepository, a.Cache)
+	deps.InventoryUseCase = usecase.NewInventoryUseCase(deps.InventoryRepository, a.Logger, a.Cache)
+	deps.TableUseCase = usecase.NewTableUseCase(deps.TableRepository, a.Logger, a.Cache)
 }
 
 func (a *Application) initializeControllers(deps *Dependencies) {

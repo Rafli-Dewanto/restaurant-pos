@@ -1,10 +1,13 @@
 package usecase
 
 import (
+	"cakestore/internal/database"
 	"cakestore/internal/domain/entity"
 	"cakestore/internal/domain/model"
 	"cakestore/internal/repository"
+	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -23,12 +26,14 @@ type InventoryUseCase interface {
 type inventoryUseCase struct {
 	repo   repository.InventoryRepository
 	logger *logrus.Logger
+	cache  database.RedisCache
 }
 
-func NewInventoryUseCase(repo repository.InventoryRepository, logger *logrus.Logger) InventoryUseCase {
+func NewInventoryUseCase(repo repository.InventoryRepository, logger *logrus.Logger, cache database.RedisCache) InventoryUseCase {
 	return &inventoryUseCase{
 		repo:   repo,
 		logger: logger,
+		cache:  cache,
 	}
 }
 
@@ -67,23 +72,38 @@ func (u *inventoryUseCase) GetByID(id uint) (*model.InventoryResponse, error) {
 		u.logger.Infof("GetByID took %v", time.Since(start))
 	}()
 
-	ingredient, err := u.repo.GetByID(id)
+	// Try to get the ingredient from the cache first
+	cacheKey := fmt.Sprintf("inventory:%d", id)
+	var ingredient model.InventoryResponse
+	if err := u.cache.Get(context.Background(), cacheKey, &ingredient); err == nil {
+		u.logger.Info("Ingredient fetched from cache")
+		return &ingredient, nil
+	}
+
+	// If not in cache, get from the database
+	ingredientEntity, err := u.repo.GetByID(id)
 	if err != nil {
 		return nil, err
 	}
 
-	return &model.InventoryResponse{
-		ID:              ingredient.ID,
-		Name:            ingredient.Name,
-		Quantity:        ingredient.Quantity,
-		Unit:            ingredient.Unit,
-		MinimumStock:    ingredient.MinimumStock,
-		ReorderPoint:    ingredient.ReorderPoint,
-		UnitPrice:       ingredient.UnitPrice,
-		LastRestockDate: ingredient.LastRestockDate,
-		CreatedAt:       ingredient.CreatedAt,
-		UpdatedAt:       ingredient.UpdatedAt,
-	}, nil
+	// Store the ingredient in the cache for future requests
+	ingredientModel := &model.InventoryResponse{
+		ID:              ingredientEntity.ID,
+		Name:            ingredientEntity.Name,
+		Quantity:        ingredientEntity.Quantity,
+		Unit:            ingredientEntity.Unit,
+		MinimumStock:    ingredientEntity.MinimumStock,
+		ReorderPoint:    ingredientEntity.ReorderPoint,
+		UnitPrice:       ingredientEntity.UnitPrice,
+		LastRestockDate: ingredientEntity.LastRestockDate,
+		CreatedAt:       ingredientEntity.CreatedAt,
+		UpdatedAt:       ingredientEntity.UpdatedAt,
+	}
+	if err := u.cache.Set(context.Background(), cacheKey, ingredientModel, 5*time.Minute); err != nil {
+		u.logger.Errorf("Error setting cache for ingredient ID %d: %v", id, err)
+	}
+
+	return ingredientModel, nil
 }
 
 func (u *inventoryUseCase) GetAll(params *model.InventoryQueryParams) (*model.PaginationResponse[[]model.InventoryResponse], error) {
@@ -92,6 +112,15 @@ func (u *inventoryUseCase) GetAll(params *model.InventoryQueryParams) (*model.Pa
 		u.logger.Infof("GetAll took %v", time.Since(start))
 	}()
 
+	// Try to get the ingredients from the cache first
+	cacheKey := fmt.Sprintf("inventory:all:page:%d:limit:%d", params.Page, params.Limit)
+	var cachedData model.PaginationResponse[[]model.InventoryResponse]
+	if err := u.cache.Get(context.Background(), cacheKey, &cachedData); err == nil {
+		u.logger.Info("Ingredients fetched from cache")
+		return &cachedData, nil
+	}
+
+	// If not in cache, get from the database
 	result, err := u.repo.GetAll(params)
 	if err != nil {
 		return nil, err
@@ -113,12 +142,19 @@ func (u *inventoryUseCase) GetAll(params *model.InventoryQueryParams) (*model.Pa
 		}
 	}
 
-	return &model.PaginationResponse[[]model.InventoryResponse]{
+	paginatedResponse := &model.PaginationResponse[[]model.InventoryResponse]{
 		Data:       responses,
 		Total:      result.Total,
 		Page:       result.Page,
 		TotalPages: result.TotalPages,
-	}, nil
+	}
+
+	// Store the ingredients in the cache for future requests
+	if err := u.cache.Set(context.Background(), cacheKey, paginatedResponse, 5*time.Minute); err != nil {
+		u.logger.Errorf("Error setting cache for all ingredients: %v", err)
+	}
+
+	return paginatedResponse, nil
 }
 
 func (u *inventoryUseCase) Update(id uint, request *model.UpdateInventoryRequest) (*model.InventoryResponse, error) {
@@ -150,6 +186,18 @@ func (u *inventoryUseCase) Update(id uint, request *model.UpdateInventoryRequest
 		return nil, err
 	}
 
+	// Invalidate cache
+	cacheKey := fmt.Sprintf("inventory:%d", id)
+	if err := u.cache.Delete(context.Background(), cacheKey); err != nil {
+		u.logger.Errorf("Error deleting cache for ingredient ID %d: %v", id, err)
+	}
+	if err := u.cache.Delete(context.Background(), "inventory:all:*"); err != nil {
+		u.logger.Errorf("Error deleting cache for all ingredients: %v", err)
+	}
+	if err := u.cache.Delete(context.Background(), "low_stock_ingredients"); err != nil {
+		u.logger.Errorf("Error deleting cache for low stock ingredients: %v", err)
+	}
+
 	return &model.InventoryResponse{
 		ID:              existing.ID,
 		Name:            existing.Name,
@@ -165,7 +213,23 @@ func (u *inventoryUseCase) Update(id uint, request *model.UpdateInventoryRequest
 }
 
 func (u *inventoryUseCase) Delete(id uint) error {
-	return u.repo.Delete(id)
+	if err := u.repo.Delete(id); err != nil {
+		return err
+	}
+
+	// Invalidate cache
+	cacheKey := fmt.Sprintf("inventory:%d", id)
+	if err := u.cache.Delete(context.Background(), cacheKey); err != nil {
+		u.logger.Errorf("Error deleting cache for ingredient ID %d: %v", id, err)
+	}
+	if err := u.cache.Delete(context.Background(), "inventory:all:*"); err != nil {
+		u.logger.Errorf("Error deleting cache for all ingredients: %v", err)
+	}
+	if err := u.cache.Delete(context.Background(), "low_stock_ingredients"); err != nil {
+		u.logger.Errorf("Error deleting cache for low stock ingredients: %v", err)
+	}
+
+	return nil
 }
 
 func (u *inventoryUseCase) UpdateStock(id uint, quantity float64) error {
@@ -178,7 +242,23 @@ func (u *inventoryUseCase) UpdateStock(id uint, quantity float64) error {
 		return errors.New("insufficient stock")
 	}
 
-	return u.repo.UpdateStock(id, quantity)
+	if err := u.repo.UpdateStock(id, quantity); err != nil {
+		return err
+	}
+
+	// Invalidate cache
+	cacheKey := fmt.Sprintf("inventory:%d", id)
+	if err := u.cache.Delete(context.Background(), cacheKey); err != nil {
+		u.logger.Errorf("Error deleting cache for ingredient ID %d: %v", id, err)
+	}
+	if err := u.cache.Delete(context.Background(), "inventory:all:*"); err != nil {
+		u.logger.Errorf("Error deleting cache for all ingredients: %v", err)
+	}
+	if err := u.cache.Delete(context.Background(), "low_stock_ingredients"); err != nil {
+		u.logger.Errorf("Error deleting cache for low stock ingredients: %v", err)
+	}
+
+	return nil
 }
 
 func (u *inventoryUseCase) GetLowStockIngredients() ([]model.InventoryResponse, error) {
@@ -187,13 +267,22 @@ func (u *inventoryUseCase) GetLowStockIngredients() ([]model.InventoryResponse, 
 		u.logger.Infof("GetLowStockIngredients took %v", time.Since(start))
 	}()
 
-	ingredients, err := u.repo.GetLowStockIngredients()
+	// Try to get the ingredients from the cache first
+	cacheKey := "low_stock_ingredients"
+	var ingredients []model.InventoryResponse
+	if err := u.cache.Get(context.Background(), cacheKey, &ingredients); err == nil {
+		u.logger.Info("Low stock ingredients fetched from cache")
+		return ingredients, nil
+	}
+
+	// If not in cache, get from the database
+	ingredientEntities, err := u.repo.GetLowStockIngredients()
 	if err != nil {
 		return nil, err
 	}
 
-	responses := make([]model.InventoryResponse, len(ingredients))
-	for i, ingredient := range ingredients {
+	responses := make([]model.InventoryResponse, len(ingredientEntities))
+	for i, ingredient := range ingredientEntities {
 		responses[i] = model.InventoryResponse{
 			ID:              ingredient.ID,
 			Name:            ingredient.Name,
@@ -206,6 +295,11 @@ func (u *inventoryUseCase) GetLowStockIngredients() ([]model.InventoryResponse, 
 			CreatedAt:       ingredient.CreatedAt,
 			UpdatedAt:       ingredient.UpdatedAt,
 		}
+	}
+
+	// Store the ingredients in the cache for future requests
+	if err := u.cache.Set(context.Background(), cacheKey, responses, 5*time.Minute); err != nil {
+		u.logger.Errorf("Error setting cache for low stock ingredients: %v", err)
 	}
 
 	return responses, nil

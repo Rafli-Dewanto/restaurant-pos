@@ -10,6 +10,7 @@ import (
 	"cakestore/internal/repository"
 	"cakestore/internal/usecase"
 	"cakestore/utils"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http/httptest"
@@ -43,10 +44,13 @@ func (suite *MenuHandlerTestSuite) SetupTest() {
 	err := db.AutoMigrate(&entity.Menu{})
 	assert.NoError(suite.T(), err)
 
+	ctx := context.Background()
+	redis := database.NewRedisCacheService(ctx, "")
+
 	suite.db = db
 	suite.logger = utils.NewLogger()
 	suite.repo = repository.NewMenuRepository(db, suite.logger)
-	suite.useCase = usecase.NewMenuUseCase(suite.repo, suite.logger)
+	suite.useCase = usecase.NewMenuUseCase(suite.repo, suite.logger, redis)
 	suite.handler = controller.NewMenuController(suite.useCase, suite.logger)
 
 	// Initialize Fiber app

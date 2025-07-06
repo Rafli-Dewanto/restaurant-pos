@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"cakestore/internal/database"
 	"cakestore/internal/domain/entity"
 	"cakestore/internal/domain/model"
 	"errors"
@@ -44,7 +45,8 @@ func (m *MockWishListRepository) Delete(customerID, menuID int64) error {
 func TestWishListUseCase_GetWishList(t *testing.T) {
 	logger := logrus.New()
 	mockWishListRepo := new(MockWishListRepository)
-	useCase := NewWishListUseCase(mockWishListRepo, nil, logger)
+	mockCache := new(database.MockRedisCacheService)
+	useCase := NewWishListUseCase(mockWishListRepo, nil, logger, mockCache)
 
 	t.Run("success", func(t *testing.T) {
 		expectedResponse := []entity.Menu{
@@ -57,7 +59,9 @@ func TestWishListUseCase_GetWishList(t *testing.T) {
 			Total: 1,
 		}
 		params := &model.PaginationQuery{Page: 1, Limit: 10}
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockWishListRepo.On("GetByCustomerID", int64(1), params).Return(expectedResponse, meta, nil).Once()
+		mockCache.On("Set", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		menus, resultMeta, err := useCase.GetWishList(1, params)
 
@@ -70,6 +74,7 @@ func TestWishListUseCase_GetWishList(t *testing.T) {
 
 	t.Run("error", func(t *testing.T) {
 		params := &model.PaginationQuery{Page: 1, Limit: 10}
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockWishListRepo.On("GetByCustomerID", int64(1), params).Return(nil, nil, errors.New("error")).Once()
 
 		menus, resultMeta, err := useCase.GetWishList(1, params)

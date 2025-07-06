@@ -2,10 +2,13 @@ package usecase
 
 import (
 	"cakestore/internal/constants"
+	"cakestore/internal/database"
 	"cakestore/internal/domain/entity"
 	"cakestore/internal/domain/model"
 	"cakestore/internal/repository"
+	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -28,13 +31,15 @@ type customerUseCase struct {
 	repo      repository.CustomerRepository
 	logger    *logrus.Logger
 	jwtSecret string
+	cache     database.RedisCache
 }
 
-func NewCustomerUseCase(repo repository.CustomerRepository, logger *logrus.Logger, jwtSecret string) CustomerUseCase {
+func NewCustomerUseCase(repo repository.CustomerRepository, logger *logrus.Logger, jwtSecret string, cache database.RedisCache) CustomerUseCase {
 	return &customerUseCase{
 		repo:      repo,
 		logger:    logger,
 		jwtSecret: jwtSecret,
+		cache:     cache,
 	}
 }
 
@@ -108,12 +113,27 @@ func (uc *customerUseCase) GetCustomerByID(id int64) (*entity.Customer, error) {
 		uc.logger.Infof("GetCustomerByID took %v", time.Since(start))
 	}()
 
-	customer, err := uc.repo.GetByID(id)
+	// Try to get the customer from the cache first
+	cacheKey := fmt.Sprintf("customer:%d", id)
+	var customer entity.Customer
+	if err := uc.cache.Get(context.Background(), cacheKey, &customer); err == nil {
+		uc.logger.Info("Customer fetched from cache")
+		return &customer, nil
+	}
+
+	// If not in cache, get from the database
+	customerEntity, err := uc.repo.GetByID(id)
 	if err != nil {
 		uc.logger.Errorf("Error getting customer by ID: %v", err)
 		return nil, err
 	}
-	return customer, nil
+
+	// Store the customer in the cache for future requests
+	if err := uc.cache.Set(context.Background(), cacheKey, customerEntity, 5*time.Minute); err != nil {
+		uc.logger.Errorf("Error setting cache for customer ID %d: %v", id, err)
+	}
+
+	return customerEntity, nil
 }
 
 func (uc *customerUseCase) UpdateCustomer(id int64, request *model.UpdateUserRequest) error {
@@ -132,6 +152,12 @@ func (uc *customerUseCase) UpdateCustomer(id int64, request *model.UpdateUserReq
 		return err
 	}
 
+	// Invalidate cache
+	cacheKey := fmt.Sprintf("customer:%d", id)
+	if err := uc.cache.Delete(context.Background(), cacheKey); err != nil {
+		uc.logger.Errorf("Error deleting cache for customer ID %d: %v", id, err)
+	}
+
 	return nil
 }
 
@@ -141,11 +167,26 @@ func (uc *customerUseCase) GetEmployees() ([]entity.Customer, error) {
 		uc.logger.Infof("GetEmployees took %v", time.Since(start))
 	}()
 
+	// Try to get the employees from the cache first
+	cacheKey := "employees"
+	var employees []entity.Customer
+	if err := uc.cache.Get(context.Background(), cacheKey, &employees); err == nil {
+		uc.logger.Info("Employees fetched from cache")
+		return employees, nil
+	}
+
+	// If not in cache, get from the database
 	employees, err := uc.repo.GetEmployees()
 	if err != nil {
 		uc.logger.Errorf("Error getting employees: %v", err)
 		return nil, err
 	}
+
+	// Store the employees in the cache for future requests
+	if err := uc.cache.Set(context.Background(), cacheKey, employees, 5*time.Minute); err != nil {
+		uc.logger.Errorf("Error setting cache for employees: %v", err)
+	}
+
 	return employees, nil
 }
 
@@ -155,7 +196,16 @@ func (uc *customerUseCase) GetEmployeeByID(id int64) (*entity.Customer, error) {
 		uc.logger.Infof("GetEmployeeByID took %v", time.Since(start))
 	}()
 
-	employee, err := uc.repo.GetEmployeeByID(id)
+	// Try to get the employee from the cache first
+	cacheKey := fmt.Sprintf("employee:%d", id)
+	var employee entity.Customer
+	if err := uc.cache.Get(context.Background(), cacheKey, &employee); err == nil {
+		uc.logger.Info("Employee fetched from cache")
+		return &employee, nil
+	}
+
+	// If not in cache, get from the database
+	employeeEntity, err := uc.repo.GetEmployeeByID(id)
 	if err != nil {
 		if errors.Is(err, constants.ErrNotFound) {
 			return nil, err
@@ -163,7 +213,13 @@ func (uc *customerUseCase) GetEmployeeByID(id int64) (*entity.Customer, error) {
 		uc.logger.Errorf("Error getting employee by ID: %v", err)
 		return nil, err
 	}
-	return employee, nil
+
+	// Store the employee in the cache for future requests
+	if err := uc.cache.Set(context.Background(), cacheKey, employeeEntity, 5*time.Minute); err != nil {
+		uc.logger.Errorf("Error setting cache for employee ID %d: %v", id, err)
+	}
+
+	return employeeEntity, nil
 }
 
 func (uc *customerUseCase) UpdateEmployee(id int64, request *model.UpdateUserRequest, role string) error {
@@ -186,6 +242,15 @@ func (uc *customerUseCase) UpdateEmployee(id int64, request *model.UpdateUserReq
 		return err
 	}
 
+	// Invalidate cache
+	cacheKey := fmt.Sprintf("employee:%d", id)
+	if err := uc.cache.Delete(context.Background(), cacheKey); err != nil {
+		uc.logger.Errorf("Error deleting cache for employee ID %d: %v", id, err)
+	}
+	if err := uc.cache.Delete(context.Background(), "employees"); err != nil {
+		uc.logger.Errorf("Error deleting cache for employees: %v", err)
+	}
+
 	return nil
 }
 
@@ -194,5 +259,15 @@ func (uc *customerUseCase) DeleteEmployee(id int64) error {
 		uc.logger.Errorf("Error deleting employee: %v", err)
 		return err
 	}
+
+	// Invalidate cache
+	cacheKey := fmt.Sprintf("employee:%d", id)
+	if err := uc.cache.Delete(context.Background(), cacheKey); err != nil {
+		uc.logger.Errorf("Error deleting cache for employee ID %d: %v", id, err)
+	}
+	if err := uc.cache.Delete(context.Background(), "employees"); err != nil {
+		uc.logger.Errorf("Error deleting cache for employees: %v", err)
+	}
+
 	return nil
 }

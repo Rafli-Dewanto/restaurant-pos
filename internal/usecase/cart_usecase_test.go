@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"cakestore/internal/database"
 	"cakestore/internal/domain/entity"
 	"cakestore/internal/domain/model"
 	"errors"
@@ -73,7 +74,8 @@ func (m *MockCartRepository) Delete(id int64) error {
 func TestCartUseCase_GetCartByID(t *testing.T) {
 	logger := logrus.New()
 	mockCartRepo := new(MockCartRepository)
-	useCase := NewCartUseCase(mockCartRepo, nil, logger)
+	mockCache := new(database.MockRedisCacheService)
+	useCase := NewCartUseCase(mockCartRepo, nil, logger, mockCache)
 
 	t.Run("success", func(t *testing.T) {
 		expectedCart := &entity.Cart{
@@ -86,7 +88,9 @@ func TestCartUseCase_GetCartByID(t *testing.T) {
 			CreatedAt:  time.Now(),
 			UpdatedAt:  time.Now(),
 		}
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockCartRepo.On("GetByID", int64(1)).Return(expectedCart, nil).Once()
+		mockCache.On("Set", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		cart, err := useCase.GetCartByID(1)
 
@@ -97,6 +101,7 @@ func TestCartUseCase_GetCartByID(t *testing.T) {
 	})
 
 	t.Run("not found", func(t *testing.T) {
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockCartRepo.On("GetByID", int64(1)).Return(nil, errors.New("not found")).Once()
 
 		cart, err := useCase.GetCartByID(1)
@@ -110,7 +115,8 @@ func TestCartUseCase_GetCartByID(t *testing.T) {
 func TestCartUseCase_GetCartByCustomerID(t *testing.T) {
 	logger := logrus.New()
 	mockCartRepo := new(MockCartRepository)
-	useCase := NewCartUseCase(mockCartRepo, nil, logger)
+	mockCache := new(database.MockRedisCacheService)
+	useCase := NewCartUseCase(mockCartRepo, nil, logger, mockCache)
 
 	t.Run("success", func(t *testing.T) {
 		expectedResponse := &model.PaginationResponse[[]model.UserCartResponse]{
@@ -127,7 +133,9 @@ func TestCartUseCase_GetCartByCustomerID(t *testing.T) {
 			Page:  1,
 		}
 		params := &model.PaginationQuery{Page: 1, Limit: 10}
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockCartRepo.On("GetByCustomerID", int64(1), params).Return(expectedResponse, nil).Once()
+		mockCache.On("Set", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		carts, meta, err := useCase.GetCartByCustomerID(1, params)
 
@@ -140,6 +148,7 @@ func TestCartUseCase_GetCartByCustomerID(t *testing.T) {
 
 	t.Run("error", func(t *testing.T) {
 		params := &model.PaginationQuery{Page: 1, Limit: 10}
+		mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found"))
 		mockCartRepo.On("GetByCustomerID", int64(1), params).Return(nil, errors.New("error")).Once()
 
 		carts, meta, err := useCase.GetCartByCustomerID(1, params)
