@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/midtrans/midtrans-go"
@@ -47,6 +48,11 @@ func NewPaymentUseCase(
 }
 
 func (uc *paymentUseCase) GetPaymentByOrderID(order *entity.Order) (*entity.Payment, error) {
+	start := time.Now()
+	defer func() {
+		uc.log.Infof("GetPaymentByOrderID took %v", time.Since(start))
+	}()
+
 	payment, err := uc.paymentRepository.GetPaymentByOrderID(order.ID)
 	if err != nil {
 		return nil, err
@@ -124,6 +130,11 @@ func (uc *paymentUseCase) CreatePaymentURL(order *entity.Order) (*model.PaymentR
 }
 
 func (uc *paymentUseCase) GetOrderStatus(orderID string) (string, error) {
+	start := time.Now()
+	defer func() {
+		uc.log.Infof("GetOrderStatus took %v", time.Since(start))
+	}()
+
 	endpoint := fmt.Sprintf("%s/v2/%s/status", uc.endpoint, orderID)
 	headers := utils.GenerateRequestHeader()
 

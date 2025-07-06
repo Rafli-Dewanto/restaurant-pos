@@ -62,6 +62,11 @@ func (u *inventoryUseCase) Create(request *model.CreateInventoryRequest) (*model
 }
 
 func (u *inventoryUseCase) GetByID(id uint) (*model.InventoryResponse, error) {
+	start := time.Now()
+	defer func() {
+		u.logger.Infof("GetByID took %v", time.Since(start))
+	}()
+
 	ingredient, err := u.repo.GetByID(id)
 	if err != nil {
 		return nil, err
@@ -82,6 +87,11 @@ func (u *inventoryUseCase) GetByID(id uint) (*model.InventoryResponse, error) {
 }
 
 func (u *inventoryUseCase) GetAll(params *model.InventoryQueryParams) (*model.PaginationResponse[[]model.InventoryResponse], error) {
+	start := time.Now()
+	defer func() {
+		u.logger.Infof("GetAll took %v", time.Since(start))
+	}()
+
 	result, err := u.repo.GetAll(params)
 	if err != nil {
 		return nil, err
@@ -172,6 +182,11 @@ func (u *inventoryUseCase) UpdateStock(id uint, quantity float64) error {
 }
 
 func (u *inventoryUseCase) GetLowStockIngredients() ([]model.InventoryResponse, error) {
+	start := time.Now()
+	defer func() {
+		u.logger.Infof("GetLowStockIngredients took %v", time.Since(start))
+	}()
+
 	ingredients, err := u.repo.GetLowStockIngredients()
 	if err != nil {
 		return nil, err

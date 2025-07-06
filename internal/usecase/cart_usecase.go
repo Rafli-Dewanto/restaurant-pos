@@ -88,6 +88,11 @@ func (uc *cartUseCase) CreateCart(customerID int64, req *model.AddCart) error {
 }
 
 func (uc *cartUseCase) GetCartByID(id int64) (*model.CartModel, error) {
+	start := time.Now()
+	defer func() {
+		uc.logger.Infof("GetCartByID took %v", time.Since(start))
+	}()
+
 	cart, err := uc.cartRepo.GetByID(id)
 	if err != nil {
 		uc.logger.Errorf("Error fetching cart by ID %d: %v", id, err)
@@ -97,6 +102,11 @@ func (uc *cartUseCase) GetCartByID(id int64) (*model.CartModel, error) {
 }
 
 func (uc *cartUseCase) GetCartByCustomerID(customerID int64, params *model.PaginationQuery) ([]model.UserCartResponse, *model.PaginatedMeta, error) {
+	start := time.Now()
+	defer func() {
+		uc.logger.Infof("GetCartByCustomerID took %v", time.Since(start))
+	}()
+
 	data, err := uc.cartRepo.GetByCustomerID(customerID, params)
 	if err != nil {
 		uc.logger.Errorf("Error fetching carts for customer ID %d: %v", customerID, err)

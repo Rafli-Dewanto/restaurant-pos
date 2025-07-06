@@ -5,6 +5,7 @@ import (
 	"cakestore/internal/domain/model"
 	"cakestore/internal/repository"
 	"errors"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
@@ -37,6 +38,11 @@ func NewReservationUseCase(
 }
 
 func (u *reservationUseCase) AdminGetAllCustomerReservations(params *model.PaginationQuery) (*model.PaginationResponse[[]model.ReservationResponse], error) {
+	start := time.Now()
+	defer func() {
+		u.logger.Infof("AdminGetAllCustomerReservations took %v", time.Since(start))
+	}()
+
 	result, err := u.repo.AdminGetAllCustomerReservations(params)
 	if err != nil {
 		return nil, err
@@ -135,6 +141,11 @@ func (u *reservationUseCase) Create(customerID uint, request *model.CreateReserv
 }
 
 func (u *reservationUseCase) GetByID(id uint) (*model.ReservationResponse, error) {
+	start := time.Now()
+	defer func() {
+		u.logger.Infof("GetByID took %v", time.Since(start))
+	}()
+
 	reservation, err := u.repo.GetByID(id)
 	if err != nil {
 		return nil, err
@@ -155,6 +166,11 @@ func (u *reservationUseCase) GetByID(id uint) (*model.ReservationResponse, error
 }
 
 func (u *reservationUseCase) GetAll(params *model.ReservationQueryParams) (*model.PaginationResponse[[]model.ReservationResponse], error) {
+	start := time.Now()
+	defer func() {
+		u.logger.Infof("GetAll took %v", time.Since(start))
+	}()
+
 	result, err := u.repo.GetAll(params)
 	if err != nil {
 		return nil, err

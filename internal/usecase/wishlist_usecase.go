@@ -5,6 +5,7 @@ import (
 	"cakestore/internal/domain/entity"
 	"cakestore/internal/domain/model"
 	"cakestore/internal/repository"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/sirupsen/logrus"
@@ -50,8 +51,13 @@ func (uc *wishListUseCase) CreateWishList(customerID, menuID int64) error {
 	return uc.wishListRepo.Create(wishlist)
 }
 
-func (u *wishListUseCase) GetWishList(customerID int64, params *model.PaginationQuery) ([]model.MenuModel, *model.PaginatedMeta, error) {
-	menus, meta, err := u.wishListRepo.GetByCustomerID(customerID, params)
+func (uc *wishListUseCase) GetWishList(customerID int64, params *model.PaginationQuery) ([]model.MenuModel, *model.PaginatedMeta, error) {
+	start := time.Now()
+	defer func() {
+		uc.logger.Infof("GetWishList took %v", time.Since(start))
+	}()
+
+	menus, meta, err := uc.wishListRepo.GetByCustomerID(customerID, params)
 	if err != nil {
 		return nil, nil, err
 	}

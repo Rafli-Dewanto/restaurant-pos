@@ -6,6 +6,7 @@ import (
 	"cakestore/internal/domain/model"
 	"cakestore/internal/repository"
 	"errors"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/sirupsen/logrus"
@@ -34,6 +35,11 @@ func NewMenuUseCase(repo repository.MenuRepository, logger *logrus.Logger) MenuU
 }
 
 func (uc *menuUseCase) GetAllMenus(params *model.MenuQueryParams) (*model.PaginationResponse[[]entity.Menu], error) {
+	start := time.Now()
+	defer func() {
+		uc.logger.Infof("GetAllMenus took %v", time.Since(start))
+	}()
+
 	if params == nil {
 		params = &model.MenuQueryParams{}
 	}
@@ -48,6 +54,11 @@ func (uc *menuUseCase) GetAllMenus(params *model.MenuQueryParams) (*model.Pagina
 }
 
 func (uc *menuUseCase) GetMenuByID(id int64) (*entity.Menu, error) {
+	start := time.Now()
+	defer func() {
+		uc.logger.Infof("GetMenuByID took %v", time.Since(start))
+	}()
+
 	menu, err := uc.repo.GetByID(id)
 	if err != nil {
 		if errors.Is(err, constants.ErrNotFound) {

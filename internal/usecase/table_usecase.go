@@ -47,6 +47,11 @@ func (u *tableUseCase) Create(request *model.CreateTableRequest) (*model.TableRe
 }
 
 func (u *tableUseCase) GetByID(id uint) (*model.TableResponse, error) {
+	start := time.Now()
+	defer func() {
+		u.log.Infof("GetByID took %v", time.Since(start))
+	}()
+
 	table, err := u.tableRepo.GetByID(id)
 	if err != nil {
 		return nil, err
@@ -56,6 +61,11 @@ func (u *tableUseCase) GetByID(id uint) (*model.TableResponse, error) {
 }
 
 func (u *tableUseCase) GetAll(params *model.TableQueryParams) (*model.PaginationResponse[[]model.TableResponse], error) {
+	start := time.Now()
+	defer func() {
+		u.log.Infof("GetAll took %v", time.Since(start))
+	}()
+
 	tables, err := u.tableRepo.GetAll()
 	if err != nil {
 		return nil, err
@@ -110,6 +120,11 @@ func (u *tableUseCase) Delete(id uint) error {
 }
 
 func (u *tableUseCase) GetAvailableTables(reserveTime time.Time, duration time.Duration) ([]model.TableResponse, error) {
+	start := time.Now()
+	defer func() {
+		u.log.Infof("GetAvailableTables took %v", time.Since(start))
+	}()
+
 	tables, err := u.tableRepo.GetAvailableTables(reserveTime, duration)
 	if err != nil {
 		return nil, err

@@ -51,6 +51,11 @@ func (uc *orderUseCaseImpl) UpdateFoodStatus(orderID int64, foodStatus entity.Fo
 }
 
 func (uc *orderUseCaseImpl) GetPendingOrder(customerID int64, orderID int64) (*model.OrderResponse, error) {
+	start := time.Now()
+	defer func() {
+		uc.logger.Infof("GetPendingOrder took %v", time.Since(start))
+	}()
+
 	order, err := uc.orderRepo.GetPendingPaymentByOrderID(customerID, orderID)
 	if err != nil {
 		return nil, err
@@ -106,6 +111,11 @@ func (uc *orderUseCaseImpl) CreateOrder(customerID int64, request *model.CreateO
 }
 
 func (uc *orderUseCaseImpl) GetOrderByID(id int64) (*model.OrderResponse, error) {
+	start := time.Now()
+	defer func() {
+		uc.logger.Infof("GetOrderByID took %v", time.Since(start))
+	}()
+
 	order, err := uc.orderRepo.GetByID(id)
 	if err != nil {
 		return nil, err
@@ -115,6 +125,11 @@ func (uc *orderUseCaseImpl) GetOrderByID(id int64) (*model.OrderResponse, error)
 }
 
 func (uc *orderUseCaseImpl) GetCustomerOrders(customerID int64) ([]model.OrderResponse, error) {
+	start := time.Now()
+	defer func() {
+		uc.logger.Infof("GetCustomerOrders took %v", time.Since(start))
+	}()
+
 	orders, err := uc.orderRepo.GetByCustomerID(customerID)
 	if err != nil {
 		return nil, err
@@ -166,6 +181,11 @@ func (uc *orderUseCaseImpl) DeleteOrder(id int64) error {
 }
 
 func (uc *orderUseCaseImpl) GetAllOrders(params *model.PaginationQuery) (*[]model.OrderResponse, *model.PaginatedMeta, error) {
+	start := time.Now()
+	defer func() {
+		uc.logger.Infof("GetAllOrders took %v", time.Since(start))
+	}()
+
 	uc.logger.Trace("GetAllOrders usecase ~ in ", uc.env)
 
 	orders, meta, err := uc.orderRepo.GetAll(params)

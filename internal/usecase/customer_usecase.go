@@ -103,6 +103,11 @@ func (uc *customerUseCase) Login(request *model.LoginRequest) (*string, error) {
 }
 
 func (uc *customerUseCase) GetCustomerByID(id int64) (*entity.Customer, error) {
+	start := time.Now()
+	defer func() {
+		uc.logger.Infof("GetCustomerByID took %v", time.Since(start))
+	}()
+
 	customer, err := uc.repo.GetByID(id)
 	if err != nil {
 		uc.logger.Errorf("Error getting customer by ID: %v", err)
@@ -131,6 +136,11 @@ func (uc *customerUseCase) UpdateCustomer(id int64, request *model.UpdateUserReq
 }
 
 func (uc *customerUseCase) GetEmployees() ([]entity.Customer, error) {
+	start := time.Now()
+	defer func() {
+		uc.logger.Infof("GetEmployees took %v", time.Since(start))
+	}()
+
 	employees, err := uc.repo.GetEmployees()
 	if err != nil {
 		uc.logger.Errorf("Error getting employees: %v", err)
@@ -140,6 +150,11 @@ func (uc *customerUseCase) GetEmployees() ([]entity.Customer, error) {
 }
 
 func (uc *customerUseCase) GetEmployeeByID(id int64) (*entity.Customer, error) {
+	start := time.Now()
+	defer func() {
+		uc.logger.Infof("GetEmployeeByID took %v", time.Since(start))
+	}()
+
 	employee, err := uc.repo.GetEmployeeByID(id)
 	if err != nil {
 		if errors.Is(err, constants.ErrNotFound) {
