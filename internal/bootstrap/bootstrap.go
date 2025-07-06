@@ -16,6 +16,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
+
+	fiberprometheus "github.com/ansrivas/fiberprometheus/v2"
 )
 
 type Application struct {
@@ -142,6 +144,24 @@ func (a *Application) setupHealthCheck() {
 	})
 }
 
+// New function to set up Prometheus metrics
+func (a *Application) setupPrometheus() {
+	// Create a new Prometheus middleware instance
+	// You can customize the service name
+	prometheus := fiberprometheus.New("cakestore_go_app")
+
+	// Register the Prometheus middleware with your Fiber app
+	// This will instrument all incoming HTTP requests
+	a.App.Use(prometheus.Middleware)
+
+	// Expose the /metrics endpoint for Prometheus to scrape
+	// By default, fiberprometheus exposes it at /metrics
+	// You can change this path using prometheus.RegisterAt(a.App, "/your-custom-metrics-path")
+	prometheus.RegisterAt(a.App, "/metrics")
+
+	a.Logger.Info("Prometheus metrics exposed at /metrics")
+}
+
 func (a *Application) setupRoutes(deps *Dependencies) {
 	routeConfig := route.RouteConfig{
 		App:                   a.App,
@@ -171,6 +191,9 @@ func (a *Application) Bootstrap() {
 
 	// Setup health check
 	a.setupHealthCheck()
+
+	// set up prometheus
+	a.setupPrometheus()
 
 	// Setup routes
 	a.setupRoutes(&deps)

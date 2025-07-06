@@ -1,3 +1,4 @@
+# docker-compose.yml
 version: "3.8"
 
 services:
@@ -33,9 +34,27 @@ services:
       - app-network
     restart: always
 
+  prometheus:
+    image: prom/prometheus:latest # Or a specific version like prom/prometheus:v2.53.0
+    container_name: prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus' # Persistent storage for metrics
+    ports:
+      - "9090:9090" # Expose Prometheus UI
+    volumes:
+      - ./prometheus:/etc/prometheus # Mount your prometheus.yml
+      - prometheus_data:/prometheus # Persistent storage for Prometheus data
+    networks:
+      - app-network
+    depends_on:
+      - app # Prometheus depends on your app being up to scrape it
+    restart: always
+
 networks:
   app-network:
     driver: bridge
 
 volumes:
   db_data:
+  prometheus_data: # Define the volume for Prometheus data
