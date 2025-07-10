@@ -15,21 +15,15 @@ services:
     networks:
       - app-network
 
-  dragonfly:
-    image: "docker.dragonflydb.io/dragonflydb/dragonfly"
-    ulimits:
-      memlock: -1
+  redis: # Changed service name from dragonfly to redis
+    image: "redis:latest" # Changed image to Redis
     ports:
       - "6379:6379"
-    # For better performance, consider `host` mode instead `port` to avoid docker NAT.
-    # `host` mode is NOT currently supported in Swarm Mode.
-    # https://docs.docker.com/compose/compose-file/compose-file-v3/#network_mode
-    # network_mode: "host"
     volumes:
-      - dragonflydata:/data
-    networks: # Ensure Dragonfly is on the same network
+      - redisdata:/data # Changed volume name to redisdata
+    networks: # Ensure Redis is on the same network
       - app-network
-    restart: always # Added restart policy for consistency
+    restart: always
 
   app:
     build:
@@ -37,15 +31,15 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - db
-      - dragonfly
+      - redis # Changed dependency from dragonfly to redis
     environment:
       - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=cakestore
-      - DRAGONFLY_HOST=dragonfly
-      - DRAGONFLY_PORT=6379 
+      - REDIS_HOST=redis # Changed environment variable from DRAGONFLY_HOST to REDIS_HOST
+      - REDIS_PORT=6379 # Changed environment variable from DRAGONFLY_PORT to REDIS_PORT
     ports:
       - "8080:8080"
     networks:
@@ -88,6 +82,6 @@ networks:
 
 volumes:
   db_data:
-  dragonflydata:
+  redisdata: # Changed volume name from dragonflydata to redisdata
   prometheus_data:
   grafana_data:

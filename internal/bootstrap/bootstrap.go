@@ -71,7 +71,7 @@ func NewApplication() *Application {
 	logger := utils.NewLogger()
 	cfg := configs.LoadConfig()
 	db := database.ConnectPostgres(cfg)
-	cache := database.NewRedisCacheService(context.Background(), "redis://dragonfly:6379/0")
+	cache := database.NewRedisCacheService(context.Background(), "redis://redis:6379/0")
 
 	if err := database.RunMigrations(db); err != nil {
 		log.Fatalf("❌ Failed to run database migrations: %v", err)
