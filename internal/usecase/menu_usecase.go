@@ -50,12 +50,12 @@ func (uc *menuUseCase) GetAllMenus(params *model.MenuQueryParams) (*model.Pagina
 	}
 
 	// Try to get the menus from the cache first
-	cacheKey := fmt.Sprintf("menus:all:page:%d:limit:%d", params.Page, params.Limit)
-	var cachedData model.PaginationResponse[[]entity.Menu]
-	if err := uc.cache.Get(context.Background(), cacheKey, &cachedData); err == nil {
-		uc.logger.Info("Menus fetched from cache")
-		return &cachedData, nil
-	}
+	// cacheKey := fmt.Sprintf("menus:all:page:%d:limit:%d", params.Page, params.Limit)
+	// var cachedData model.PaginationResponse[[]entity.Menu]
+	// if err := uc.cache.Get(context.Background(), cacheKey, &cachedData); err == nil {
+	// 	uc.logger.Info("Menus fetched from cache")
+	// 	return &cachedData, nil
+	// }
 
 	// If not in cache, get from the database
 	response, err := uc.repo.GetAll(params)
@@ -65,9 +65,9 @@ func (uc *menuUseCase) GetAllMenus(params *model.MenuQueryParams) (*model.Pagina
 	}
 
 	// Store the menus in the cache for future requests
-	if err := uc.cache.Set(context.Background(), cacheKey, response, 5*time.Minute); err != nil {
-		uc.logger.Errorf("Error setting cache for all menus: %v", err)
-	}
+	// if err := uc.cache.Set(context.Background(), cacheKey, response, 5*time.Minute); err != nil {
+	// 	uc.logger.Errorf("Error setting cache for all menus: %v", err)
+	// }
 
 	return response, nil
 }
@@ -79,12 +79,12 @@ func (uc *menuUseCase) GetMenuByID(id int64) (*entity.Menu, error) {
 	}()
 
 	// Try to get the menu from the cache first
-	cacheKey := fmt.Sprintf("menu:%d", id)
-	var menu entity.Menu
-	if err := uc.cache.Get(context.Background(), cacheKey, &menu); err == nil {
-		uc.logger.Info("Menu fetched from cache")
-		return &menu, nil
-	}
+	// cacheKey := fmt.Sprintf("menu:%d", id)
+	// var menu entity.Menu
+	// if err := uc.cache.Get(context.Background(), cacheKey, &menu); err == nil {
+	// 	uc.logger.Info("Menu fetched from cache")
+	// 	return &menu, nil
+	// }
 
 	// If not in cache, get from the database
 	menuEntity, err := uc.repo.GetByID(id)
@@ -97,9 +97,9 @@ func (uc *menuUseCase) GetMenuByID(id int64) (*entity.Menu, error) {
 	}
 
 	// Store the menu in the cache for future requests
-	if err := uc.cache.Set(context.Background(), cacheKey, menuEntity, 5*time.Minute); err != nil {
-		uc.logger.Errorf("Error setting cache for menu ID %d: %v", id, err)
-	}
+	// if err := uc.cache.Set(context.Background(), cacheKey, menuEntity, 5*time.Minute); err != nil {
+	// 	uc.logger.Errorf("Error setting cache for menu ID %d: %v", id, err)
+	// }
 
 	uc.logger.Infof("Successfully fetched menu with ID %d", id)
 	return menuEntity, nil
