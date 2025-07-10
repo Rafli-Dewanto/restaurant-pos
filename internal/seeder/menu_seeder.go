@@ -5,6 +5,8 @@ import (
 	"cakestore/internal/domain/entity"
 	"cakestore/internal/domain/model"
 	"cakestore/internal/repository"
+	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -23,96 +25,78 @@ func NewMenuSeeder(repo repository.MenuRepository, logger *logrus.Logger) *MenuS
 }
 
 func (s *MenuSeeder) SeedMenus() error {
-	menus := []entity.Menu{
-		{
-			Title:       "Chocolate Fudge Cake",
-			Description: "Rich and moist chocolate cake with fudge frosting",
-			Rating:      4.5,
-			Image:       "https://images.unsplash.com/photo-1586985289906-406988974504?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Y2hvY29sYXRlJTIwY2FrZXxlbnwwfHwwfHx8MA%3D%3D",
-			Price:       80000,
-			Quantity:    20,
-			Category:    constants.BirthdayCake,
-			CreatedAt:   time.Now(),
-			UpdatedAt:   time.Now(),
-		},
-		{
-			Title:       "Vanilla Bean Cheesecake",
-			Description: "Creamy cheesecake with real vanilla beans",
-			Rating:      4.8,
-			Image:       "https://images.unsplash.com/photo-1568051243857-068aa3ea934d?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8dmFuaWxsYSUyMGNha2V8ZW58MHx8MHx8fDA%3D",
-			Price:       90000,
-			Quantity:    20,
-			Category:    constants.WeddingCake,
-			CreatedAt:   time.Now(),
-			UpdatedAt:   time.Now(),
-		},
-		{
-			Title:       "Red Velvet Delight",
-			Description: "Classic red velvet cake with cream cheese frosting",
-			Rating:      4.7,
-			Image:       "https://images.unsplash.com/photo-1586788680434-30d324b2d46f?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8cmVkJTIwdmVsdmV0fGVufDB8fDB8fHww",
-			Price:       120000,
-			Quantity:    20,
-			Category:    constants.CupCake,
-			CreatedAt:   time.Now(),
-			UpdatedAt:   time.Now(),
-		},
-		{
-			Title:       "Matcha Cookies",
-			Description: "Soft and chewy cookie with matcha flavor",
-			Rating:      4.5,
-			Image:       "https://teakandthyme.com/wp-content/uploads/2023/09/matcha-white-chocolate-cookies-DSC_5105-1x1-1200.jpg",
-			Price:       120000,
-			Quantity:    20,
-			Category:    constants.Cookies,
-			CreatedAt:   time.Now(),
-			UpdatedAt:   time.Now(),
-		},
-		{
-			Title:       "Strawberry Cupcake",
-			Description: "Sweet and creamy cupcake with fresh strawberries",
-			Rating:      4.9,
-			Image:       "https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Y2FrZXxlbnwwfHwwfHx8MA%3D%3D",
-			Price:       35000,
-			Quantity:    30,
-			Category:    constants.CupCake,
-			CreatedAt:   time.Now(),
-			UpdatedAt:   time.Now(),
-		},
-		{
-			Title:       "Tiramisu",
-			Description: "Classic Italian dessert with layers of coffee-soaked ladyfingers and creamy mascarpone filling",
-			Rating:      4.8,
-			Image:       "https://images.unsplash.com/photo-1571115177098-24ec42ed204d?q=80&w=3177&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-			Price:       120000,
-			Quantity:    20,
-			Category:    constants.Other,
-			CreatedAt:   time.Now(),
-			UpdatedAt:   time.Now(),
-		},
-	}
-
-	// if already exists return
-	menuData, err := s.repo.GetAll(&model.MenuQueryParams{})
+	// Seed only if no data exists to avoid re-seeding 100,000 records every time
+	menuData, err := s.repo.GetAll(&model.MenuQueryParams{Limit: 1}) // Just check if any record exists
 	if err != nil {
-		s.logger.Errorf("Error getting menus: %v", err)
+		s.logger.Errorf("Error checking for existing menus: %v", err)
 		return err
 	}
 
-	for _, menu := range menuData.Data {
-		if menu.Title == menus[0].Title {
-			s.logger.Info("Menus already exist")
-			return nil
+	if len(menuData.Data) > 0 {
+		s.logger.Info("Menus already exist, skipping seeding.")
+		return nil
+	}
+
+	const numberOfMenusToSeed = 100000
+	menus := make([]entity.Menu, 0, numberOfMenusToSeed) // Pre-allocate slice capacity
+
+	// Seed random source for more varied dummy data
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	// Define categories to cycle through
+	categories := []string{
+		constants.BirthdayCake,
+		constants.WeddingCake,
+		constants.CupCake,
+		constants.Cookies,
+		constants.Other,
+	}
+
+	s.logger.Infof("Starting to generate %d dummy menu items...", numberOfMenusToSeed)
+
+	for i := 0; i < numberOfMenusToSeed; i++ {
+		title := fmt.Sprintf("Dummy Cake %d", i+1)
+		description := fmt.Sprintf("Delicious dummy cake number %d for all occasions.", i+1)
+		imageURL := fmt.Sprintf("https://dummyimage.com/600x400/000/fff&text=Cake+%d", i+1) // Generic dummy image URL
+
+		menu := entity.Menu{
+			Title:       title,
+			Description: description,
+			Rating:      float64(r.Intn(100)+300) / 100.0, // Random rating between 3.0 and 4.0
+			Image:       imageURL,
+			Price:       float64(r.Intn(100000) + 20000),     // Random price between 20,000 and 120,000
+			Quantity:    int64(r.Intn(50) + 10),              // Random quantity between 10 and 60
+			Category:    categories[r.Intn(len(categories))], // Cycle through categories
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+		}
+		menus = append(menus, menu)
+
+		// Log progress periodically
+		if (i+1)%10000 == 0 {
+			s.logger.Infof("Generated %d / %d menu items...", i+1, numberOfMenusToSeed)
 		}
 	}
 
-	for _, m := range menus {
+	s.logger.Infof("Finished generating %d dummy menu items. Starting database insertion...", numberOfMenusToSeed)
+
+	// --- IMPORTANT: CONSIDER BATCH INSERTION HERE ---
+	// Inserting 100,000 records one by one can be very slow.
+	// It's highly recommended to implement a batch insert method in your MenuRepository.
+	// For example: `s.repo.BulkCreate(menus)`
+	// If you don't have a batch insert, the loop below will work but will be slow.
+
+	for i, m := range menus {
 		if err := s.repo.Create(&m); err != nil {
-			s.logger.Errorf("Error seeding menus %s: %v", m.Title, err)
+			s.logger.Errorf("Error seeding menu %s (item %d/%d): %v", m.Title, i+1, numberOfMenusToSeed, err)
 			return err
 		}
+		// Log insertion progress periodically
+		if (i+1)%5000 == 0 {
+			s.logger.Infof("Inserted %d / %d menu items into the database...", i+1, numberOfMenusToSeed)
+		}
 	}
 
-	s.logger.Info("Menus seeded successfully")
+	s.logger.Infof("Successfully seeded %d menus.", numberOfMenusToSeed)
 	return nil
 }
