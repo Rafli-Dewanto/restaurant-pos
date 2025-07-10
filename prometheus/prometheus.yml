@@ -3,6 +3,9 @@ global:
   scrape_interval: 5s # How often Prometheus scrapes targets
 
 scrape_configs:
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres_exporter:9187']
   - job_name: 'go_app'
     # The 'app' here refers to the service name in your docker-compose.yml
     # and the port 8080 is where your Go app exposes its metrics.

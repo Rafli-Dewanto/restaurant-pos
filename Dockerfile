@@ -30,6 +30,7 @@ WORKDIR /app
 
 # Copy the binary from builder
 COPY --from=builder /app/main .
+COPY --from=builder /app/docs ./docs
 COPY .env .
 
 # Expose application port

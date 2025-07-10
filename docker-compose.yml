@@ -1,4 +1,3 @@
-# docker-compose.yml
 version: "3.8"
 
 services:
@@ -16,18 +15,37 @@ services:
     networks:
       - app-network
 
+  dragonfly:
+    image: "docker.dragonflydb.io/dragonflydb/dragonfly"
+    ulimits:
+      memlock: -1
+    ports:
+      - "6379:6379"
+    # For better performance, consider `host` mode instead `port` to avoid docker NAT.
+    # `host` mode is NOT currently supported in Swarm Mode.
+    # https://docs.docker.com/compose/compose-file/compose-file-v3/#network_mode
+    # network_mode: "host"
+    volumes:
+      - dragonflydata:/data
+    networks: # Ensure Dragonfly is on the same network
+      - app-network
+    restart: always # Added restart policy for consistency
+
   app:
     build:
       context: .
       dockerfile: Dockerfile
     depends_on:
       - db
+      - dragonfly
     environment:
       - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=cakestore
+      - DRAGONFLY_HOST=dragonfly
+      - DRAGONFLY_PORT=6379 
     ports:
       - "8080:8080"
     networks:
@@ -35,20 +53,33 @@ services:
     restart: always
 
   prometheus:
-    image: prom/prometheus:latest # Or a specific version like prom/prometheus:v2.53.0
+    image: prom/prometheus:latest
     container_name: prometheus
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus' # Persistent storage for metrics
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
     ports:
-      - "9090:9090" # Expose Prometheus UI
+      - "9090:9090"
     volumes:
-      - ./prometheus:/etc/prometheus # Mount your prometheus.yml
-      - prometheus_data:/prometheus # Persistent storage for Prometheus data
+      - ./prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
     networks:
       - app-network
     depends_on:
-      - app # Prometheus depends on your app being up to scrape it
+      - app
+    restart: always
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - app-network
+    depends_on:
+      - prometheus
     restart: always
 
 networks:
@@ -57,4 +88,6 @@ networks:
 
 volumes:
   db_data:
-  prometheus_data: # Define the volume for Prometheus data
+  dragonflydata:
+  prometheus_data:
+  grafana_data:

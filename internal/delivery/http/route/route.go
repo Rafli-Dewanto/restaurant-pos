@@ -8,6 +8,7 @@ import (
 	"github.com/gofiber/contrib/swagger"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/pprof"
 	"github.com/sirupsen/logrus"
 )
 
@@ -36,6 +37,7 @@ func (c *RouteConfig) SetupRoute() {
 		AllowMethods: "GET,POST,PATCH,PUT,DELETE",
 		AllowHeaders: "Origin, Content-Type, Accept, Authorization, X-App-Role, User-Agent",
 	}))
+	c.App.Use(pprof.New())
 	c.App.Use(middleware.LogMiddleware(c.Log))
 	c.App.Static("/docs", "./docs")
 	cfg := swagger.Config{
@@ -56,7 +58,7 @@ func (c *RouteConfig) SetupRoute() {
 	c.App.Get("/menus/:id", c.MenuController.GetMenuByID)
 
 	// Protected routes
-	protectedRoutes := c.App.Group("/", middleware.AuthMiddleware(c.JWTSecret))
+	protectedRoutes := c.App.Group("/api/v1", middleware.AuthMiddleware(c.JWTSecret))
 
 	// Customer routes
 	protectedRoutes.Get("/authorize", c.CustomerController.Authorize)

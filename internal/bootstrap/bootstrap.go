@@ -2,7 +2,6 @@
 package bootstrap
 
 import (
-	"context"
 	configs "cakestore/internal/config"
 	"cakestore/internal/database"
 	controller "cakestore/internal/delivery/http"
@@ -12,6 +11,7 @@ import (
 	"cakestore/internal/seeder"
 	"cakestore/internal/usecase"
 	"cakestore/utils"
+	"context"
 	"log"
 
 	"github.com/gofiber/fiber/v2"
@@ -71,9 +71,8 @@ func NewApplication() *Application {
 	logger := utils.NewLogger()
 	cfg := configs.LoadConfig()
 	db := database.ConnectPostgres(cfg)
-	cache := database.NewRedisCacheService(context.Background(), cfg.REDIS_ADDR)
+	cache := database.NewRedisCacheService(context.Background(), "redis://dragonfly:6379/0")
 
-	// Run migrations
 	if err := database.RunMigrations(db); err != nil {
 		log.Fatalf("❌ Failed to run database migrations: %v", err)
 	}
