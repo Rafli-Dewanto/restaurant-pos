@@ -47,6 +47,11 @@ func (m *MockMenuRepository) SoftDelete(id int64) error {
 	return args.Error(0)
 }
 
+func (m *MockMenuRepository) DecreaseStock(menuID int64, quantity int) error {
+	args := m.Called(menuID, quantity)
+	return args.Error(0)
+}
+
 func TestMenuUseCase_GetAllMenus(t *testing.T) {
 	logger := logrus.New()
 	mockMenuRepo := new(MockMenuRepository)

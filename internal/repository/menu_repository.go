@@ -17,6 +17,7 @@ type MenuRepository interface {
 	Create(menu *entity.Menu) error
 	UpdateMenu(menu *entity.Menu) error
 	SoftDelete(id int64) error
+	DecreaseStock(menuID int64, quantity int) error
 }
 
 type menuRepository struct {
@@ -141,5 +142,20 @@ func (c *menuRepository) SoftDelete(id int64) error {
 		return errors.New("no rows updated, menu not found")
 	}
 
+	return nil
+}
+
+func (c *menuRepository) DecreaseStock(menuID int64, quantity int) error {
+	query := `
+        UPDATE menus 
+        SET stock = stock - ? 
+        WHERE id = ? AND stock >= ?
+        RETURNING id`
+
+	var id int64
+	err := c.db.Raw(query, quantity, menuID, quantity).Scan(&id).Error
+	if err != nil {
+		return err
+	}
 	return nil
 }

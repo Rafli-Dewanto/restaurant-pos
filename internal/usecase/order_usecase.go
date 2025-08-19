@@ -108,11 +108,22 @@ func (uc *orderUseCaseImpl) CreateOrder(customerID int64, request *model.CreateO
 	var orderItems []entity.OrderItem
 	var totalPrice float64
 
+	// Check and decrease stock for each item
 	for _, item := range request.Items {
-		// Validate menu exists
-		_, err := uc.menuRepo.GetByID(item.MenuID)
+		menu, err := uc.menuRepo.GetByID(item.MenuID)
 		if err != nil {
 			return nil, errors.New("menu not found")
+		}
+
+		// Check if enough stock is available
+		if menu.Quantity < item.Quantity {
+			return nil, fmt.Errorf("insufficient stock for menu item %d: requested %d, available %d",
+				item.MenuID, item.Quantity, menu.Quantity)
+		}
+
+		// Decrease stock
+		if err := uc.menuRepo.DecreaseStock(item.MenuID, int(item.Quantity)); err != nil {
+			return nil, fmt.Errorf("failed to decrease stock for menu item %d: %v", item.MenuID, err)
 		}
 
 		orderItem := entity.OrderItem{
