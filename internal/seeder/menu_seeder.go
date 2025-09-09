@@ -37,7 +37,7 @@ func (s *MenuSeeder) SeedMenus() error {
 		return nil
 	}
 
-	const numberOfMenusToSeed = 100000
+	const numberOfMenusToSeed = 1000
 	menus := make([]entity.Menu, 0, numberOfMenusToSeed) // Pre-allocate slice capacity
 
 	// Seed random source for more varied dummy data
