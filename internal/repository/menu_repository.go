@@ -148,8 +148,8 @@ func (c *menuRepository) SoftDelete(id int64) error {
 func (c *menuRepository) DecreaseStock(menuID int64, quantity int) error {
 	query := `
         UPDATE menus 
-        SET stock = stock - ? 
-        WHERE id = ? AND stock >= ?
+        SET quantity = quantity - ? 
+        WHERE id = ? AND quantity >= ?
         RETURNING id`
 
 	var id int64
